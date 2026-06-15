@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilo para que los campos deshabilitados parezcan "datos del sistema" */
+input:disabled, textarea:disabled {
+  background-color: #f3f4f6; /* gris suave */
+  color: #1f2937; /* texto oscuro */
+  cursor: not-allowed;
+  font-weight: 600;
+  border-color: #d1d5db;
+}
