@@ -1,146 +1,1092 @@
--- Respaldador automático de SEIOT para Neon.tech
--- Generado el: 13/7/2026, 6:40:08 p.m.
+-- Limpieza previa de tablas
+DROP TABLE IF EXISTS public.modulo6_acta_circunstanciada CASCADE;
+DROP TABLE IF EXISTS public.modulo5_acta_supervision CASCADE;
+DROP TABLE IF EXISTS public.modulo4_acta_hechos CASCADE;
+DROP TABLE IF EXISTS public.modulo3_lista_verificacion CASCADE;
+DROP TABLE IF EXISTS public.modulo3_checklist CASCADE;
+DROP TABLE IF EXISTS public.modulo2_orden_supervision CASCADE;
+DROP TABLE IF EXISTS public.modulo1_oficio_notificacion CASCADE;
+DROP TABLE IF EXISTS public.documentos_firmados CASCADE;
+DROP TABLE IF EXISTS public.visitas CASCADE;
+DROP TABLE IF EXISTS public.excel_psg CASCADE;
+DROP TABLE IF EXISTS public.excel_supervisores CASCADE;
+DROP TABLE IF EXISTS public.usuarios CASCADE;
 
 --
--- Estructura de tabla para la tabla "modulo5_acta_supervision"
+-- PostgreSQL database dump
 --
-DROP TABLE IF EXISTS "modulo5_acta_supervision" CASCADE;
-CREATE TABLE "modulo5_acta_supervision" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "acta_no" character varying(100),
-  "fecha" date,
-  "hora" time without time zone,
-  "hora_inicio" time without time zone,
-  "hora_termino" time without time zone,
-  "acta_hechos" boolean,
-  "otros_documentos" text,
-  "cumple" boolean,
-  "presenta_observaciones" boolean,
-  "requiere_seguimiento" boolean,
-  "observaciones_detectadas" text,
-  "medidas_preventivas" text,
-  "no_realizo_manifestaciones" boolean,
-  "manifestaciones" text,
-  "localidad" character varying(100),
-  "municipio" character varying(100),
-  "nombre_psg" character varying(200),
-  "tipo_psg" character varying(100),
-  "nombre_titular" character varying(200),
-  "domicilio" character varying(300),
-  "telefono" character varying(20),
-  "nombre_supervisor" character varying(200),
-  "nombre_testigo" character varying(200),
-  "domicilio_testigo" character varying(300),
-  "tipo_id_testigo" character varying(100),
-  "numero_id_testigo" character varying(100)
+
+-- Dumped from database version 17.0
+-- Dumped by pg_dump version 17.0
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: documentos_firmados; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.documentos_firmados (
+    id integer NOT NULL,
+    visita_id integer,
+    modulo integer NOT NULL,
+    nombre_archivo character varying(255) NOT NULL,
+    ruta_archivo text NOT NULL,
+    fecha_subida timestamp without time zone DEFAULT now(),
+    CONSTRAINT documentos_firmados_modulo_check CHECK (((modulo >= 1) AND (modulo <= 6)))
 );
 
--- Volcado de datos para la tabla "modulo5_acta_supervision"
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (1, 1, NULL, '2026-07-02T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, FALSE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (2, 8, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (3, 10, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (4, 9, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (5, 11, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (6, 12, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (7, 14, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (8, 13, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (9, 15, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (10, 17, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (11, 16, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (12, 18, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (13, 20, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (14, 19, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (15, 24, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, FALSE, FALSE, TRUE, NULL, NULL, TRUE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (16, 31, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (17, 33, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (18, 32, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (19, 34, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (20, 35, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (21, 36, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (22, 37, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
-INSERT INTO "modulo5_acta_supervision" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "acta_hechos", "otros_documentos", "cumple", "presenta_observaciones", "requiere_seguimiento", "observaciones_detectadas", "medidas_preventivas", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (23, 38, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, FALSE, NULL, TRUE, FALSE, FALSE, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL);
+
+ALTER TABLE public.documentos_firmados OWNER TO postgres;
 
 --
--- Estructura de tabla para la tabla "modulo1_oficio_notificacion"
+-- Name: documentos_firmados_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
-DROP TABLE IF EXISTS "modulo1_oficio_notificacion" CASCADE;
-CREATE TABLE "modulo1_oficio_notificacion" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "fecha_emision" date,
-  "localidad" character varying(100),
-  "municipio" character varying(100),
-  "estado" character varying(100),
-  "nombre_psg" character varying(200),
-  "domicilio" character varying(300),
-  "nombre_servidor" character varying(200),
-  "cargo_servidor" character varying(200)
+
+CREATE SEQUENCE public.documentos_firmados_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.documentos_firmados_id_seq OWNER TO postgres;
+
+--
+-- Name: documentos_firmados_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.documentos_firmados_id_seq OWNED BY public.documentos_firmados.id;
+
+
+--
+-- Name: excel_psg; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.excel_psg (
+    id integer NOT NULL,
+    razon_social character varying(200),
+    representante character varying(200),
+    municipio character varying(100),
+    localidad character varying(100),
+    psg character varying(50) NOT NULL,
+    clave_compra_venta character varying(100),
+    fecha_autorizacion date,
+    estatus character varying(20),
+    tipo_psg character varying(100),
+    telefono character varying(50),
+    estado character varying(100),
+    domicilio text,
+    gps character varying(100),
+    latitud character varying(50),
+    longitud character varying(50),
+    superficie_m2 numeric,
+    capacidad_maxima_bovinos integer,
+    cabezas_inventario integer,
+    inventario_actual integer,
+    tipo_identificacion character varying(100),
+    numero_identificacion character varying(100),
+    expedida_por character varying(150)
 );
 
--- Volcado de datos para la tabla "modulo1_oficio_notificacion"
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (1, 1, '2026-07-02T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (2, 2, '2026-07-02T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Juan Jos‚ L¢pez Rivera', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (3, 3, '2026-07-02T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Jos‚ Gilberto Garc¡a Vivanco', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (4, 5, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (5, 6, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (6, 7, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (7, 8, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (8, 9, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (9, 10, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (10, 11, '2026-07-07T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (11, 12, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (12, 13, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (13, 14, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (14, 15, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (15, 16, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (16, 17, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (17, 18, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (18, 19, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (19, 20, '2026-07-08T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Adalberto Morales Fragoso', '');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (20, 21, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Ing. Jared Guadalupe Pe¤a Barrios', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (24, 22, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (25, 23, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Carlos Antonio Lara González', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (26, 24, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (27, 25, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (28, 26, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (29, 27, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (30, 28, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (31, 29, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (32, 30, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (33, 31, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (34, 32, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (35, 33, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (36, 34, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (37, 35, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (38, 36, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (39, 37, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
-INSERT INTO "modulo1_oficio_notificacion" ("id", "visita_id", "fecha_emision", "localidad", "municipio", "estado", "nombre_psg", "domicilio", "nombre_servidor", "cargo_servidor") VALUES (40, 38, '2026-07-14T07:00:00.000Z', 'PALOMAS', 'XALISCO', 'NAYARIT', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera');
+
+ALTER TABLE public.excel_psg OWNER TO postgres;
 
 --
--- Estructura de tabla para la tabla "excel_supervisores"
+-- Name: excel_psg_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
-DROP TABLE IF EXISTS "excel_supervisores" CASCADE;
-CREATE TABLE "excel_supervisores" (
-  "id" SERIAL PRIMARY KEY,
-  "nombre" character varying(200),
-  "cargo" character varying(200),
-  "adscripcion" character varying(200),
-  "tipo_identificacion" character varying(100),
-  "folio_identificacion" character varying(100),
-  "credencial_oficial" character varying(100),
-  "tipo_supervisor" character varying(100),
-  "estado" character varying(100),
-  "municipio" character varying(100),
-  "localidad" character varying(100),
-  "telefono" character varying(50),
-  "correo" character varying(150),
-  "nombramiento" character varying(255),
-  "nombre_personal_superior" character varying(200),
-  "cargo_personal_superior" character varying(200)
+
+CREATE SEQUENCE public.excel_psg_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.excel_psg_id_seq OWNER TO postgres;
+
+--
+-- Name: excel_psg_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.excel_psg_id_seq OWNED BY public.excel_psg.id;
+
+
+--
+-- Name: excel_supervisores; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.excel_supervisores (
+    id integer NOT NULL,
+    nombre character varying(200),
+    cargo character varying(200),
+    adscripcion character varying(200),
+    tipo_identificacion character varying(100),
+    folio_identificacion character varying(100),
+    credencial_oficial character varying(100),
+    tipo_supervisor character varying(100),
+    estado character varying(100),
+    municipio character varying(100),
+    localidad character varying(100),
+    telefono character varying(50),
+    correo character varying(150),
+    nombramiento character varying(255),
+    nombre_personal_superior character varying(200),
+    cargo_personal_superior character varying(200)
 );
 
--- Volcado de datos para la tabla "excel_supervisores"
+
+ALTER TABLE public.excel_supervisores OWNER TO postgres;
+
+--
+-- Name: excel_supervisores_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.excel_supervisores_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.excel_supervisores_id_seq OWNER TO postgres;
+
+--
+-- Name: excel_supervisores_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.excel_supervisores_id_seq OWNED BY public.excel_supervisores.id;
+
+
+--
+-- Name: modulo1_oficio_notificacion; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo1_oficio_notificacion (
+    id integer NOT NULL,
+    visita_id integer,
+    fecha_emision date,
+    localidad character varying(100),
+    municipio character varying(100),
+    estado character varying(100),
+    nombre_psg character varying(200),
+    domicilio character varying(300),
+    nombre_servidor character varying(200),
+    cargo_servidor character varying(200)
+);
+
+
+ALTER TABLE public.modulo1_oficio_notificacion OWNER TO postgres;
+
+--
+-- Name: modulo1_oficio_notificacion_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo1_oficio_notificacion_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo1_oficio_notificacion_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo1_oficio_notificacion_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo1_oficio_notificacion_id_seq OWNED BY public.modulo1_oficio_notificacion.id;
+
+
+--
+-- Name: modulo2_orden_supervision; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo2_orden_supervision (
+    id integer NOT NULL,
+    visita_id integer,
+    fecha date,
+    nombre_psg character varying(200),
+    domicilio character varying(300),
+    calidad_sujeto character varying(100),
+    nombre_pc character varying(200),
+    cargo_pc character varying(200),
+    adscripcion character varying(200),
+    tipo_identificacion character varying(100),
+    folio_identificacion character varying(100),
+    nombre_ordena character varying(200)
+);
+
+
+ALTER TABLE public.modulo2_orden_supervision OWNER TO postgres;
+
+--
+-- Name: modulo2_orden_supervision_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo2_orden_supervision_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo2_orden_supervision_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo2_orden_supervision_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo2_orden_supervision_id_seq OWNED BY public.modulo2_orden_supervision.id;
+
+
+--
+-- Name: modulo3_checklist; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo3_checklist (
+    id integer NOT NULL,
+    visita_id integer,
+    pregunta_id integer,
+    respuesta character varying(2),
+    observacion text,
+    creado_en timestamp without time zone DEFAULT now(),
+    modificado_en timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.modulo3_checklist OWNER TO postgres;
+
+--
+-- Name: modulo3_checklist_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo3_checklist_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo3_checklist_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo3_checklist_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo3_checklist_id_seq OWNED BY public.modulo3_checklist.id;
+
+
+--
+-- Name: modulo3_lista_verificacion; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo3_lista_verificacion (
+    id integer NOT NULL,
+    visita_id integer,
+    nombre_psg character varying(200),
+    tipo_psg character varying(100),
+    nombre_titular character varying(200),
+    telefono character varying(20),
+    municipio character varying(100),
+    localidad character varying(100),
+    latitud numeric(10,7),
+    longitud numeric(10,7),
+    capacidad_instalada integer,
+    nombre_supervisor character varying(200),
+    fecha date,
+    hora_inicio time without time zone,
+    hora_termino time without time zone,
+    p13 character varying(2),
+    p14 character varying(2),
+    p15 character varying(2),
+    p16 character varying(2),
+    p17 character varying(2),
+    p18 character varying(2),
+    p19 character varying(2),
+    p20 character varying(2),
+    p21 character varying(2),
+    p22 character varying(2),
+    p23 character varying(2),
+    p24 character varying(2),
+    p25 character varying(2),
+    p26 character varying(2),
+    p27 character varying(2),
+    p28 character varying(2),
+    p29 character varying(2),
+    p30 character varying(2),
+    p31 character varying(2),
+    p32 character varying(2),
+    p33 character varying(2),
+    p34 character varying(2),
+    p35 character varying(2),
+    p36 character varying(2),
+    p37 character varying(2),
+    p38 character varying(2),
+    p39 character varying(2),
+    p40 character varying(2),
+    p41 character varying(2),
+    p42 character varying(2),
+    p43 character varying(2),
+    p44 character varying(2),
+    p45 character varying(2),
+    p46 character varying(2),
+    p47 character varying(2),
+    p48 character varying(2),
+    p49 character varying(2),
+    p50 character varying(2),
+    p51 character varying(2),
+    p52 character varying(2),
+    p53 character varying(2),
+    p54 character varying(2),
+    p55 character varying(2),
+    p56 character varying(2),
+    p57 character varying(2),
+    p58 character varying(2),
+    p59 character varying(2),
+    p60 character varying(2),
+    p61 character varying(2),
+    p62 character varying(2),
+    observaciones text,
+    cumple boolean,
+    presenta_observaciones boolean,
+    requiere_seguimiento boolean,
+    responsable_psg character varying(200),
+    responsable_supervisor character varying(200),
+    nombre_testigo character varying(200),
+    domicilio_testigo character varying(300),
+    tipo_id_testigo character varying(100),
+    numero_id_testigo character varying(100)
+);
+
+
+ALTER TABLE public.modulo3_lista_verificacion OWNER TO postgres;
+
+--
+-- Name: modulo3_lista_verificacion_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo3_lista_verificacion_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo3_lista_verificacion_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo3_lista_verificacion_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo3_lista_verificacion_id_seq OWNED BY public.modulo3_lista_verificacion.id;
+
+
+--
+-- Name: modulo4_acta_hechos; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo4_acta_hechos (
+    id integer NOT NULL,
+    visita_id integer,
+    acta_no character varying(100),
+    fecha date,
+    hora time without time zone,
+    hora_inicio time without time zone,
+    hora_termino time without time zone,
+    hechos_observados text,
+    no_realizo_manifestaciones boolean,
+    manifestaciones text,
+    localidad character varying(100),
+    municipio character varying(100),
+    nombre_psg character varying(200),
+    tipo_psg character varying(100),
+    nombre_titular character varying(200),
+    domicilio character varying(300),
+    telefono character varying(20),
+    nombre_supervisor character varying(200),
+    nombre_testigo character varying(200),
+    domicilio_testigo character varying(300),
+    tipo_id_testigo character varying(100),
+    numero_id_testigo character varying(100),
+    nombre_testigo_cierre character varying(200)
+);
+
+
+ALTER TABLE public.modulo4_acta_hechos OWNER TO postgres;
+
+--
+-- Name: modulo4_acta_hechos_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo4_acta_hechos_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo4_acta_hechos_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo4_acta_hechos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo4_acta_hechos_id_seq OWNED BY public.modulo4_acta_hechos.id;
+
+
+--
+-- Name: modulo5_acta_supervision; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo5_acta_supervision (
+    id integer NOT NULL,
+    visita_id integer,
+    acta_no character varying(100),
+    fecha date,
+    hora time without time zone,
+    hora_inicio time without time zone,
+    hora_termino time without time zone,
+    acta_hechos boolean,
+    otros_documentos text,
+    cumple boolean,
+    presenta_observaciones boolean,
+    requiere_seguimiento boolean,
+    observaciones_detectadas text,
+    medidas_preventivas text,
+    no_realizo_manifestaciones boolean,
+    manifestaciones text,
+    localidad character varying(100),
+    municipio character varying(100),
+    nombre_psg character varying(200),
+    tipo_psg character varying(100),
+    nombre_titular character varying(200),
+    domicilio character varying(300),
+    telefono character varying(20),
+    nombre_supervisor character varying(200),
+    nombre_testigo character varying(200),
+    domicilio_testigo character varying(300),
+    tipo_id_testigo character varying(100),
+    numero_id_testigo character varying(100)
+);
+
+
+ALTER TABLE public.modulo5_acta_supervision OWNER TO postgres;
+
+--
+-- Name: modulo5_acta_supervision_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo5_acta_supervision_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo5_acta_supervision_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo5_acta_supervision_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo5_acta_supervision_id_seq OWNED BY public.modulo5_acta_supervision.id;
+
+
+--
+-- Name: modulo6_acta_circunstanciada; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.modulo6_acta_circunstanciada (
+    id integer NOT NULL,
+    visita_id integer,
+    acta_no character varying(100),
+    fecha date,
+    hora time without time zone,
+    establecimiento character varying(200),
+    clave_psg character varying(50),
+    ubicacion character varying(300),
+    localidad character varying(100),
+    municipio character varying(100),
+    estado character varying(100),
+    nombre_oficial character varying(200),
+    nombre_responsable character varying(200),
+    tipo_id_responsable character varying(100),
+    numero_id_responsable character varying(100),
+    id_expedida_por character varying(200),
+    fecha_expedicion_id date,
+    ubicacion_compareciente character varying(300),
+    credencial_oficial_no character varying(100),
+    nombre_testigo1 character varying(200),
+    domicilio_testigo1 character varying(300),
+    tipo_id_testigo1 character varying(100),
+    numero_id_testigo1 character varying(100),
+    nombre_testigo2 character varying(200),
+    domicilio_testigo2 character varying(300),
+    tipo_id_testigo2 character varying(100),
+    numero_id_testigo2 character varying(100),
+    oficio_comision character varying(100),
+    fecha_comision date,
+    emite_comision character varying(200),
+    hechos_observaciones text,
+    articulo1 character varying(100),
+    de1 character varying(200),
+    articulo2 character varying(100),
+    de2 character varying(200),
+    articulo3 character varying(100),
+    de3 character varying(200),
+    articulo4 character varying(100),
+    de4 character varying(200),
+    manifestaciones text,
+    fecha_cierre date,
+    hora_cierre time without time zone,
+    nombre_testigo_cierre1 character varying(200),
+    tipo_id_cierre1 character varying(100),
+    numero_id_cierre1 character varying(100),
+    nombre_testigo_cierre2 character varying(200),
+    tipo_id_cierre2 character varying(100),
+    numero_id_cierre2 character varying(100)
+);
+
+
+ALTER TABLE public.modulo6_acta_circunstanciada OWNER TO postgres;
+
+--
+-- Name: modulo6_acta_circunstanciada_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.modulo6_acta_circunstanciada_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modulo6_acta_circunstanciada_id_seq OWNER TO postgres;
+
+--
+-- Name: modulo6_acta_circunstanciada_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.modulo6_acta_circunstanciada_id_seq OWNED BY public.modulo6_acta_circunstanciada.id;
+
+
+--
+-- Name: usuarios; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.usuarios (
+    id integer NOT NULL,
+    nombre character varying(150) NOT NULL,
+    usuario character varying(50) NOT NULL,
+    password_hash text NOT NULL,
+    activo boolean DEFAULT true,
+    es_admin boolean DEFAULT false,
+    modulo1 boolean DEFAULT false,
+    modulo2 boolean DEFAULT false,
+    modulo3 boolean DEFAULT false,
+    modulo4 boolean DEFAULT false,
+    modulo5 boolean DEFAULT false,
+    modulo6 boolean DEFAULT false,
+    ver_visitas_otros boolean DEFAULT false,
+    editar_campos boolean DEFAULT false,
+    eliminar_documentos boolean DEFAULT false,
+    descargar_pdfs boolean DEFAULT true,
+    panel_admin boolean DEFAULT false,
+    rol character varying(50) DEFAULT 'capturista'::character varying,
+    creado_en timestamp without time zone DEFAULT now(),
+    modificado_en timestamp without time zone DEFAULT now(),
+    superadmin boolean DEFAULT false,
+    modulo6_pagina4 boolean DEFAULT false,
+    consultas boolean DEFAULT false
+);
+
+
+ALTER TABLE public.usuarios OWNER TO postgres;
+
+--
+-- Name: usuarios_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.usuarios_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.usuarios_id_seq OWNER TO postgres;
+
+--
+-- Name: usuarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.usuarios_id_seq OWNED BY public.usuarios.id;
+
+
+--
+-- Name: visitas; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.visitas (
+    id integer NOT NULL,
+    folio character varying(60) NOT NULL,
+    psg character varying(50),
+    supervisor character varying(200),
+    fecha_inicio timestamp without time zone DEFAULT now(),
+    modulo1_completado boolean DEFAULT false,
+    modulo2_completado boolean DEFAULT false,
+    modulo3_completado boolean DEFAULT false,
+    modulo4_completado boolean DEFAULT false,
+    modulo5_completado boolean DEFAULT false,
+    modulo6_completado boolean DEFAULT false,
+    estado_visita character varying(50) DEFAULT 'en_proceso'::character varying,
+    capturista_id integer,
+    supervisor_id integer
+);
+
+
+ALTER TABLE public.visitas OWNER TO postgres;
+
+--
+-- Name: visitas_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.visitas_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.visitas_id_seq OWNER TO postgres;
+
+--
+-- Name: visitas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.visitas_id_seq OWNED BY public.visitas.id;
+
+
+--
+-- Name: documentos_firmados id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.documentos_firmados ALTER COLUMN id SET DEFAULT nextval('public.documentos_firmados_id_seq'::regclass);
+
+
+--
+-- Name: excel_psg id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.excel_psg ALTER COLUMN id SET DEFAULT nextval('public.excel_psg_id_seq'::regclass);
+
+
+--
+-- Name: excel_supervisores id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.excel_supervisores ALTER COLUMN id SET DEFAULT nextval('public.excel_supervisores_id_seq'::regclass);
+
+
+--
+-- Name: modulo1_oficio_notificacion id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo1_oficio_notificacion ALTER COLUMN id SET DEFAULT nextval('public.modulo1_oficio_notificacion_id_seq'::regclass);
+
+
+--
+-- Name: modulo2_orden_supervision id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo2_orden_supervision ALTER COLUMN id SET DEFAULT nextval('public.modulo2_orden_supervision_id_seq'::regclass);
+
+
+--
+-- Name: modulo3_checklist id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_checklist ALTER COLUMN id SET DEFAULT nextval('public.modulo3_checklist_id_seq'::regclass);
+
+
+--
+-- Name: modulo3_lista_verificacion id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_lista_verificacion ALTER COLUMN id SET DEFAULT nextval('public.modulo3_lista_verificacion_id_seq'::regclass);
+
+
+--
+-- Name: modulo4_acta_hechos id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo4_acta_hechos ALTER COLUMN id SET DEFAULT nextval('public.modulo4_acta_hechos_id_seq'::regclass);
+
+
+--
+-- Name: modulo5_acta_supervision id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo5_acta_supervision ALTER COLUMN id SET DEFAULT nextval('public.modulo5_acta_supervision_id_seq'::regclass);
+
+
+--
+-- Name: modulo6_acta_circunstanciada id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo6_acta_circunstanciada ALTER COLUMN id SET DEFAULT nextval('public.modulo6_acta_circunstanciada_id_seq'::regclass);
+
+
+--
+-- Name: usuarios id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuarios ALTER COLUMN id SET DEFAULT nextval('public.usuarios_id_seq'::regclass);
+
+
+--
+-- Name: visitas id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.visitas ALTER COLUMN id SET DEFAULT nextval('public.visitas_id_seq'::regclass);
+
+
+--
+-- Name: documentos_firmados documentos_firmados_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.documentos_firmados
+    ADD CONSTRAINT documentos_firmados_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: documentos_firmados documentos_firmados_visita_id_modulo_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.documentos_firmados
+    ADD CONSTRAINT documentos_firmados_visita_id_modulo_key UNIQUE (visita_id, modulo);
+
+
+--
+-- Name: excel_psg excel_psg_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.excel_psg
+    ADD CONSTRAINT excel_psg_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: excel_psg excel_psg_psg_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.excel_psg
+    ADD CONSTRAINT excel_psg_psg_key UNIQUE (psg);
+
+
+--
+-- Name: excel_supervisores excel_supervisores_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.excel_supervisores
+    ADD CONSTRAINT excel_supervisores_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo1_oficio_notificacion modulo1_oficio_notificacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo1_oficio_notificacion
+    ADD CONSTRAINT modulo1_oficio_notificacion_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo1_oficio_notificacion modulo1_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo1_oficio_notificacion
+    ADD CONSTRAINT modulo1_visita_id_key UNIQUE (visita_id);
+
+
+--
+-- Name: modulo2_orden_supervision modulo2_orden_supervision_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo2_orden_supervision
+    ADD CONSTRAINT modulo2_orden_supervision_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo2_orden_supervision modulo2_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo2_orden_supervision
+    ADD CONSTRAINT modulo2_visita_id_key UNIQUE (visita_id);
+
+
+--
+-- Name: modulo3_checklist modulo3_checklist_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_checklist
+    ADD CONSTRAINT modulo3_checklist_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo3_checklist modulo3_checklist_visita_id_pregunta_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_checklist
+    ADD CONSTRAINT modulo3_checklist_visita_id_pregunta_id_key UNIQUE (visita_id, pregunta_id);
+
+
+--
+-- Name: modulo3_lista_verificacion modulo3_lista_verificacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_lista_verificacion
+    ADD CONSTRAINT modulo3_lista_verificacion_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo3_lista_verificacion modulo3_lista_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_lista_verificacion
+    ADD CONSTRAINT modulo3_lista_visita_id_key UNIQUE (visita_id);
+
+
+--
+-- Name: modulo4_acta_hechos modulo4_acta_hechos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo4_acta_hechos
+    ADD CONSTRAINT modulo4_acta_hechos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo4_acta_hechos modulo4_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo4_acta_hechos
+    ADD CONSTRAINT modulo4_visita_id_key UNIQUE (visita_id);
+
+
+--
+-- Name: modulo5_acta_supervision modulo5_acta_supervision_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo5_acta_supervision
+    ADD CONSTRAINT modulo5_acta_supervision_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo5_acta_supervision modulo5_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo5_acta_supervision
+    ADD CONSTRAINT modulo5_visita_id_key UNIQUE (visita_id);
+
+
+--
+-- Name: modulo6_acta_circunstanciada modulo6_acta_circunstanciada_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo6_acta_circunstanciada
+    ADD CONSTRAINT modulo6_acta_circunstanciada_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo6_acta_circunstanciada modulo6_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo6_acta_circunstanciada
+    ADD CONSTRAINT modulo6_visita_id_key UNIQUE (visita_id);
+
+
+--
+-- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: usuarios usuarios_usuario_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuarios
+    ADD CONSTRAINT usuarios_usuario_key UNIQUE (usuario);
+
+
+--
+-- Name: visitas visitas_folio_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.visitas
+    ADD CONSTRAINT visitas_folio_key UNIQUE (folio);
+
+
+--
+-- Name: visitas visitas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.visitas
+    ADD CONSTRAINT visitas_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: documentos_firmados documentos_firmados_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.documentos_firmados
+    ADD CONSTRAINT documentos_firmados_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id) ON DELETE CASCADE;
+
+
+--
+-- Name: modulo1_oficio_notificacion modulo1_oficio_notificacion_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo1_oficio_notificacion
+    ADD CONSTRAINT modulo1_oficio_notificacion_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: modulo2_orden_supervision modulo2_orden_supervision_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo2_orden_supervision
+    ADD CONSTRAINT modulo2_orden_supervision_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: modulo3_checklist modulo3_checklist_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_checklist
+    ADD CONSTRAINT modulo3_checklist_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: modulo3_lista_verificacion modulo3_lista_verificacion_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_lista_verificacion
+    ADD CONSTRAINT modulo3_lista_verificacion_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: modulo4_acta_hechos modulo4_acta_hechos_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo4_acta_hechos
+    ADD CONSTRAINT modulo4_acta_hechos_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: modulo5_acta_supervision modulo5_acta_supervision_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo5_acta_supervision
+    ADD CONSTRAINT modulo5_acta_supervision_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: modulo6_acta_circunstanciada modulo6_acta_circunstanciada_visita_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo6_acta_circunstanciada
+    ADD CONSTRAINT modulo6_acta_circunstanciada_visita_id_fkey FOREIGN KEY (visita_id) REFERENCES public.visitas(id);
+
+
+--
+-- Name: visitas visitas_capturista_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.visitas
+    ADD CONSTRAINT visitas_capturista_id_fkey FOREIGN KEY (capturista_id) REFERENCES public.usuarios(id);
+
+
+--
+-- Name: visitas visitas_psg_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.visitas
+    ADD CONSTRAINT visitas_psg_fkey FOREIGN KEY (psg) REFERENCES public.excel_psg(psg);
+
+
+--
+-- Name: visitas visitas_supervisor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.visitas
+    ADD CONSTRAINT visitas_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES public.usuarios(id);
+
+
+--
+-- Indexes for performance optimization
+--
+
+CREATE INDEX IF NOT EXISTS idx_visitas_psg ON public.visitas(psg);
+CREATE INDEX IF NOT EXISTS idx_visitas_capturista ON public.visitas(capturista_id);
+CREATE INDEX IF NOT EXISTS idx_visitas_supervisor ON public.visitas(supervisor_id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+
+-- -----------------------------------------------------
+-- Carga de catálogos y usuarios iniciales corregidos
+-- -----------------------------------------------------
+
+-- Volcado de datos para "usuarios"
+INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (5, 'prueba2', 'prueba2', '$2b$10$G/OE77bNkH2eN8LkOE1Ye.pnQ1tK3n/IVPqpzIZmnMQf6BtViwXQS', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, 'capturista', '2026-06-15T01:58:12.454Z', '2026-06-15T04:08:15.432Z', FALSE, FALSE, FALSE);
+INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (1, 'Administrador', 'admin', '$2b$10$R0eFxGpH3IvoizYaR1SYKuTIMYbPbqlpWFALT43143Zwg6uXriIPm', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'admin', '2026-06-14T11:24:21.212Z', '2026-06-14T11:24:21.212Z', TRUE, TRUE, TRUE);
+INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (3, 'supervisor', 'supervisor', '$2b$10$WbtyZlHgABEQqEjr9yF0C.Wa31.eHVu0VgS.9zqno7LtzsBol3qEe', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, 'supervisor', '2026-06-14T14:26:55.324Z', '2026-07-01T20:46:09.674Z', FALSE, FALSE, TRUE);
+INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (2, 'prueba', 'prueba', '$2b$10$CconCUDa.fDoy1nLWIqjmOXJtMWLphUL6atFZyqJD7VqVMEsirl7y', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, 'capturista', '2026-06-14T12:08:10.683Z', '2026-07-02T09:52:03.528Z', FALSE, FALSE, TRUE);
+INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (4, 'vista', 'vista', '$2b$10$J./FLcaKyDIRcjeY7nIpMOJZ5iPUysN7CyImz/SU5OAVSa1CmNnaW', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE, 'vista', '2026-06-14T14:28:19.161Z', '2026-07-02T11:15:19.494Z', FALSE, FALSE, TRUE);
+
+-- Volcado de datos para "excel_supervisores"
 INSERT INTO "excel_supervisores" ("id", "nombre", "cargo", "adscripcion", "tipo_identificacion", "folio_identificacion", "credencial_oficial", "tipo_supervisor", "estado", "municipio", "localidad", "telefono", "correo", "nombramiento", "nombre_personal_superior", "cargo_personal_superior") VALUES (6, 'Gustavo Reyes Zavala', NULL, 'SEDER', NULL, NULL, NULL, 'Supervisor', 'Nayarit', 'Tepic', 'Tepic', NULL, NULL, NULL, NULL, NULL);
 INSERT INTO "excel_supervisores" ("id", "nombre", "cargo", "adscripcion", "tipo_identificacion", "folio_identificacion", "credencial_oficial", "tipo_supervisor", "estado", "municipio", "localidad", "telefono", "correo", "nombramiento", "nombre_personal_superior", "cargo_personal_superior") VALUES (24, 'Ing. Pedro Páramo Bugarín', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '0341050519398', 'OENAY-28', 'Oficial Estatal', 'Nayarit', 'Tepic', 'Tepic', '3891007802', 'paramopedro@hotmail.com', 'B00.03.03.02-2903 -2026', 'Ing, Rosa Estela Flores Salcido', 'Secretaria de Desarrollo Rural');
 INSERT INTO "excel_supervisores" ("id", "nombre", "cargo", "adscripcion", "tipo_identificacion", "folio_identificacion", "credencial_oficial", "tipo_supervisor", "estado", "municipio", "localidad", "telefono", "correo", "nombramiento", "nombre_personal_superior", "cargo_personal_superior") VALUES (7, 'Francisco Raúl Quintero Villaseñor', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', NULL, NULL, NULL, 'Oficial Estatal', 'Nayarit', 'Tepic', 'Tepic', NULL, NULL, NULL, NULL, NULL);
@@ -161,354 +1107,7 @@ INSERT INTO "excel_supervisores" ("id", "nombre", "cargo", "adscripcion", "tipo_
 INSERT INTO "excel_supervisores" ("id", "nombre", "cargo", "adscripcion", "tipo_identificacion", "folio_identificacion", "credencial_oficial", "tipo_supervisor", "estado", "municipio", "localidad", "telefono", "correo", "nombramiento", "nombre_personal_superior", "cargo_personal_superior") VALUES (22, 'MVZ. Juan José López Rivera', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '07240449509968207090H3512311MEX', 'OENAY-26', 'Oficial Estatal', 'Nayarit', 'Tepic', 'Tepic', '3118768360', 'juanlopez2504@hotmail.com', 'B00.03.03.02-2903 -2026', 'Ing, Rosa Estela Flores Salcido', 'Secretaria de Desarrollo Rural');
 INSERT INTO "excel_supervisores" ("id", "nombre", "cargo", "adscripcion", "tipo_identificacion", "folio_identificacion", "credencial_oficial", "tipo_supervisor", "estado", "municipio", "localidad", "telefono", "correo", "nombramiento", "nombre_personal_superior", "cargo_personal_superior") VALUES (23, 'MVZ. Iván Jiménez Vargas', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', NULL, NULL, 'OENAY-27', 'Oficial Estatal', 'Nayarit', 'Tepic', 'Tepic', NULL, NULL, 'B00.03.03.02-2903 -2026', 'Ing, Rosa Estela Flores Salcido', 'Secretaria de Desarrollo Rural');
 
---
--- Estructura de tabla para la tabla "modulo2_orden_supervision"
---
-DROP TABLE IF EXISTS "modulo2_orden_supervision" CASCADE;
-CREATE TABLE "modulo2_orden_supervision" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "fecha" date,
-  "nombre_psg" character varying(200),
-  "domicilio" character varying(300),
-  "calidad_sujeto" character varying(100),
-  "nombre_pc" character varying(200),
-  "cargo_pc" character varying(200),
-  "adscripcion" character varying(200),
-  "tipo_identificacion" character varying(100),
-  "folio_identificacion" character varying(100),
-  "nombre_ordena" character varying(200)
-);
-
--- Volcado de datos para la tabla "modulo2_orden_supervision"
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (1, 1, '2026-07-02T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (2, 2, '2026-07-02T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Juan Jos‚ L¢pez Rivera', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (3, 3, '2026-07-02T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'Jos‚ Gilberto Garc¡a Vivanco', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (4, 5, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (5, 6, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (6, 7, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (7, 8, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (8, 9, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (9, 10, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (10, 11, '2026-07-07T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (11, 12, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (12, 13, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (13, 14, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (14, 15, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (15, 16, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (16, 17, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (17, 18, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (18, 19, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (19, 20, '2026-07-08T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Supervisor', 'Adalberto Morales Fragoso', '', 'Comit‚ Pecuario', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (20, 21, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'Ing. Jared Guadalupe Pe¤a Barrios', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', '', '', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (21, 24, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (23, 25, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (24, 26, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (25, 27, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (26, 28, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (27, 29, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (28, 30, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (29, 31, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (30, 32, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (31, 33, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (32, 34, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (33, 35, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (34, 36, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (35, 37, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-INSERT INTO "modulo2_orden_supervision" ("id", "visita_id", "fecha", "nombre_psg", "domicilio", "calidad_sujeto", "nombre_pc", "cargo_pc", "adscripcion", "tipo_identificacion", "folio_identificacion", "nombre_ordena") VALUES (36, 38, '2026-07-14T07:00:00.000Z', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'Oficial Estatal', 'MVZ. Octavio Herrera Ulloa', 'Oficial Estatal en Movilizaci¢n Agropecuaria, Acu¡cola y Pesquera', 'SEDER', 'INE', '08750639183897401215H3212312MEX', '');
-
---
--- Estructura de tabla para la tabla "modulo3_checklist"
---
-DROP TABLE IF EXISTS "modulo3_checklist" CASCADE;
-CREATE TABLE "modulo3_checklist" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "pregunta_id" integer,
-  "respuesta" character varying(2),
-  "observacion" text,
-  "creado_en" timestamp without time zone,
-  "modificado_en" timestamp without time zone
-);
-
---
--- Estructura de tabla para la tabla "modulo3_lista_verificacion"
---
-DROP TABLE IF EXISTS "modulo3_lista_verificacion" CASCADE;
-CREATE TABLE "modulo3_lista_verificacion" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "nombre_psg" character varying(200),
-  "tipo_psg" character varying(100),
-  "nombre_titular" character varying(200),
-  "telefono" character varying(20),
-  "municipio" character varying(100),
-  "localidad" character varying(100),
-  "latitud" numeric,
-  "longitud" numeric,
-  "capacidad_instalada" integer,
-  "nombre_supervisor" character varying(200),
-  "fecha" date,
-  "hora_inicio" time without time zone,
-  "hora_termino" time without time zone,
-  "p13" character varying(2),
-  "p14" character varying(2),
-  "p15" character varying(2),
-  "p16" character varying(2),
-  "p17" character varying(2),
-  "p18" character varying(2),
-  "p19" character varying(2),
-  "p20" character varying(2),
-  "p21" character varying(2),
-  "p22" character varying(2),
-  "p23" character varying(2),
-  "p24" character varying(2),
-  "p25" character varying(2),
-  "p26" character varying(2),
-  "p27" character varying(2),
-  "p28" character varying(2),
-  "p29" character varying(2),
-  "p30" character varying(2),
-  "p31" character varying(2),
-  "p32" character varying(2),
-  "p33" character varying(2),
-  "p34" character varying(2),
-  "p35" character varying(2),
-  "p36" character varying(2),
-  "p37" character varying(2),
-  "p38" character varying(2),
-  "p39" character varying(2),
-  "p40" character varying(2),
-  "p41" character varying(2),
-  "p42" character varying(2),
-  "p43" character varying(2),
-  "p44" character varying(2),
-  "p45" character varying(2),
-  "p46" character varying(2),
-  "p47" character varying(2),
-  "p48" character varying(2),
-  "p49" character varying(2),
-  "p50" character varying(2),
-  "p51" character varying(2),
-  "p52" character varying(2),
-  "p53" character varying(2),
-  "p54" character varying(2),
-  "p55" character varying(2),
-  "p56" character varying(2),
-  "p57" character varying(2),
-  "p58" character varying(2),
-  "p59" character varying(2),
-  "p60" character varying(2),
-  "p61" character varying(2),
-  "p62" character varying(2),
-  "observaciones" text,
-  "cumple" boolean,
-  "presenta_observaciones" boolean,
-  "requiere_seguimiento" boolean,
-  "responsable_psg" character varying(200),
-  "responsable_supervisor" character varying(200),
-  "nombre_testigo" character varying(200),
-  "domicilio_testigo" character varying(300),
-  "tipo_id_testigo" character varying(100),
-  "numero_id_testigo" character varying(100)
-);
-
--- Volcado de datos para la tabla "modulo3_lista_verificacion"
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (1, 1, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-02T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', FALSE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (2, 5, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (3, 7, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (4, 6, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (5, 8, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (6, 10, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (7, 9, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (8, 11, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (9, 12, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (10, 14, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (11, 13, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (12, 15, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (13, 17, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (14, 16, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (15, 18, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (16, 20, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (17, 19, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'Adalberto Morales Fragoso', '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'Adalberto Morales Fragoso', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (18, 24, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', FALSE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (19, 31, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (20, 33, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (21, 32, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (22, 34, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (23, 35, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (24, 36, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (25, 37, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-INSERT INTO "modulo3_lista_verificacion" ("id", "visita_id", "nombre_psg", "tipo_psg", "nombre_titular", "telefono", "municipio", "localidad", "latitud", "longitud", "capacidad_instalada", "nombre_supervisor", "fecha", "hora_inicio", "hora_termino", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "observaciones", "cumple", "presenta_observaciones", "requiere_seguimiento", "responsable_psg", "responsable_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo") VALUES (26, 38, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', '311-260-07-83', 'XALISCO', 'PALOMAS', '21.4449000', '-104.8466000', 1000, 'MVZ. Octavio Herrera Ulloa', '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', TRUE, FALSE, FALSE, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'MVZ. Octavio Herrera Ulloa', '', '', '', '');
-
---
--- Estructura de tabla para la tabla "modulo4_acta_hechos"
---
-DROP TABLE IF EXISTS "modulo4_acta_hechos" CASCADE;
-CREATE TABLE "modulo4_acta_hechos" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "acta_no" character varying(100),
-  "fecha" date,
-  "hora" time without time zone,
-  "hora_inicio" time without time zone,
-  "hora_termino" time without time zone,
-  "hechos_observados" text,
-  "no_realizo_manifestaciones" boolean,
-  "manifestaciones" text,
-  "localidad" character varying(100),
-  "municipio" character varying(100),
-  "nombre_psg" character varying(200),
-  "tipo_psg" character varying(100),
-  "nombre_titular" character varying(200),
-  "domicilio" character varying(300),
-  "telefono" character varying(20),
-  "nombre_supervisor" character varying(200),
-  "nombre_testigo" character varying(200),
-  "domicilio_testigo" character varying(300),
-  "tipo_id_testigo" character varying(100),
-  "numero_id_testigo" character varying(100),
-  "nombre_testigo_cierre" character varying(200)
-);
-
--- Volcado de datos para la tabla "modulo4_acta_hechos"
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (1, 1, NULL, '2026-07-02T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, 'aetsrsffsdghyj');
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (3, 5, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (4, 7, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (5, 6, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (6, 8, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (7, 10, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (8, 9, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (9, 11, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (10, 12, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (11, 14, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (12, 13, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (13, 15, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (14, 17, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (15, 16, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (16, 18, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (17, 20, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (18, 19, NULL, '2026-07-07T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (19, 24, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (20, 31, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (21, 33, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (22, 32, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (23, 34, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (24, 35, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (25, 36, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (26, 37, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo4_acta_hechos" ("id", "visita_id", "acta_no", "fecha", "hora", "hora_inicio", "hora_termino", "hechos_observados", "no_realizo_manifestaciones", "manifestaciones", "localidad", "municipio", "nombre_psg", "tipo_psg", "nombre_titular", "domicilio", "telefono", "nombre_supervisor", "nombre_testigo", "domicilio_testigo", "tipo_id_testigo", "numero_id_testigo", "nombre_testigo_cierre") VALUES (27, 38, NULL, '2026-07-13T07:00:00.000Z', NULL, NULL, NULL, NULL, FALSE, NULL, 'PALOMAS', 'XALISCO', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'ACOPIO', 'LUIS GERARDO RIVAS SANCHEZ', 'CAMINO PALOMAS - PANTANAL KM 2.5', '311-260-07-83', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL);
-
---
--- Estructura de tabla para la tabla "modulo6_acta_circunstanciada"
---
-DROP TABLE IF EXISTS "modulo6_acta_circunstanciada" CASCADE;
-CREATE TABLE "modulo6_acta_circunstanciada" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "acta_no" character varying(100),
-  "fecha" date,
-  "hora" time without time zone,
-  "establecimiento" character varying(200),
-  "clave_psg" character varying(50),
-  "ubicacion" character varying(300),
-  "localidad" character varying(100),
-  "municipio" character varying(100),
-  "estado" character varying(100),
-  "nombre_oficial" character varying(200),
-  "nombre_responsable" character varying(200),
-  "tipo_id_responsable" character varying(100),
-  "numero_id_responsable" character varying(100),
-  "id_expedida_por" character varying(200),
-  "fecha_expedicion_id" date,
-  "ubicacion_compareciente" character varying(300),
-  "credencial_oficial_no" character varying(100),
-  "nombre_testigo1" character varying(200),
-  "domicilio_testigo1" character varying(300),
-  "tipo_id_testigo1" character varying(100),
-  "numero_id_testigo1" character varying(100),
-  "nombre_testigo2" character varying(200),
-  "domicilio_testigo2" character varying(300),
-  "tipo_id_testigo2" character varying(100),
-  "numero_id_testigo2" character varying(100),
-  "oficio_comision" character varying(100),
-  "fecha_comision" date,
-  "emite_comision" character varying(200),
-  "hechos_observaciones" text,
-  "articulo1" character varying(100),
-  "de1" character varying(200),
-  "articulo2" character varying(100),
-  "de2" character varying(200),
-  "articulo3" character varying(100),
-  "de3" character varying(200),
-  "articulo4" character varying(100),
-  "de4" character varying(200),
-  "manifestaciones" text,
-  "fecha_cierre" date,
-  "hora_cierre" time without time zone,
-  "nombre_testigo_cierre1" character varying(200),
-  "tipo_id_cierre1" character varying(100),
-  "numero_id_cierre1" character varying(100),
-  "nombre_testigo_cierre2" character varying(200),
-  "tipo_id_cierre2" character varying(100),
-  "numero_id_cierre2" character varying(100)
-);
-
--- Volcado de datos para la tabla "modulo6_acta_circunstanciada"
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (1, 1, NULL, '2026-07-02T07:00:00.000Z', '13:30:00', 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, 'SENASICA', '2026-08-03T07:00:00.000Z', 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, '47585455', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'FFDFF', NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (2, 8, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (3, 10, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (4, 9, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (5, 11, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (6, 12, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (7, 14, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (8, 13, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (9, 15, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (10, 17, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (11, 16, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (12, 18, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (13, 20, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (14, 19, NULL, '2026-07-07T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'Adalberto Morales Fragoso', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (15, 31, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (16, 33, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (17, 32, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (18, 34, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (19, 35, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (20, 36, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (21, 37, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "modulo6_acta_circunstanciada" ("id", "visita_id", "acta_no", "fecha", "hora", "establecimiento", "clave_psg", "ubicacion", "localidad", "municipio", "estado", "nombre_oficial", "nombre_responsable", "tipo_id_responsable", "numero_id_responsable", "id_expedida_por", "fecha_expedicion_id", "ubicacion_compareciente", "credencial_oficial_no", "nombre_testigo1", "domicilio_testigo1", "tipo_id_testigo1", "numero_id_testigo1", "nombre_testigo2", "domicilio_testigo2", "tipo_id_testigo2", "numero_id_testigo2", "oficio_comision", "fecha_comision", "emite_comision", "hechos_observaciones", "articulo1", "de1", "articulo2", "de2", "articulo3", "de3", "articulo4", "de4", "manifestaciones", "fecha_cierre", "hora_cierre", "nombre_testigo_cierre1", "tipo_id_cierre1", "numero_id_cierre1", "nombre_testigo_cierre2", "tipo_id_cierre2", "numero_id_cierre2") VALUES (22, 38, NULL, '2026-07-13T07:00:00.000Z', NULL, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', '18-017-0002-P02', 'CAMINO PALOMAS - PANTANAL KM 2.5', 'PALOMAS', 'XALISCO', 'NAYARIT', 'MVZ. Octavio Herrera Ulloa', NULL, NULL, NULL, NULL, NULL, 'CAMINO PALOMAS - PANTANAL KM 2.5', 'OENAY-10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
---
--- Estructura de tabla para la tabla "excel_psg"
---
-DROP TABLE IF EXISTS "excel_psg" CASCADE;
-CREATE TABLE "excel_psg" (
-  "id" SERIAL PRIMARY KEY,
-  "razon_social" character varying(200),
-  "representante" character varying(200),
-  "municipio" character varying(100),
-  "localidad" character varying(100),
-  "psg" character varying(50) NOT NULL,
-  "clave_compra_venta" character varying(100),
-  "fecha_autorizacion" date,
-  "estatus" character varying(20),
-  "tipo_psg" character varying(100),
-  "telefono" character varying(50),
-  "estado" character varying(100),
-  "domicilio" text,
-  "gps" character varying(100),
-  "latitud" character varying(50),
-  "longitud" character varying(50),
-  "superficie_m2" numeric,
-  "capacidad_maxima_bovinos" integer,
-  "cabezas_inventario" integer,
-  "inventario_actual" integer,
-  "tipo_identificacion" character varying(100),
-  "numero_identificacion" character varying(100),
-  "expedida_por" character varying(150)
-);
-
--- Volcado de datos para la tabla "excel_psg"
+-- Volcado de datos para "excel_psg"
 INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "localidad", "psg", "clave_compra_venta", "fecha_autorizacion", "estatus", "tipo_psg", "telefono", "estado", "domicilio", "gps", "latitud", "longitud", "superficie_m2", "capacidad_maxima_bovinos", "cabezas_inventario", "inventario_actual", "tipo_identificacion", "numero_identificacion", "expedida_por") VALUES (308, 'AGRICOLA GANADERA RIVASA, S.P.R. DE R.L.', 'LUIS GERARDO RIVAS SANCHEZ', 'XALISCO', 'PALOMAS', '18-017-0002-P02', NULL, NULL, 'VIGENTE', 'ACOPIO', '311-260-07-83', 'NAYARIT', 'CAMINO PALOMAS - PANTANAL KM 2.5', '21.4449  -104.8466', '21.4449', '-104.8466', '20000', 1000, 294, 158, NULL, NULL, NULL);
 INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "localidad", "psg", "clave_compra_venta", "fecha_autorizacion", "estatus", "tipo_psg", "telefono", "estado", "domicilio", "gps", "latitud", "longitud", "superficie_m2", "capacidad_maxima_bovinos", "cabezas_inventario", "inventario_actual", "tipo_identificacion", "numero_identificacion", "expedida_por") VALUES (309, 'AGRICOLA GANADERA NUEVA GENERACION, S.P.R. DE R.L.', 'OSCAR GERARDO RIVAS PINEDA', 'SANTA MARIA DEL ORO', 'LA LABOR', '18-014-0006-P02', NULL, NULL, 'VIGENTE', 'ACOPIO', '311-8-76-15-72', 'NAYARIT', 'CAMINO A LA TRITURADORA KM .5', '21.3924  -104.7392', '21.3924', '-104.7392', '20000', 2000, 1110, 1009, NULL, NULL, NULL);
 INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "localidad", "psg", "clave_compra_venta", "fecha_autorizacion", "estatus", "tipo_psg", "telefono", "estado", "domicilio", "gps", "latitud", "longitud", "superficie_m2", "capacidad_maxima_bovinos", "cabezas_inventario", "inventario_actual", "tipo_identificacion", "numero_identificacion", "expedida_por") VALUES (310, 'ACOPIO PANTANO GRANDE SUKARNE', 'JOSE MARTIN LAMARQUE DIAZ', 'SANTIAGO IXCUINTLA', 'PANTANO GRANDE', '18-015-0008-P02', NULL, NULL, 'VIGENTE', 'ACOPIO', '323-23-90-472', 'NAYARIT', 'CARRETERA TEPIC-MAZATLAN KM 58.5', '21.8789-105.1476', '21.8789', '-105.1476', '10000', 600, 480, 327, NULL, NULL, NULL);
@@ -1008,129 +1607,4 @@ INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "lo
 INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "localidad", "psg", "clave_compra_venta", "fecha_autorizacion", "estatus", "tipo_psg", "telefono", "estado", "domicilio", "gps", "latitud", "longitud", "superficie_m2", "capacidad_maxima_bovinos", "cabezas_inventario", "inventario_actual", "tipo_identificacion", "numero_identificacion", "expedida_por") VALUES (892, 'FLORO PE A ALDAMA', 'MARCELINO REYES GONZALEZ', 'LA YESCA', 'AMATLAN DE JORA', 'SIN-PSG-10', NULL, NULL, 'EN TRAMITE', NULL, '332-214-29-04', 'NAYARIT', NULL, NULL, NULL, NULL, '2750000', NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "localidad", "psg", "clave_compra_venta", "fecha_autorizacion", "estatus", "tipo_psg", "telefono", "estado", "domicilio", "gps", "latitud", "longitud", "superficie_m2", "capacidad_maxima_bovinos", "cabezas_inventario", "inventario_actual", "tipo_identificacion", "numero_identificacion", "expedida_por") VALUES (893, 'CARLOS FELIPE VALLE MICHEL', 'MA. NATIVIDAD DELGADO BA UELOS', 'JALA', 'JOMULCO', 'SIN-PSG-11', NULL, NULL, 'EN TRAMITE', NULL, '324-126-32-28', 'NAYARIT', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO "excel_psg" ("id", "razon_social", "representante", "municipio", "localidad", "psg", "clave_compra_venta", "fecha_autorizacion", "estatus", "tipo_psg", "telefono", "estado", "domicilio", "gps", "latitud", "longitud", "superficie_m2", "capacidad_maxima_bovinos", "cabezas_inventario", "inventario_actual", "tipo_identificacion", "numero_identificacion", "expedida_por") VALUES (894, 'JORGE ISAAC HERRERA GONZALEZ', 'ARNULFO MITRE AGUILAR', 'ACAPONETA', 'MESA DE PEDRO Y PABLO', 'SIN-PSG-12', NULL, NULL, 'EN TRAMITE', NULL, '311-743-95-30', 'NAYARIT', NULL, NULL, NULL, NULL, '5000', 50, NULL, NULL, NULL, NULL, NULL);
-
---
--- Estructura de tabla para la tabla "documentos_firmados"
---
-DROP TABLE IF EXISTS "documentos_firmados" CASCADE;
-CREATE TABLE "documentos_firmados" (
-  "id" SERIAL PRIMARY KEY,
-  "visita_id" integer,
-  "modulo" integer NOT NULL,
-  "nombre_archivo" character varying(255) NOT NULL,
-  "ruta_archivo" text NOT NULL,
-  "fecha_subida" timestamp without time zone
-);
-
--- Volcado de datos para la tabla "documentos_firmados"
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (1, 1, 1, 'visita_1_modulo1_firmado.pdf', 'uploads\documentos_firmados\visita_1_modulo1_firmado.pdf', '2026-07-02T21:24:21.223Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (2, 1, 2, 'visita_1_modulo2_firmado.pdf', 'uploads\documentos_firmados\visita_1_modulo2_firmado.pdf', '2026-07-02T21:24:47.936Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (3, 1, 3, 'visita_1_modulo3_firmado.pdf', 'uploads\documentos_firmados\visita_1_modulo3_firmado.pdf', '2026-07-02T21:25:10.168Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (4, 1, 4, 'visita_1_modulo4_firmado.pdf', 'uploads\documentos_firmados\visita_1_modulo4_firmado.pdf', '2026-07-02T21:25:31.500Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (5, 1, 5, 'visita_1_modulo5_firmado.pdf', 'uploads\documentos_firmados\visita_1_modulo5_firmado.pdf', '2026-07-02T21:26:56.155Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (6, 1, 6, 'visita_1_modulo6_firmado.pdf', 'uploads\documentos_firmados\visita_1_modulo6_firmado.pdf', '2026-07-02T21:27:39.047Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (7, 2, 2, 'visita_2_modulo2_firmado.pdf', 'uploads\documentos_firmados\visita_2_modulo2_firmado.pdf', '2026-07-02T21:35:12.676Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (8, 3, 1, 'visita_3_modulo1_firmado.pdf', 'uploads\documentos_firmados\visita_3_modulo1_firmado.pdf', '2026-07-02T21:37:21.010Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (9, 3, 2, 'visita_3_modulo2_firmado.pdf', 'uploads\documentos_firmados\visita_3_modulo2_firmado.pdf', '2026-07-02T21:37:31.824Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (10, 21, 1, 'visita_21_modulo1_firmado.pdf', 'uploads\documentos_firmados\visita_21_modulo1_firmado.pdf', '2026-07-14T01:04:33.364Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (11, 24, 1, 'visita_24_modulo1_firmado.pdf', 'uploads\documentos_firmados\visita_24_modulo1_firmado.pdf', '2026-07-14T01:58:58.005Z');
-INSERT INTO "documentos_firmados" ("id", "visita_id", "modulo", "nombre_archivo", "ruta_archivo", "fecha_subida") VALUES (12, 24, 2, 'visita_24_modulo2_firmado.pdf', 'uploads\documentos_firmados\visita_24_modulo2_firmado.pdf', '2026-07-14T01:59:10.481Z');
-
---
--- Estructura de tabla para la tabla "usuarios"
---
-DROP TABLE IF EXISTS "usuarios" CASCADE;
-CREATE TABLE "usuarios" (
-  "id" SERIAL PRIMARY KEY,
-  "nombre" character varying(150) NOT NULL,
-  "usuario" character varying(50) NOT NULL,
-  "password_hash" text NOT NULL,
-  "activo" boolean,
-  "es_admin" boolean,
-  "modulo1" boolean,
-  "modulo2" boolean,
-  "modulo3" boolean,
-  "modulo4" boolean,
-  "modulo5" boolean,
-  "modulo6" boolean,
-  "ver_visitas_otros" boolean,
-  "editar_campos" boolean,
-  "eliminar_documentos" boolean,
-  "descargar_pdfs" boolean,
-  "panel_admin" boolean,
-  "rol" character varying(50),
-  "creado_en" timestamp without time zone,
-  "modificado_en" timestamp without time zone,
-  "superadmin" boolean,
-  "modulo6_pagina4" boolean,
-  "consultas" boolean
-);
-
--- Volcado de datos para la tabla "usuarios"
-INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (5, 'prueba2', 'prueba2', '$2b$10$G/OE77bNkH2eN8LkOE1Ye.pnQ1tK3n/IVPqpzIZmnMQf6BtViwXQS', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, 'capturista', '2026-06-15T01:58:12.454Z', '2026-06-15T04:08:15.432Z', FALSE, FALSE, FALSE);
-INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (1, 'Administrador', 'admin', '$2b$10$R0eFxGpH3IvoizYaR1SYKuTIMYbPbqlpWFALT43143Zwg6uXriIPm', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'admin', '2026-06-14T11:24:21.212Z', '2026-06-14T11:24:21.212Z', TRUE, TRUE, TRUE);
-INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (3, 'supervisor', 'supervisor', '$2b$10$WbtyZlHgABEQqEjr9yF0C.Wa31.eHVu0VgS.9zqno7LtzsBol3qEe', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, 'supervisor', '2026-06-14T14:26:55.324Z', '2026-07-01T20:46:09.674Z', FALSE, FALSE, TRUE);
-INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (2, 'prueba', 'prueba', '$2b$10$CconCUDa.fDoy1nLWIqjmOXJtMWLphUL6atFZyqJD7VqVMEsirl7y', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, 'capturista', '2026-06-14T12:08:10.683Z', '2026-07-02T09:52:03.528Z', FALSE, FALSE, TRUE);
-INSERT INTO "usuarios" ("id", "nombre", "usuario", "password_hash", "activo", "es_admin", "modulo1", "modulo2", "modulo3", "modulo4", "modulo5", "modulo6", "ver_visitas_otros", "editar_campos", "eliminar_documentos", "descargar_pdfs", "panel_admin", "rol", "creado_en", "modificado_en", "superadmin", "modulo6_pagina4", "consultas") VALUES (4, 'vista', 'vista', '$2b$10$J./FLcaKyDIRcjeY7nIpMOJZ5iPUysN7CyImz/SU5OAVSa1CmNnaW', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE, 'vista', '2026-06-14T14:28:19.161Z', '2026-07-02T11:15:19.494Z', FALSE, FALSE, TRUE);
-
---
--- Estructura de tabla para la tabla "visitas"
---
-DROP TABLE IF EXISTS "visitas" CASCADE;
-CREATE TABLE "visitas" (
-  "id" SERIAL PRIMARY KEY,
-  "folio" character varying(60) NOT NULL,
-  "psg" character varying(50),
-  "supervisor" character varying(200),
-  "fecha_inicio" timestamp without time zone,
-  "modulo1_completado" boolean,
-  "modulo2_completado" boolean,
-  "modulo3_completado" boolean,
-  "modulo4_completado" boolean,
-  "modulo5_completado" boolean,
-  "modulo6_completado" boolean,
-  "estado_visita" character varying(50),
-  "capturista_id" integer,
-  "supervisor_id" integer
-);
-
--- Volcado de datos para la tabla "visitas"
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (9, 'SDR/18-017-0002-P02/2026/543', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:11:09.807Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (29, 'SDR/18-017-0002-P02/2026/623', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:06:54.043Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (21, 'SDR/18-017-0002-P02/2026/963', '18-017-0002-P02', 'Ing. Jared Guadalupe Pe¤a Barrios', '2026-07-14T01:03:38.651Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (1, 'SDR/18-017-0002-P02/2026/407', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-02T21:24:07.358Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (2, 'SDR/18-017-0002-P02/2026/328', '18-017-0002-P02', 'MVZ. Juan Jos‚ L¢pez Rivera', '2026-07-02T21:34:43.030Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 2, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (11, 'SDR/18-017-0002-P02/2026/410', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:12:19.240Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (3, 'SDR/18-017-0002-P02/2026/944', '18-017-0002-P02', 'Jos‚ Gilberto Garc¡a Vivanco', '2026-07-02T21:37:16.507Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 3, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (4, 'SDR/18-017-0002-P02/2026/590', '18-017-0002-P02', 'Francisco Raul Quintero Villase¤or', '2026-07-02T21:43:42.963Z', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 2, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (17, 'SDR/18-017-0002-P02/2026/983', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:28:08.460Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (22, 'SDR/18-017-0002-P02/2026/207', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T01:30:20.400Z', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 2, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (5, 'SDR/18-017-0002-P02/2026/151', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:09:40.647Z', TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (23, 'SDR/18-017-0002-P02/2026/996', '18-017-0002-P02', 'MVZ. Carlos Antonio Lara González', '2026-07-14T01:50:31.069Z', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 2, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (16, 'SDR/18-017-0002-P02/2026/177', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:28:05.258Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (7, 'SDR/18-017-0002-P02/2026/802', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:09:45.623Z', TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (12, 'SDR/18-017-0002-P02/2026/286', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:18:35.017Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (6, 'SDR/18-017-0002-P02/2026/134', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:09:42.096Z', TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (30, 'SDR/18-017-0002-P02/2026/625', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:06:55.823Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (8, 'SDR/18-017-0002-P02/2026/405', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:11:08.217Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (33, 'SDR/18-017-0002-P02/2026/735', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:08:30.645Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (14, 'SDR/18-017-0002-P02/2026/354', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:18:39.887Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (18, 'SDR/18-017-0002-P02/2026/587', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:37:39.637Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (24, 'SDR/18-017-0002-P02/2026/358', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T01:58:46.776Z', TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, 'en_proceso', 2, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (13, 'SDR/18-017-0002-P02/2026/197', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:18:36.070Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (10, 'SDR/18-017-0002-P02/2026/446', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T00:11:13.248Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (25, 'SDR/18-017-0002-P02/2026/186', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:01:50.266Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (35, 'SDR/18-017-0002-P02/2026/747', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:12:36.603Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (20, 'SDR/18-017-0002-P02/2026/607', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:37:44.887Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (15, 'SDR/18-017-0002-P02/2026/128', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:28:03.163Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (26, 'SDR/18-017-0002-P02/2026/837', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:01:51.684Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (32, 'SDR/18-017-0002-P02/2026/976', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:08:27.530Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (27, 'SDR/18-017-0002-P02/2026/640', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:01:54.902Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (19, 'SDR/18-017-0002-P02/2026/785', '18-017-0002-P02', 'Adalberto Morales Fragoso', '2026-07-08T01:37:41.708Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (28, 'SDR/18-017-0002-P02/2026/573', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:06:53.279Z', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (37, 'SDR/18-017-0002-P02/2026/253', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:19:54.469Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (31, 'SDR/18-017-0002-P02/2026/560', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:08:26.247Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (36, 'SDR/18-017-0002-P02/2026/586', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:14:15.481Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (34, 'SDR/18-017-0002-P02/2026/973', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:12:24.101Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
-INSERT INTO "visitas" ("id", "folio", "psg", "supervisor", "fecha_inicio", "modulo1_completado", "modulo2_completado", "modulo3_completado", "modulo4_completado", "modulo5_completado", "modulo6_completado", "estado_visita", "capturista_id", "supervisor_id") VALUES (38, 'SDR/18-017-0002-P02/2026/784', '18-017-0002-P02', 'MVZ. Octavio Herrera Ulloa', '2026-07-14T02:22:14.194Z', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 'en_proceso', 1, NULL);
 
