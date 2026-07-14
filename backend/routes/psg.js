@@ -25,7 +25,7 @@ router.get('/buscar/:psg', verificarToken, async (req, res) => {
 // Obtener todos los supervisores (filtrados temporalmente a los 4 activos)
 router.get('/supervisores', verificarToken, async (req, res) => {
     try {
-        const resultado = await pool.query('SELECT * FROM excel_supervisores WHERE id IN (18) ORDER BY nombre');
+        const resultado = await pool.query('SELECT * FROM excel_supervisores WHERE id IN (7) ORDER BY nombre');
         res.json(resultado.rows);
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor.' });
