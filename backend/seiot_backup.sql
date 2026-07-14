@@ -50,7 +50,6 @@ CREATE TABLE public.documentos_firmados (
 );
 
 
-ALTER TABLE public.documentos_firmados OWNER TO postgres;
 
 --
 -- Name: documentos_firmados_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -65,7 +64,6 @@ CREATE SEQUENCE public.documentos_firmados_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.documentos_firmados_id_seq OWNER TO postgres;
 
 --
 -- Name: documentos_firmados_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -105,7 +103,6 @@ CREATE TABLE public.excel_psg (
 );
 
 
-ALTER TABLE public.excel_psg OWNER TO postgres;
 
 --
 -- Name: excel_psg_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -120,7 +117,6 @@ CREATE SEQUENCE public.excel_psg_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.excel_psg_id_seq OWNER TO postgres;
 
 --
 -- Name: excel_psg_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -153,7 +149,6 @@ CREATE TABLE public.excel_supervisores (
 );
 
 
-ALTER TABLE public.excel_supervisores OWNER TO postgres;
 
 --
 -- Name: excel_supervisores_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -168,7 +163,6 @@ CREATE SEQUENCE public.excel_supervisores_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.excel_supervisores_id_seq OWNER TO postgres;
 
 --
 -- Name: excel_supervisores_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -195,7 +189,6 @@ CREATE TABLE public.modulo1_oficio_notificacion (
 );
 
 
-ALTER TABLE public.modulo1_oficio_notificacion OWNER TO postgres;
 
 --
 -- Name: modulo1_oficio_notificacion_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -210,7 +203,6 @@ CREATE SEQUENCE public.modulo1_oficio_notificacion_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo1_oficio_notificacion_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo1_oficio_notificacion_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -239,7 +231,6 @@ CREATE TABLE public.modulo2_orden_supervision (
 );
 
 
-ALTER TABLE public.modulo2_orden_supervision OWNER TO postgres;
 
 --
 -- Name: modulo2_orden_supervision_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -254,7 +245,6 @@ CREATE SEQUENCE public.modulo2_orden_supervision_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo2_orden_supervision_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo2_orden_supervision_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -278,7 +268,6 @@ CREATE TABLE public.modulo3_checklist (
 );
 
 
-ALTER TABLE public.modulo3_checklist OWNER TO postgres;
 
 --
 -- Name: modulo3_checklist_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -293,7 +282,6 @@ CREATE SEQUENCE public.modulo3_checklist_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo3_checklist_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo3_checklist_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -385,7 +373,6 @@ CREATE TABLE public.modulo3_lista_verificacion (
 );
 
 
-ALTER TABLE public.modulo3_lista_verificacion OWNER TO postgres;
 
 --
 -- Name: modulo3_lista_verificacion_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -400,7 +387,6 @@ CREATE SEQUENCE public.modulo3_lista_verificacion_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo3_lista_verificacion_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo3_lista_verificacion_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -440,7 +426,6 @@ CREATE TABLE public.modulo4_acta_hechos (
 );
 
 
-ALTER TABLE public.modulo4_acta_hechos OWNER TO postgres;
 
 --
 -- Name: modulo4_acta_hechos_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -455,7 +440,6 @@ CREATE SEQUENCE public.modulo4_acta_hechos_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo4_acta_hechos_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo4_acta_hechos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -500,7 +484,6 @@ CREATE TABLE public.modulo5_acta_supervision (
 );
 
 
-ALTER TABLE public.modulo5_acta_supervision OWNER TO postgres;
 
 --
 -- Name: modulo5_acta_supervision_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -515,7 +498,6 @@ CREATE SEQUENCE public.modulo5_acta_supervision_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo5_acta_supervision_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo5_acta_supervision_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -580,7 +562,6 @@ CREATE TABLE public.modulo6_acta_circunstanciada (
 );
 
 
-ALTER TABLE public.modulo6_acta_circunstanciada OWNER TO postgres;
 
 --
 -- Name: modulo6_acta_circunstanciada_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -595,7 +576,6 @@ CREATE SEQUENCE public.modulo6_acta_circunstanciada_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.modulo6_acta_circunstanciada_id_seq OWNER TO postgres;
 
 --
 -- Name: modulo6_acta_circunstanciada_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -635,7 +615,6 @@ CREATE TABLE public.usuarios (
 );
 
 
-ALTER TABLE public.usuarios OWNER TO postgres;
 
 --
 -- Name: usuarios_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -650,7 +629,6 @@ CREATE SEQUENCE public.usuarios_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.usuarios_id_seq OWNER TO postgres;
 
 --
 -- Name: usuarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -681,7 +659,6 @@ CREATE TABLE public.visitas (
 );
 
 
-ALTER TABLE public.visitas OWNER TO postgres;
 
 --
 -- Name: visitas_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -696,7 +673,6 @@ CREATE SEQUENCE public.visitas_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.visitas_id_seq OWNER TO postgres;
 
 --
 -- Name: visitas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -1074,6 +1050,8 @@ CREATE INDEX IF NOT EXISTS idx_visitas_supervisor ON public.visitas(supervisor_i
 -- PostgreSQL database dump complete
 --
 
+
+SET search_path TO public;
 
 -- -----------------------------------------------------
 -- Carga de catálogos y usuarios iniciales corregidos
