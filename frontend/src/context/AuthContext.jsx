@@ -6,6 +6,39 @@ const AuthContext = createContext(null);
 const AuthProvider = ({ children }) => {
     const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
+    const [permisosListos, setPermisosListos] = useState(false);
+
+    const actualizarPermisos = async () => {
+        const token = localStorage.getItem('seiot_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/perfil`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                setUsuario(prev => prev ? {
+                    ...prev,
+                    es_admin: data.es_admin,
+                    rol: data.rol,
+                    permisos: {
+                        ...data.permisos,
+                        consultas: data.rol === 'vista' ? true : data.permisos.consultas
+                    }
+                } : null);
+                setPermisosListos(true);
+            }
+        } catch {
+            // Error de red — no cerrar sesión
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem('seiot_token');
@@ -24,21 +57,45 @@ const AuthProvider = ({ children }) => {
                 localStorage.removeItem('visitaActiva');
             }
         }
+        if (usuarioInicial?.rol === 'vista') {
+            usuarioInicial = {
+                ...usuarioInicial,
+                permisos: { ...usuarioInicial.permisos, consultas: true }
+            };
+        }
         setUsuario(usuarioInicial);
         setCargando(false);
+
+        if (usuarioInicial) {
+            actualizarPermisos();
+        } else {
+            setPermisosListos(true);
+        }
     }, []);
+
+    useEffect(() => {
+        if (!usuario) return;
+        const intervalo = setInterval(() => {
+            actualizarPermisos();
+        }, 10000);
+        return () => clearInterval(intervalo);
+    }, [usuario?.id]);
 
     const login = (token, datosUsuario) => {
         localStorage.setItem('seiot_token', token);
         setUsuario(datosUsuario);
+        setPermisosListos(false);
+        // Actualizar permisos inmediatamente después del login
+        actualizarPermisos();
     };
 
     const logout = () => {
         localStorage.removeItem('seiot_token');
         localStorage.removeItem('visitaActiva');
+        localStorage.removeItem('desdeConsultas');
         setUsuario(null);
-        // Reemplazar historial para que la flecha atrás no regrese al dashboard
-        window.history.pushState(null, '', '/login');
+        setPermisosListos(false);
+        window.location.replace('/login');
     };
 
     const tienePermiso = (permiso) => {
@@ -48,7 +105,7 @@ const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ usuario, login, logout, tienePermiso, cargando }}>
+        <AuthContext.Provider value={{ usuario, login, logout, tienePermiso, cargando, permisosListos }}>
             {children}
         </AuthContext.Provider>
     );

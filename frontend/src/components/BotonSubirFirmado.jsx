@@ -13,11 +13,11 @@ import { useAuth } from '../context/AuthContext';
 const BotonSubirFirmado = ({ visita_id, modulo }) => {
     const [estado, setEstado] = useState('cargando');
     const { usuario } = useAuth();
-    const puedeEliminar = usuario?.es_admin || usuario?.permisos?.eliminar_documentos; // 'cargando' | 'libre' | 'subido' | 'subiendo'
+    const puedeEliminar = usuario?.es_admin || usuario?.permisos?.eliminar_documentos;
+    const soloVista = usuario?.rol === 'vista';
     const [docInfo, setDocInfo] = useState(null);
     const inputRef = useRef(null);
 
-    // Al montar, consulta si ya hay documento firmado para este módulo
     useEffect(() => {
         if (!visita_id) return;
         apiFetch(`/api/modulos/firmado/${visita_id}/${modulo}`)
@@ -55,7 +55,6 @@ const BotonSubirFirmado = ({ visita_id, modulo }) => {
             const data = await res.json();
 
             if (res.status === 409) {
-                // Ya existe — aunque no debería llegar aquí por la verificación previa
                 alert('Ya existe un documento firmado para este módulo.');
                 setEstado('subido');
             } else if (res.ok) {
@@ -71,8 +70,23 @@ const BotonSubirFirmado = ({ visita_id, modulo }) => {
             setEstado('libre');
         }
 
-        // Limpiar input para permitir re-selección si fuera necesario
         if (inputRef.current) inputRef.current.value = '';
+    };
+
+    // 🔴 CORRECCIÓN: usar apiFetch con token en lugar de <a> directo
+    const handleVer = async () => {
+        try {
+            const res = await apiFetch(`/uploads/documentos_firmados/${docInfo.nombre_archivo}`);
+            if (!res || !res.ok) {
+                alert('No tienes permiso para ver este documento.');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch {
+            alert('Error al obtener el documento.');
+        }
     };
 
     // ── ESTADO: cargando ──
@@ -89,9 +103,6 @@ const BotonSubirFirmado = ({ visita_id, modulo }) => {
         const fecha = docInfo?.fecha_subida
             ? new Date(docInfo.fecha_subida).toLocaleDateString('es-MX')
             : '';
-        const urlArchivo = docInfo?.nombre_archivo
-            ? `${API_URL}/uploads/documentos_firmados/${docInfo.nombre_archivo}`
-            : null;
 
         const handleEliminar = async () => {
             if (!confirm('¿Estás seguro de eliminar el documento firmado? Esta acción no se puede deshacer.')) return;
@@ -119,26 +130,23 @@ const BotonSubirFirmado = ({ visita_id, modulo }) => {
                     <Lock size={12} className="text-green-500" />
                     {fecha && <span className="text-green-600 font-normal">({fecha})</span>}
                 </div>
-                {urlArchivo && (
-                    <a
-                        href={urlArchivo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
+                {docInfo?.nombre_archivo && (
+                    <button
+                        onClick={handleVer}
                         className="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-1 text-xs font-bold transition-all active:scale-95"
                         title="Ver / Descargar documento firmado"
                     >
                         <Eye size={14} /> VER
-                    </a>
+                    </button>
                 )}
                 {puedeEliminar && (
-                <button
-                    onClick={handleEliminar}
-                    className="bg-red-600 text-white px-3 py-2 rounded shadow hover:bg-red-700 flex items-center gap-1 text-xs font-bold transition-all active:scale-95"
-                    title="Eliminar documento firmado"
-                >
-                    <Trash2 size={14} /> ELIMINAR
-                </button>
+                    <button
+                        onClick={handleEliminar}
+                        className="bg-red-600 text-white px-3 py-2 rounded shadow hover:bg-red-700 flex items-center gap-1 text-xs font-bold transition-all active:scale-95"
+                        title="Eliminar documento firmado"
+                    >
+                        <Trash2 size={14} /> ELIMINAR
+                    </button>
                 )}
             </div>
         );
@@ -154,6 +162,7 @@ const BotonSubirFirmado = ({ visita_id, modulo }) => {
     }
 
     // ── ESTADO: libre (puede subir) ──
+    if (soloVista) return null;
     return (
         <>
             <input

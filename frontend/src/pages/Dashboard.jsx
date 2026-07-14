@@ -1,15 +1,17 @@
 import { apiFetch } from '../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg'; 
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { usuario, logout } = useAuth();
+  const location = useLocation();
+  const { usuario, logout, permisosListos } = useAuth();
   const puedeVerOtros = usuario?.es_admin || usuario?.permisos?.ver_visitas_otros;
   const puedeCrearVisita = usuario?.es_admin || usuario?.rol !== 'vista';
+  const puedeConsultas = usuario?.es_admin || usuario?.permisos?.consultas;
 
   // Verificar sesión activa al montar y bloquear historial
   useEffect(() => {
@@ -31,6 +33,7 @@ const Dashboard = () => {
   const [datosPsg, setDatosPsg] = useState(visitaGuardada ? visitaGuardada.datosPsg : null);
   const [folioActivo, setFolioActivo] = useState(visitaGuardada ? visitaGuardada.folio : '');
   const [avance, setAvance] = useState(visitaGuardada?.avance || { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false });
+  const [pdfs, setPdfs] = useState({ 1: false, 2: false, 3: false, 4: false, 5: false, 6: false });
   const [busquedaFolio, setBusquedaFolio] = useState('');
   const [supervisores, setSupervisores] = useState([]);
   const [supervisorSeleccionado, setSupervisorSeleccionado] = useState(visitaGuardada ? visitaGuardada.datosSupervisor : null);
@@ -41,6 +44,33 @@ const Dashboard = () => {
       .then(data => setSupervisores(data))
       .catch(err => console.error('Error cargando supervisores:', err));
   }, []);
+
+  // ─── CONSULTAR PDFs AL CARGAR VISITA ─────────────────────────────────────
+  const visitaId = JSON.parse(localStorage.getItem('visitaActiva') || 'null')?.visita_id;
+  useEffect(() => {
+    if (!visitaId) return;
+
+    const consultarPdfs = async () => {
+      const resultados = {};
+      await Promise.all([1, 2, 3, 4, 5, 6].map(async (modulo) => {
+        try {
+          const response = await apiFetch(`/api/modulos/firmado/${visitaId}/${modulo}`);
+          if (response.ok) {
+            const data = await response.json();
+            resultados[modulo] = data.existe;
+          } else {
+            resultados[modulo] = false;
+          }
+        } catch {
+          resultados[modulo] = false;
+        }
+      }));
+      setPdfs(resultados);
+    };
+
+    consultarPdfs();
+  }, [visitaId]);
+
 
   const handlePsgChange = async (e) => {
     const valor = e.target.value.toUpperCase();
@@ -74,15 +104,7 @@ const Dashboard = () => {
     setAvance(contexto.avance);
   };
 
-  // ⚙ MODO PRUEBA - Eliminar en producción
-  const simularAvanceCompleto = () => {
-    const visitaActiva = JSON.parse(localStorage.getItem('visitaActiva') || 'null');
-    if (!visitaActiva) { alert("Primero inicia una visita."); return; }
-    const avanceCompleto = { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: true };
-    const contextoActualizado = { ...visitaActiva, avance: avanceCompleto };
-    localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
-    setAvance(avanceCompleto);
-  };
+
 
   const handleNuevaVisita = async () => {
     if (!supervisorSeleccionado) { alert("Por favor selecciona un supervisor."); return; }
@@ -123,6 +145,7 @@ const Dashboard = () => {
 
   const tienePermiso = (mod) => usuario?.es_admin || usuario?.permisos?.[mod];
   const esVista = usuario?.rol === 'vista';
+  const desdeConsultas = localStorage.getItem('desdeConsultas') === 'true';
 
   const modulos = [
     { id: 1, nombre: "Oficio de Notificación", ruta: "/modulo1", icono: <FileText size={32} />, color: avance.modulo1 ? "bg-green-600" : "bg-blue-600", bloqueado: esVista ? !avance.modulo1 : !tienePermiso('modulo1'), completado: avance.modulo1 },
@@ -142,15 +165,25 @@ const Dashboard = () => {
           </div>
           <div><h1 className="font-bold text-xl leading-tight">SEIOT</h1><p className="text-xs text-red-200 tracking-wider">MÓDULO DE SUPERVISIÓN</p></div>
         </div>
-        {(usuario?.es_admin || usuario?.permisos?.panel_admin) && (
-          <button onClick={() => navigate('/admin/usuarios')} className="flex items-center gap-2 text-sm bg-yellow-500 text-yellow-900 px-4 py-2 rounded hover:bg-yellow-400 font-bold transition-colors">
-            <Users size={16} /> Usuarios
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {puedeConsultas && (
+            <button onClick={() => navigate('/admin/consultas')} className="flex items-center gap-2 text-sm bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400 font-bold transition-colors">
+              <BarChart2 size={16} /> Consultas
+            </button>
+          )}
+          {(usuario?.es_admin || usuario?.permisos?.panel_admin) && (
+            <button onClick={() => navigate('/admin/usuarios')} className="flex items-center gap-2 text-sm bg-yellow-500 text-yellow-900 px-4 py-2 rounded hover:bg-yellow-400 font-bold transition-colors">
+              <Users size={16} /> Usuarios
+            </button>
+          )}
+        </div>
         <span className="text-white/80 text-sm hidden md:block">
           Hola, <span className="font-bold text-white">{usuario?.nombre}</span>
         </span>
-        <button onClick={() => { logout(); window.location.replace('/login'); }} className="flex items-center gap-2 text-sm bg-red-800 px-4 py-2 rounded hover:bg-red-700 transition-colors"><LogOut size={16} /> Salir</button>
+        <>
+              {folioActivo && !esVista && permisosListos && <button onClick={() => { setFolioActivo(''); setPsgInput(''); setDatosPsg(null); setSupervisorSeleccionado(null); setAvance({ modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false }); localStorage.removeItem('visitaActiva'); localStorage.removeItem('desdeConsultas'); }} className="flex items-center gap-2 text-sm bg-orange-600 px-4 py-2 rounded hover:bg-orange-700 transition-colors"><X size={16} /> Limpiar</button>}
+              <button onClick={() => { localStorage.removeItem('seiot_token'); localStorage.removeItem('visitaActiva'); localStorage.removeItem('desdeConsultas'); window.history.go(-(window.history.length - 1)); window.location.replace('/login'); }} className="flex items-center gap-2 text-sm bg-red-800 px-4 py-2 rounded hover:bg-red-700 transition-colors"><LogOut size={16} /> Salir</button>
+            </>
       </nav>
 
       <div className="max-w-7xl mx-auto p-6">
@@ -160,10 +193,10 @@ const Dashboard = () => {
           <h2 className="text-gray-700 font-bold mb-4">1. IDENTIFICACIÓN DEL PSG</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Ingrese Clave PSG:</label>
+              <label htmlFor="psg-input" className="block text-xs font-bold text-gray-500 mb-1 uppercase">Ingrese Clave PSG:</label>
               <div className="flex items-center gap-2 bg-white p-2 rounded border-2 border-blue-100 focus-within:border-blue-500 transition-colors">
                 <MapPin size={20} className="text-blue-600" />
-                <input type="text" value={psgInput} onChange={handlePsgChange} placeholder="Ej: 18-017-0002-P02" disabled={!!folioActivo} className={`bg-transparent font-bold text-gray-800 w-full outline-none text-lg uppercase ${folioActivo ? 'cursor-not-allowed opacity-70' : ''}`} />
+                <input id="psg-input" type="text" value={psgInput} onChange={handlePsgChange} placeholder="Ej: 18-017-0002-P02" disabled={!!folioActivo} className={`bg-transparent font-bold text-gray-800 w-full outline-none text-lg uppercase ${folioActivo ? 'cursor-not-allowed opacity-70' : ''}`} />
                 {folioActivo && <Lock size={16} className="text-gray-400" />}
               </div>
               {datosPsg && (
@@ -174,32 +207,32 @@ const Dashboard = () => {
               )}
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Supervisor:</label>
+            {(!esVista || folioActivo) && <div>
+              <label htmlFor="supervisor-select" className="block text-xs font-bold text-gray-500 mb-1 uppercase">Supervisor:</label>
               {folioActivo ? (
                 <div className="flex items-center gap-2 p-2 bg-gray-100 rounded border border-gray-200">
                   <User size={20} className="text-gray-500" />
                   <span className="font-bold text-gray-700 text-sm">{supervisorSeleccionado?.nombre || '...'}</span>
                 </div>
               ) : (
-                <select onChange={handleSupervisorChange} defaultValue="" className="w-full p-2 border-2 border-blue-100 rounded text-sm font-bold text-gray-700 outline-none focus:border-blue-500">
+                <select id="supervisor-select" onChange={handleSupervisorChange} defaultValue="" className="w-full p-2 border-2 border-blue-100 rounded text-sm font-bold text-gray-700 outline-none focus:border-blue-500">
                   <option value="" disabled>-- Selecciona un supervisor --</option>
                   {supervisores.map(s => (
                     <option key={s.id} value={s.id}>{s.nombre}</option>
                   ))}
                 </select>
               )}
-              {supervisorSeleccionado && !folioActivo && (
+              {supervisorSeleccionado && (
                 <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-200">
                   <span className="font-bold">Cargo:</span> {supervisorSeleccionado.cargo} | <span className="font-bold">Adscripción:</span> {supervisorSeleccionado.adscripcion}
                 </div>
               )}
-            </div>
+            </div>}
           </div>
         </div>
 
         {/* --- ZONA 2: GESTIÓN DE VISITA --- */}
-        {datosPsg && !folioActivo && (
+        {datosPsg && !folioActivo && !esVista && (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border-t-4 border-green-600">
             <h2 className="text-gray-700 font-bold mb-4">2. GESTIÓN DE LA VISITA</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -231,28 +264,7 @@ const Dashboard = () => {
                   <p className="text-xl font-mono text-red-700 font-bold">{folioActivo}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                {/* ⚙ MODO PRUEBA - Eliminar en producción */}
-                <button
-                  onClick={simularAvanceCompleto}
-                  title="Modo Prueba: marca todos los módulos como completados"
-                  className="flex items-center gap-1 text-xs bg-yellow-400 text-yellow-900 font-bold px-3 py-1 rounded hover:bg-yellow-500 transition-colors"
-                >
-                  <Settings size={13} /> SIMULAR AVANCE
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm("¿Deseas cerrar esta visita y buscar otra?")) {
-                      setFolioActivo(''); setPsgInput(''); setDatosPsg(null); setSupervisorSeleccionado(null);
-                      setAvance({ modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false });
-                      localStorage.removeItem('visitaActiva');
-                    }
-                  }}
-                  className="text-xs text-gray-500 underline hover:text-red-700 font-bold"
-                >
-                  Cerrar Visita
-                </button>
-              </div>
+
             </div>
 
             <div className="transition-opacity duration-500">
@@ -274,6 +286,11 @@ const Dashboard = () => {
                         <span className="text-gray-500 flex items-center gap-1"><Lock size={10} /> Bloqueado</span>
                       ) : (
                         <span className="opacity-80">Disponible</span>
+                      )}
+                      {pdfs[modulo.id] && (
+                        <span className="flex items-center gap-1 text-blue-100 bg-blue-700/30 px-2 py-1 rounded border border-blue-300 ml-1" title="Tiene PDF firmado">
+                          <FileCheck size={12} /> PDF
+                        </span>
                       )}
                     </div>
                   </div>

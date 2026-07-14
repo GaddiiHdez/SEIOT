@@ -4,6 +4,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// 🔴 Validar variables de entorno requeridas
+const requeridas = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+for (const variable of requeridas) {
+    if (!process.env[variable]) {
+        throw new Error(`❌ Variable de entorno ${variable} no está definida`);
+    }
+}
+
 const { Pool } = pkg;
 
 const pool = new Pool({

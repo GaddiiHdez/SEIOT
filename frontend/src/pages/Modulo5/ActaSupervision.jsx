@@ -36,6 +36,7 @@ const ActaSupervision = () => {
     const soloVista = usuario?.rol === 'vista';
     const puedeAcceder = usuario?.es_admin || usuario?.permisos?.modulo5 || usuario?.rol === 'vista';
     const [pagina, setPagina] = useState(1);
+    const [cargando, setCargando] = useState(true);
 
     const [contexto] = useState(() => {
         const guardado = localStorage.getItem('visitaActiva');
@@ -69,6 +70,50 @@ const ActaSupervision = () => {
     const [numeroIdTestigo, setNumeroIdTestigo] = useState("");
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
+
+    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
+    useEffect(() => {
+        if (!contexto?.visita_id) { setCargando(false); return; }
+
+        const cargarDatos = async () => {
+            try {
+                const response = await apiFetch(`/api/modulos/modulo5/${contexto.visita_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.existe && data.datos) {
+                        const d = data.datos;
+                        if (d.acta_no) setActaNo(d.acta_no);
+                        if (d.hora) setHora(d.hora);
+                        if (d.tipo_psg) setTipoPsg(d.tipo_psg);
+                        if (d.domicilio) setDomicilio(d.domicilio);
+                        if (d.telefono) setTelefono(d.telefono);
+                        if (d.hora_inicio) setHoraInicio(d.hora_inicio);
+                        if (d.hora_termino) setHoraTermino(d.hora_termino);
+                        if (d.acta_hechos !== undefined) setActaHechos(d.acta_hechos);
+                        if (d.otros_documentos) setOtrosDocumentos(d.otros_documentos);
+                        if (d.cumple) setConclusion('cumple');
+                        else if (d.presenta_observaciones) setConclusion('observaciones');
+                        else if (d.requiere_seguimiento) setConclusion('seguimiento');
+                        if (d.observaciones_detectadas) setObservacionesDetectadas(d.observaciones_detectadas);
+                        if (d.medidas_preventivas) setMedidasPreventivas(d.medidas_preventivas);
+                        if (d.no_realizo_manifestaciones !== undefined) setNoRealizo(d.no_realizo_manifestaciones);
+                        if (d.manifestaciones) setManifestaciones(d.manifestaciones);
+                        if (d.nombre_testigo) setNombreTestigo(d.nombre_testigo);
+                        if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
+                        if (d.tipo_id_testigo) setTipoIdTestigo(d.tipo_id_testigo);
+                        if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos módulo 5:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
+    }, []);
+
     const guardarBorrador = () => {
         const borrador = {
             modulo: 5, visita_id: contexto.visita_id, folio: contexto.folio,
@@ -179,7 +224,12 @@ const ActaSupervision = () => {
         }
     };
 
-    if (!contexto) return <div className="p-10 text-center font-bold">Cargando...</div>;
+    if (!contexto) return null;
+    if (cargando) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
+        </div>
+    );
     const { folio, datosPsg, supervisor, fecha } = contexto;
 
     return (
@@ -280,14 +330,14 @@ const ActaSupervision = () => {
                         <h3 className="text-indigo-600 font-bold text-center text-lg uppercase mt-4">IV. RESULTADO DE LA SUPERVISIÓN</h3>
                         <label className="block text-xs font-bold text-indigo-700 mb-2 uppercase">(18) Resultado general:</label>
                         <div className="flex flex-wrap gap-4 justify-between bg-indigo-50 p-4 rounded border border-indigo-200 font-bold text-sm">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="conclusion" value="cumple" checked={conclusion === 'cumple'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Cumple
+                            <label htmlFor="conclusion-cumple-m5" className="flex items-center gap-2 cursor-pointer">
+                                <input id="conclusion-cumple-m5" type="radio" name="conclusion" value="cumple" checked={conclusion === 'cumple'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Cumple
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="conclusion" value="observaciones" checked={conclusion === 'observaciones'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Presenta Observaciones
+                            <label htmlFor="conclusion-observaciones-m5" className="flex items-center gap-2 cursor-pointer">
+                                <input id="conclusion-observaciones-m5" type="radio" name="conclusion" value="observaciones" checked={conclusion === 'observaciones'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Presenta Observaciones
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="conclusion" value="seguimiento" checked={conclusion === 'seguimiento'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Requiere Seguimiento
+                            <label htmlFor="conclusion-seguimiento-m5" className="flex items-center gap-2 cursor-pointer">
+                                <input id="conclusion-seguimiento-m5" type="radio" name="conclusion" value="seguimiento" checked={conclusion === 'seguimiento'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Requiere Seguimiento
                             </label>
                         </div>
                     </div>
@@ -366,7 +416,7 @@ const ActaSupervision = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && <button
+                            {puedeDescargar && !soloVista && <button
                                 onClick={() => generarPdfModulo5({
                                     acta_no: actaNo,
                                     folio,

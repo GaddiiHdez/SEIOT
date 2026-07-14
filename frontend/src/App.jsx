@@ -12,6 +12,7 @@ import ActaHechos from './pages/Modulo4/ActaHechos';
 import ActaSupervision from './pages/Modulo5/ActaSupervision';
 import ActaCircunstanciada from './pages/Modulo6/ActaCircunstanciada';
 import AdminUsuarios from './pages/Admin/AdminUsuarios';
+import Consultas from './pages/Admin/Consultas';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/modulo5" element={<RutaProtegida><ActaSupervision /></RutaProtegida>} />
           <Route path="/modulo6" element={<RutaProtegida><ActaCircunstanciada /></RutaProtegida>} />
           <Route path="/admin/usuarios" element={<RutaProtegida><AdminUsuarios /></RutaProtegida>} />
+          <Route path="/admin/consultas" element={<RutaProtegida><Consultas /></RutaProtegida>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

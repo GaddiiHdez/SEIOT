@@ -51,6 +51,39 @@ const OrdenSupervision = () => {
     const [folioIdentificacion, setFolioIdentificacion] = useState(contexto?.datosSupervisor?.folio_identificacion || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
     const [nombreOrdena, setNombreOrdena] = useState("");
+    const [cargando, setCargando] = useState(true);
+
+    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
+    useEffect(() => {
+        if (!contexto?.visita_id) { setCargando(false); return; }
+
+        const cargarDatos = async () => {
+            try {
+                const response = await apiFetch(`/api/modulos/modulo2/${contexto.visita_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.existe && data.datos) {
+                        const d = data.datos;
+                        if (d.fecha) setFecha(d.fecha.split('T')[0]);
+                        if (d.calidad_sujeto) setCalidadSujeto(d.calidad_sujeto);
+                        if (d.nombre_pc) setNombrePC(d.nombre_pc);
+                        if (d.cargo_pc) setCargoPC(d.cargo_pc);
+                        if (d.adscripcion) setAdscripcion(d.adscripcion);
+                        if (d.tipo_identificacion) setTipoIdentificacion(d.tipo_identificacion);
+                        if (d.folio_identificacion) setFolioIdentificacion(d.folio_identificacion);
+                        if (d.domicilio) setDomicilio(d.domicilio);
+                        if (d.nombre_ordena) setNombreOrdena(d.nombre_ordena);
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos módulo 2:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
+    }, [contexto?.visita_id]);
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
@@ -138,6 +171,12 @@ const OrdenSupervision = () => {
     };
 
     if (!contexto) return null;
+    if (cargando) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
+        </div>
+    );
+
     const { folio, datosPsg } = contexto;
 
     return (
@@ -246,7 +285,7 @@ const OrdenSupervision = () => {
                     <button className="bg-orange-500 text-white px-4 py-2 rounded shadow hover:bg-orange-600 flex items-center gap-2 text-xs font-bold transition-all active:scale-95">
                         <HelpCircle size={16} /> GUÍA
                     </button>
-                    {puedeDescargar && <button 
+                    {puedeDescargar && !soloVista && <button 
                         onClick={() => generarPdfModulo2({ 
                             oficio_no: folio, 
                             fecha, 

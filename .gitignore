@@ -25,6 +25,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Temporales
+# Temporales y Caché
 *.tmp
 *.temp
+.vite/
+frontend/public/*.pdf
+frontend/src/data/
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/

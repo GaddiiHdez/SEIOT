@@ -12,10 +12,12 @@ const RutaProtegida = ({ children }) => {
             const token = localStorage.getItem('seiot_token');
             if (!token) {
                 window.history.pushState(null, '', '/login');
-                navigate('/login', { replace: true });
+                window.location.replace('/login');
             }
         };
 
+        // Agregar entrada al historial para interceptar el botón atrás
+        window.history.pushState(null, '', window.location.pathname);
         window.addEventListener('popstate', bloquearAtras);
         return () => window.removeEventListener('popstate', bloquearAtras);
     }, [navigate]);
@@ -31,6 +33,14 @@ const RutaProtegida = ({ children }) => {
 
     const token = localStorage.getItem('seiot_token');
     if (!usuario || !token) return <Navigate to="/login" replace />;
+
+    // Usuario vista sin visita activa — redirigir a consultas
+    if (usuario?.rol === 'vista' && window.location.pathname === '/dashboard') {
+        const visitaActiva = localStorage.getItem('visitaActiva');
+        if (!visitaActiva) {
+            return <Navigate to="/admin/consultas" replace />;
+        }
+    }
 
     return children;
 };

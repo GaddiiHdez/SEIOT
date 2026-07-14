@@ -27,7 +27,6 @@ const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, t
     );
 };
 
-
 const ListaVerificacion = () => {
     const navigate = useNavigate();
     const { usuario } = useAuth();
@@ -36,13 +35,13 @@ const ListaVerificacion = () => {
     const soloVista = usuario?.rol === 'vista';
     const puedeAcceder = usuario?.es_admin || usuario?.permisos?.modulo3 || usuario?.rol === 'vista';
     const [pagina, setPagina] = useState(1);
+    const [cargando, setCargando] = useState(true);
 
     const [contexto] = useState(() => {
         const guardado = localStorage.getItem('visitaActiva');
         return guardado ? JSON.parse(guardado) : null;
     });
 
-    // Estados página 1
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
     const [latitud, setLatitud] = useState(contexto?.datosPsg?.latitud || "");
@@ -50,12 +49,8 @@ const ListaVerificacion = () => {
     const [cabezas, setCabezas] = useState(contexto?.datosPsg?.capacidad_maxima_bovinos || "");
     const [horaInicio, setHoraInicio] = useState("");
     const [horaTermino, setHoraTermino] = useState("");
-
-    // Estados checklist
     const [respuestas, setRespuestas] = useState({});
     const [recomendaciones, setRecomendaciones] = useState({});
-
-    // Estados página 6
     const [observaciones, setObservaciones] = useState("");
     const [conclusion, setConclusion] = useState("");
     const [responsablePsg, setResponsablePsg] = useState(contexto?.datosPsg?.nombre_titular || "");
@@ -64,6 +59,58 @@ const ListaVerificacion = () => {
     const [domicilioTestigo, setDomicilioTestigo] = useState("");
     const [tipoIdTestigo, setTipoIdTestigo] = useState("");
     const [numeroIdTestigo, setNumeroIdTestigo] = useState("");
+
+    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
+    useEffect(() => {
+        if (!contexto?.visita_id) { setCargando(false); return; }
+
+        const cargarDatos = async () => {
+            try {
+                const response = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.existe && data.datos) {
+                        const d = data.datos;
+                        if (d.tipo_psg) setTipoPsg(d.tipo_psg);
+                        if (d.telefono) setTelefono(d.telefono);
+                        if (d.latitud) setLatitud(d.latitud);
+                        if (d.longitud) setLongitud(d.longitud);
+                        if (d.capacidad_instalada) setCabezas(d.capacidad_instalada);
+                        if (d.hora_inicio) setHoraInicio(d.hora_inicio);
+                        if (d.hora_termino) setHoraTermino(d.hora_termino);
+                        if (d.observaciones) setObservaciones(d.observaciones);
+                        if (d.responsable_psg) setResponsablePsg(d.responsable_psg);
+                        if (d.responsable_supervisor) setResponsableSupervisor(d.responsable_supervisor);
+                        if (d.nombre_testigo) setNombreTestigo(d.nombre_testigo);
+                        if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
+                        if (d.tipo_id_testigo) setTipoIdTestigo(d.tipo_id_testigo);
+                        if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
+                        // Reconstruir conclusión
+                        if (d.cumple) setConclusion('cumple');
+                        else if (d.presenta_observaciones) setConclusion('observaciones');
+                        else if (d.requiere_seguimiento) setConclusion('seguimiento');
+                    }
+                    // Cargar checklist
+                    if (data.checklist?.length > 0) {
+                        const resp = {};
+                        const recom = {};
+                        data.checklist.forEach(item => {
+                            resp[`p${item.pregunta_id}`] = item.respuesta;
+                            if (item.observacion) recom[`p${item.pregunta_id}`] = item.observacion;
+                        });
+                        setRespuestas(resp);
+                        setRecomendaciones(recom);
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos módulo 3:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
+    }, [contexto?.visita_id]);
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
@@ -143,33 +190,33 @@ const ListaVerificacion = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-    visita_id: contexto.visita_id,
-    nombre_psg: datosPsg.nombre_titular,
-    tipo_psg: tipoPsg,
-    nombre_titular: datosPsg.representante || "",
-    telefono,
-    municipio: datosPsg.municipio,
-    localidad: datosPsg.localidad,
-    latitud,
-    longitud,
-    capacidad_instalada: cabezas,
-    nombre_supervisor: contexto?.datosSupervisor?.nombre || supervisor,
-    fecha,
-    hora_inicio: horaInicio,
-    hora_termino: horaTermino,
-    observaciones,
-    cumple: conclusion === 'cumple',
-    presenta_observaciones: conclusion === 'observaciones',
-    requiere_seguimiento: conclusion === 'seguimiento',
-    responsable_psg: datosPsg.nombre_titular,
-    responsable_supervisor: contexto?.datosSupervisor?.nombre || supervisor,
-    nombre_testigo: nombreTestigo,
-    domicilio_testigo: domicilioTestigo,
-    tipo_id_testigo: tipoIdTestigo,
-    numero_id_testigo: numeroIdTestigo,
-    respuestas,
-    recomendaciones
-})
+                    visita_id: contexto.visita_id,
+                    nombre_psg: datosPsg.nombre_titular,
+                    tipo_psg: tipoPsg,
+                    nombre_titular: datosPsg.representante || "",
+                    telefono,
+                    municipio: datosPsg.municipio,
+                    localidad: datosPsg.localidad,
+                    latitud,
+                    longitud,
+                    capacidad_instalada: cabezas,
+                    nombre_supervisor: contexto?.datosSupervisor?.nombre || supervisor,
+                    fecha,
+                    hora_inicio: horaInicio,
+                    hora_termino: horaTermino,
+                    observaciones,
+                    cumple: conclusion === 'cumple',
+                    presenta_observaciones: conclusion === 'observaciones',
+                    requiere_seguimiento: conclusion === 'seguimiento',
+                    responsable_psg: datosPsg.nombre_titular,
+                    responsable_supervisor: contexto?.datosSupervisor?.nombre || supervisor,
+                    nombre_testigo: nombreTestigo,
+                    domicilio_testigo: domicilioTestigo,
+                    tipo_id_testigo: tipoIdTestigo,
+                    numero_id_testigo: numeroIdTestigo,
+                    respuestas,
+                    recomendaciones
+                })
             });
             if (!response.ok) { alert("Error al guardar."); return; }
             const contextoActualizado = { ...contexto, avance: { ...contexto.avance, modulo3: true } };
@@ -182,7 +229,13 @@ const ListaVerificacion = () => {
         }
     };
 
-    if (!contexto) return <div className="p-10 text-center font-bold">Cargando...</div>;
+    if (!contexto) return null;
+    if (cargando) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
+        </div>
+    );
+
     const { folio, datosPsg, supervisor, fecha } = contexto;
 
     const preguntasData = [
@@ -323,7 +376,6 @@ const ListaVerificacion = () => {
 
             <div className="max-w-6xl mx-auto bg-white shadow-xl p-6 md:p-8 border border-gray-200 min-h-[500px]">
 
-                {/* PÁGINA 1 */}
                 {pagina === 1 && (
                     <div className="animate-fade-in">
                         <h3 className="text-blue-700 font-bold text-center text-lg mb-6 uppercase">I. DATOS GENERALES DEL SUJETO SUPERVISADO:</h3>
@@ -349,7 +401,6 @@ const ListaVerificacion = () => {
                     </div>
                 )}
 
-                {/* PÁGINAS 2-5: CHECKLIST */}
                 {pagina >= 2 && pagina <= 5 && (
                     <div className="animate-fade-in space-y-4">
                         <h3 className="text-blue-700 font-bold text-center text-lg uppercase mb-2">II. LISTA DE VERIFICACIÓN (Página {pagina - 1} de 4)</h3>
@@ -357,7 +408,6 @@ const ListaVerificacion = () => {
                     </div>
                 )}
 
-                {/* PÁGINA 6: CONCLUSIÓN */}
                 {pagina === 6 && (
                     <div className="animate-fade-in space-y-6">
                         <div>
@@ -368,14 +418,14 @@ const ListaVerificacion = () => {
                         <div>
                             <h3 className="text-blue-700 font-bold text-center text-lg mb-4 uppercase">IV. Conclusión de la Supervisión</h3>
                             <div className="flex flex-wrap gap-4 justify-between bg-blue-50 p-4 rounded border border-blue-200 mb-6 font-bold text-sm">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="conclusion" value="cumple" checked={conclusion === 'cumple'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Cumple
+                                <label htmlFor="conclusion-cumple" className="flex items-center gap-2 cursor-pointer">
+                                    <input id="conclusion-cumple" type="radio" name="conclusion" value="cumple" checked={conclusion === 'cumple'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Cumple
                                 </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="conclusion" value="observaciones" checked={conclusion === 'observaciones'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Presenta Observaciones
+                                <label htmlFor="conclusion-observaciones" className="flex items-center gap-2 cursor-pointer">
+                                    <input id="conclusion-observaciones" type="radio" name="conclusion" value="observaciones" checked={conclusion === 'observaciones'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Presenta Observaciones
                                 </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="conclusion" value="seguimiento" checked={conclusion === 'seguimiento'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Requiere Seguimiento
+                                <label htmlFor="conclusion-seguimiento" className="flex items-center gap-2 cursor-pointer">
+                                    <input id="conclusion-seguimiento" type="radio" name="conclusion" value="seguimiento" checked={conclusion === 'seguimiento'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Requiere Seguimiento
                                 </label>
                             </div>
 
@@ -398,11 +448,9 @@ const ListaVerificacion = () => {
 
             <div className="max-w-6xl mx-auto mt-6 flex justify-between items-center bg-white p-4 rounded-b-xl shadow-md border border-gray-200">
                 <div className="flex gap-2">
-                    {/* Casita - siempre visible */}
                     <button onClick={() => navigate('/dashboard')} className="bg-red-700 text-white p-2 rounded-full shadow hover:bg-red-800 transition-colors">
                         <Home size={22} />
                     </button>
-                    {/* Página anterior */}
                     {pagina > 1 && (
                         <button onClick={() => setPagina(pagina - 1)} className="bg-blue-800 text-white px-4 py-2 rounded-full shadow hover:bg-blue-900 flex items-center gap-2 text-sm font-bold">
                             <ChevronLeft size={20} /> ANTERIOR
@@ -432,7 +480,7 @@ const ListaVerificacion = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && <button 
+                            {puedeDescargar && !soloVista && <button 
                                 onClick={() => generarPdfModulo3({
                                     nombre_psg: datosPsg.nombre_titular,
                                     tipo_psg: tipoPsg,

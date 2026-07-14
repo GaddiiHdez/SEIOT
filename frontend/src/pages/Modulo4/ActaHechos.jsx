@@ -27,7 +27,6 @@ const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, t
     );
 };
 
-
 const ActaHechos = () => {
     const navigate = useNavigate();
     const { usuario } = useAuth();
@@ -36,32 +35,66 @@ const ActaHechos = () => {
     const soloVista = usuario?.rol === 'vista';
     const puedeAcceder = usuario?.es_admin || usuario?.permisos?.modulo4 || usuario?.rol === 'vista';
     const [pagina, setPagina] = useState(1);
+    const [cargando, setCargando] = useState(true);
 
     const [contexto] = useState(() => {
         const guardado = localStorage.getItem('visitaActiva');
         return guardado ? JSON.parse(guardado) : null;
     });
 
-    // Página 1 - manuales
     const [actaNo, setActaNo] = useState("");
     const [hora, setHora] = useState("");
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
-
-    // Página 2
     const [horaInicio, setHoraInicio] = useState("");
     const [horaTermino, setHoraTermino] = useState("");
     const [hechosObservados, setHechosObservados] = useState("");
     const [noRealizo, setNoRealizo] = useState(false);
     const [manifestaciones, setManifestaciones] = useState("");
-
-    // Página 3 - testigos
     const [nombreTestigo, setNombreTestigo] = useState("");
     const [tipoIdTestigo, setTipoIdTestigo] = useState("");
     const [domicilioTestigo, setDomicilioTestigo] = useState("");
     const [numeroIdTestigo, setNumeroIdTestigo] = useState("");
     const [nombreTestigoCierre, setNombreTestigoCierre] = useState("");
+
+    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
+    useEffect(() => {
+        if (!contexto?.visita_id) { setCargando(false); return; }
+
+        const cargarDatos = async () => {
+            try {
+                const response = await apiFetch(`/api/modulos/modulo4/${contexto.visita_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.existe && data.datos) {
+                        const d = data.datos;
+                        if (d.acta_no) setActaNo(d.acta_no);
+                        if (d.hora) setHora(d.hora);
+                        if (d.tipo_psg) setTipoPsg(d.tipo_psg);
+                        if (d.telefono) setTelefono(d.telefono);
+                        if (d.domicilio) setDomicilio(d.domicilio);
+                        if (d.hora_inicio) setHoraInicio(d.hora_inicio);
+                        if (d.hora_termino) setHoraTermino(d.hora_termino);
+                        if (d.hechos_observados) setHechosObservados(d.hechos_observados);
+                        if (d.no_realizo_manifestaciones !== undefined) setNoRealizo(d.no_realizo_manifestaciones);
+                        if (d.manifestaciones) setManifestaciones(d.manifestaciones);
+                        if (d.nombre_testigo) setNombreTestigo(d.nombre_testigo);
+                        if (d.tipo_id_testigo) setTipoIdTestigo(d.tipo_id_testigo);
+                        if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
+                        if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
+                        if (d.nombre_testigo_cierre) setNombreTestigoCierre(d.nombre_testigo_cierre);
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos módulo 4:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
+    }, [contexto?.visita_id]);
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
@@ -165,7 +198,13 @@ const ActaHechos = () => {
         }
     };
 
-    if (!contexto) return <div className="p-10 text-center font-bold">Cargando...</div>;
+    if (!contexto) return null;
+    if (cargando) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
+        </div>
+    );
+
     const { folio, datosPsg, supervisor, fecha } = contexto;
 
     return (
@@ -202,7 +241,6 @@ const ActaHechos = () => {
 
             <div className="max-w-6xl mx-auto bg-white shadow-xl p-8 border border-gray-200 min-h-[500px]">
 
-                {/* PÁGINA 1 */}
                 {pagina === 1 && (
                     <div className="animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
@@ -240,7 +278,6 @@ const ActaHechos = () => {
                     </div>
                 )}
 
-                {/* PÁGINA 2 */}
                 {pagina === 2 && (
                     <div className="animate-fade-in space-y-6">
                         <h3 className="text-pink-600 font-bold text-center text-lg uppercase">II. DATOS DE LA SUPERVISIÓN</h3>
@@ -279,7 +316,6 @@ const ActaHechos = () => {
                     </div>
                 )}
 
-                {/* PÁGINA 3 */}
                 {pagina === 3 && (
                     <div className="animate-fade-in space-y-6">
                         <h3 className="text-pink-600 font-bold text-center text-lg uppercase">V. TESTIGOS (CUANDO APLIQUE)</h3>
@@ -310,7 +346,6 @@ const ActaHechos = () => {
 
             <div className="max-w-6xl mx-auto mt-6 flex justify-between items-center bg-white p-4 rounded-b-xl shadow-md border border-gray-200">
                 <div className="flex gap-2 items-center">
-                    {/* Casita - siempre visible */}
                     <button onClick={() => navigate('/dashboard')} className="bg-red-700 text-white p-2 rounded-full shadow hover:bg-red-800 transition-colors">
                         <Home size={22} />
                     </button>
@@ -325,7 +360,7 @@ const ActaHechos = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && <button 
+                            {puedeDescargar && !soloVista && <button 
                                 onClick={() => generarPdfModulo4({
                                     acta_no: actaNo,
                                     folio,

@@ -62,8 +62,9 @@ const Login = () => {
 
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 mb-1 uppercase">Usuario</label>
+                            <label htmlFor="login-usuario" className="block text-xs font-bold text-gray-600 mb-1 uppercase">Usuario</label>
                             <input
+                                id="login-usuario"
                                 type="text"
                                 value={usuario}
                                 onChange={(e) => setUsuario(e.target.value)}
@@ -75,9 +76,10 @@ const Login = () => {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 mb-1 uppercase">Contraseña</label>
+                            <label htmlFor="login-password" className="block text-xs font-bold text-gray-600 mb-1 uppercase">Contraseña</label>
                             <div className="relative">
                                 <input
+                                    id="login-password"
                                     type={mostrarPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}

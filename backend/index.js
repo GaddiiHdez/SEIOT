@@ -7,6 +7,7 @@ import pool from './db.js';
 import psgRoutes from './routes/psg.js';
 import authRoutes from './routes/auth.js';
 import modulosRoutes from './routes/modulos.js';
+import { verificarToken } from './routes/auth.js';
 
 dotenv.config();
 
@@ -22,8 +23,22 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos subidos (PDFs firmados)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// 🔴 CORRECCIÓN 3: Ruta protegida para documentos firmados
+app.get('/uploads/documentos_firmados/:archivo', verificarToken, (req, res) => {
+    const safeFilename = path.basename(req.params.archivo);
+    const rutaArchivo = path.join(__dirname, 'uploads', 'documentos_firmados', safeFilename);
+    res.sendFile(rutaArchivo, (err) => {
+        if (err) {
+            res.status(404).json({ error: 'Archivo no encontrado.' });
+        }
+    });
+});
+
+// ✅ Error 12: Un único health check en /api/health
+// AWS ECS Task Definition debe apuntar a /api/health
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'SEIOT API corriendo', version: '1.0.0' });
+});
 
 app.use('/api/psg', psgRoutes);
 app.use('/api/auth', authRoutes);
@@ -40,7 +55,8 @@ if (process.env.NODE_ENV !== 'production') {
             const resultado = await pool.query('SELECT COUNT(*) FROM excel_psg');
             res.json({ mensaje: '✅ BD conectada', registros: resultado.rows[0].count });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('Error test-bd:', error);
+            res.status(500).json({ error: 'Error al conectar con la base de datos.' }); // ✅ Error 9
         }
     });
 }

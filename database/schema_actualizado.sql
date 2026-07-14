@@ -556,7 +556,13 @@ CREATE TABLE public.modulo6_acta_circunstanciada (
     de4 character varying(200),
     manifestaciones text,
     fecha_cierre date,
-    hora_cierre time without time zone
+    hora_cierre time without time zone,
+    nombre_testigo_cierre1 character varying(200),
+    tipo_id_cierre1 character varying(100),
+    numero_id_cierre1 character varying(100),
+    nombre_testigo_cierre2 character varying(200),
+    tipo_id_cierre2 character varying(100),
+    numero_id_cierre2 character varying(100)
 );
 
 
@@ -609,7 +615,9 @@ CREATE TABLE public.usuarios (
     rol character varying(50) DEFAULT 'capturista'::character varying,
     creado_en timestamp without time zone DEFAULT now(),
     modificado_en timestamp without time zone DEFAULT now(),
-    superadmin boolean DEFAULT false
+    superadmin boolean DEFAULT false,
+    modulo6_pagina4 boolean DEFAULT false,
+    consultas boolean DEFAULT false
 );
 
 
@@ -816,11 +824,27 @@ ALTER TABLE ONLY public.modulo1_oficio_notificacion
 
 
 --
+-- Name: modulo1_oficio_notificacion modulo1_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo1_oficio_notificacion
+    ADD CONSTRAINT modulo1_visita_id_key UNIQUE (visita_id);
+
+
+--
 -- Name: modulo2_orden_supervision modulo2_orden_supervision_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.modulo2_orden_supervision
     ADD CONSTRAINT modulo2_orden_supervision_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo2_orden_supervision modulo2_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo2_orden_supervision
+    ADD CONSTRAINT modulo2_visita_id_key UNIQUE (visita_id);
 
 
 --
@@ -848,11 +872,27 @@ ALTER TABLE ONLY public.modulo3_lista_verificacion
 
 
 --
+-- Name: modulo3_lista_verificacion modulo3_lista_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo3_lista_verificacion
+    ADD CONSTRAINT modulo3_lista_visita_id_key UNIQUE (visita_id);
+
+
+--
 -- Name: modulo4_acta_hechos modulo4_acta_hechos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.modulo4_acta_hechos
     ADD CONSTRAINT modulo4_acta_hechos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo4_acta_hechos modulo4_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo4_acta_hechos
+    ADD CONSTRAINT modulo4_visita_id_key UNIQUE (visita_id);
 
 
 --
@@ -864,11 +904,27 @@ ALTER TABLE ONLY public.modulo5_acta_supervision
 
 
 --
+-- Name: modulo5_acta_supervision modulo5_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo5_acta_supervision
+    ADD CONSTRAINT modulo5_visita_id_key UNIQUE (visita_id);
+
+
+--
 -- Name: modulo6_acta_circunstanciada modulo6_acta_circunstanciada_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.modulo6_acta_circunstanciada
     ADD CONSTRAINT modulo6_acta_circunstanciada_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modulo6_acta_circunstanciada modulo6_visita_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.modulo6_acta_circunstanciada
+    ADD CONSTRAINT modulo6_visita_id_key UNIQUE (visita_id);
 
 
 --
@@ -989,6 +1045,15 @@ ALTER TABLE ONLY public.visitas
 
 ALTER TABLE ONLY public.visitas
     ADD CONSTRAINT visitas_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES public.usuarios(id);
+
+
+--
+-- Indexes for performance optimization
+--
+
+CREATE INDEX IF NOT EXISTS idx_visitas_psg ON public.visitas(psg);
+CREATE INDEX IF NOT EXISTS idx_visitas_capturista ON public.visitas(capturista_id);
+CREATE INDEX IF NOT EXISTS idx_visitas_supervisor ON public.visitas(supervisor_id);
 
 
 --

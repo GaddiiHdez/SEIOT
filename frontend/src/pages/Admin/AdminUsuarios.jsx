@@ -12,21 +12,23 @@ const PERMISOS_CONFIG = [
     { key: 'modulo4', label: 'Módulo 4 - Acta de Hechos' },
     { key: 'modulo5', label: 'Módulo 5 - Acta de Supervisión' },
     { key: 'modulo6', label: 'Módulo 6 - Acta Circunstanciada' },
+    { key: 'modulo6_pagina4', label: 'Módulo 6 - Página 4 (Hechos y Artículos)' },
     { key: 'ver_visitas_otros', label: 'Ver visitas de otros usuarios' },
     { key: 'editar_campos', label: 'Editar campos bloqueados' },
     { key: 'eliminar_documentos', label: 'Eliminar documentos firmados' },
     { key: 'descargar_pdfs', label: 'Descargar PDFs' },
     { key: 'panel_admin', label: 'Acceso al panel de administración' },
+    { key: 'consultas', label: 'Acceso al panel de consultas' },
 ];
 
 const ROLES_PLANTILLA = {
-    admin: { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: true, ver_visitas_otros: true, editar_campos: true, eliminar_documentos: true, descargar_pdfs: true, panel_admin: true },
-    supervisor: { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: true, ver_visitas_otros: false, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false },
-    capturista: { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: false, ver_visitas_otros: false, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false },
-    vista: { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false, ver_visitas_otros: true, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false },
+    admin: { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: true, modulo6_pagina4: true, consultas: true, ver_visitas_otros: true, editar_campos: true, eliminar_documentos: true, descargar_pdfs: true, panel_admin: true },
+    supervisor: { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: true, modulo6_pagina4: false, consultas: false, ver_visitas_otros: false, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false },
+    capturista: { modulo1: true, modulo2: true, modulo3: true, modulo4: true, modulo5: true, modulo6: false, modulo6_pagina4: false, consultas: false, ver_visitas_otros: false, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false },
+    vista: { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false, modulo6_pagina4: false, consultas: false, ver_visitas_otros: true, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false },
 };
 
-const permisosVacios = { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false, ver_visitas_otros: false, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false };
+const permisosVacios = { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false, modulo6_pagina4: false, consultas: false, ver_visitas_otros: false, editar_campos: false, eliminar_documentos: false, descargar_pdfs: true, panel_admin: false };
 
 const Switch = ({ valor, onChange }) => (
     <button
@@ -64,7 +66,12 @@ const AdminUsuarios = () => {
         try {
             const res = await apiFetch('/api/auth/usuarios');
             const data = await res.json();
-            setUsuarios(data);
+            if (Array.isArray(data)) {
+                setUsuarios(data);
+            } else {
+                setUsuarios([]);
+                alert(data.error || 'Error al obtener usuarios');
+            }
         } catch { alert('Error al cargar usuarios'); }
         setCargando(false);
     };
@@ -93,7 +100,7 @@ const AdminUsuarios = () => {
         setRol(u.rol);
         setPermisos({
             modulo1: u.modulo1, modulo2: u.modulo2, modulo3: u.modulo3,
-            modulo4: u.modulo4, modulo5: u.modulo5, modulo6: u.modulo6,
+            modulo4: u.modulo4, modulo5: u.modulo5, modulo6: u.modulo6, modulo6_pagina4: u.modulo6_pagina4, consultas: u.consultas,
             ver_visitas_otros: u.ver_visitas_otros, editar_campos: u.editar_campos,
             eliminar_documentos: u.eliminar_documentos, descargar_pdfs: u.descargar_pdfs,
             panel_admin: u.panel_admin

@@ -53,6 +53,33 @@ const Notificacion = () => {
     const [nombreServidor, setNombreServidor] = useState(contexto?.supervisor || "");
     const [cargoServidor, setCargoServidor] = useState(contexto?.datosSupervisor?.cargo || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
+    const [cargando, setCargando] = useState(true);
+
+    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
+    useEffect(() => {
+        if (!contexto?.visita_id) { setCargando(false); return; }
+
+        const cargarDatos = async () => {
+            try {
+                const response = await apiFetch(`/api/modulos/modulo1/${contexto.visita_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.existe && data.datos) {
+                        const d = data.datos;
+                        if (d.nombre_servidor) setNombreServidor(d.nombre_servidor);
+                        if (d.cargo_servidor) setCargoServidor(d.cargo_servidor);
+                        if (d.domicilio) setDomicilio(d.domicilio);
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos módulo 1:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
+    }, [contexto?.visita_id]);
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
@@ -104,19 +131,20 @@ const Notificacion = () => {
     }, [contexto, navigate]);
 
     if (!contexto) return null;
+    if (cargando) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
+        </div>
+    );
+
     const { folio, datosPsg } = contexto;
 
-    // --- CÁLCULO DE CAMPOS AUTOMÁTICOS ---
     const oficioNoAutomatico = folio;
     const fechaTextoAutomatica = new Date().toLocaleDateString('es-MX', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
     });
-
-    // =========================================================================
-    // FUNCIÓN GENERADORA: RECONSTRUYE EL DISEÑO DE MEMBRETE Y TEXTO EN EL PDF
-    // =========================================================================
 
     const handleGuardar = async () => {
         try {
@@ -246,19 +274,19 @@ const Notificacion = () => {
                     <button className="bg-orange-500 text-white px-4 py-2 rounded shadow hover:bg-orange-600 flex items-center gap-2 text-xs font-bold transition-all active:scale-95">
                         <HelpCircle size={16} /> GUÍA
                     </button>
-                    {puedeDescargar && <button 
-    onClick={() => generarPdfModulo1({
-        oficio_no: folio,
-        fecha_emision: new Date().toISOString(),
-        nombre_psg: datosPsg.nombre_titular,
-        domicilio: domicilio,
-        nombre_servidor: nombreServidor,
-        cargo_servidor: cargoServidor
-    })}
-    className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 text-xs font-bold"
->
-    <Download size={16} /> DESCARGAR OFICIO PRELLENADO
-</button>}
+                    {puedeDescargar && !soloVista && <button 
+                        onClick={() => generarPdfModulo1({
+                            oficio_no: folio,
+                            fecha_emision: new Date().toISOString(),
+                            nombre_psg: datosPsg.nombre_titular,
+                            domicilio: domicilio,
+                            nombre_servidor: nombreServidor,
+                            cargo_servidor: cargoServidor
+                        })}
+                        className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 text-xs font-bold"
+                    >
+                        <Download size={16} /> DESCARGAR OFICIO PRELLENADO
+                    </button>}
                     {!soloVista && <>
                     <button onClick={guardarBorrador} className="bg-yellow-500 text-white px-4 py-2 rounded shadow hover:bg-yellow-600 flex items-center gap-2 text-xs font-bold transition-all active:scale-95">
                         <Save size={16} /> BORRADOR

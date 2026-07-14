@@ -28,6 +28,8 @@ const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, t
 };
 
 
+// ── CONTROL DE PÁGINAS HABILITADAS ──────────────────────────────────────────
+// Cambiar a true cuando se necesite habilitar la página 4 (Hechos y Artículos)
 const ActaCircunstanciada = () => {
     const navigate = useNavigate();
     const { usuario } = useAuth();
@@ -35,7 +37,9 @@ const ActaCircunstanciada = () => {
     const puedeEditar = usuario?.es_admin || usuario?.permisos?.editar_campos;
     const soloVista = usuario?.rol === 'vista';
     const puedeAcceder = usuario?.es_admin || usuario?.permisos?.modulo6 || usuario?.rol === 'vista';
+    const PAGINA4_HABILITADA = usuario?.es_admin || usuario?.permisos?.modulo6_pagina4;
     const [pagina, setPagina] = useState(1);
+    const [cargando, setCargando] = useState(true);
 
     const [contexto] = useState(() => {
         const guardado = localStorage.getItem('visitaActiva');
@@ -87,6 +91,68 @@ const ActaCircunstanciada = () => {
     const [numeroIdCierre2, setNumeroIdCierre2] = useState("");
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
+
+    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
+    useEffect(() => {
+        if (!contexto?.visita_id) { setCargando(false); return; }
+
+        const cargarDatos = async () => {
+            try {
+                const response = await apiFetch(`/api/modulos/modulo6/${contexto.visita_id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.existe && data.datos) {
+                        const d = data.datos;
+                        if (d.acta_no) setActaNo(d.acta_no);
+                        if (d.hora) setHora(d.hora);
+                        if (d.ubicacion) setUbicacion(d.ubicacion);
+                        if (d.tipo_id_responsable) setTipoId(d.tipo_id_responsable);
+                        if (d.numero_id_responsable) setNumeroId(d.numero_id_responsable);
+                        if (d.id_expedida_por) setExpide(d.id_expedida_por);
+                        if (d.fecha_expedicion_id) setFechaExpId(d.fecha_expedicion_id.split('T')[0]);
+                        if (d.ubicacion_compareciente) setUbicacionCompareciente(d.ubicacion_compareciente);
+                        if (d.credencial_oficial_no) setCredencialNo(d.credencial_oficial_no);
+                        if (d.nombre_testigo1) setNombreTestigo1(d.nombre_testigo1);
+                        if (d.domicilio_testigo1) setDomicilioTestigo1(d.domicilio_testigo1);
+                        if (d.tipo_id_testigo1) setTipoIdTestigo1(d.tipo_id_testigo1);
+                        if (d.numero_id_testigo1) setNumeroIdTestigo1(d.numero_id_testigo1);
+                        if (d.nombre_testigo2) setNombreTestigo2(d.nombre_testigo2);
+                        if (d.domicilio_testigo2) setDomicilioTestigo2(d.domicilio_testigo2);
+                        if (d.tipo_id_testigo2) setTipoIdTestigo2(d.tipo_id_testigo2);
+                        if (d.numero_id_testigo2) setNumeroIdTestigo2(d.numero_id_testigo2);
+                        if (d.oficio_comision) setOficioComision(d.oficio_comision);
+                        if (d.fecha_comision) setFechaComision(d.fecha_comision.split('T')[0]);
+                        if (d.emite_comision) setEmiteComision(d.emite_comision);
+                        if (d.hechos_observaciones) setHechosObservaciones(d.hechos_observaciones);
+                        if (d.articulo1) setArticulo1(d.articulo1);
+                        if (d.de1) setDe1(d.de1);
+                        if (d.articulo2) setArticulo2(d.articulo2);
+                        if (d.de2) setDe2(d.de2);
+                        if (d.articulo3) setArticulo3(d.articulo3);
+                        if (d.de3) setDe3(d.de3);
+                        if (d.articulo4) setArticulo4(d.articulo4);
+                        if (d.de4) setDe4(d.de4);
+                        if (d.manifestaciones) setManifestaciones(d.manifestaciones);
+                        if (d.hora_cierre) setHoraActa(d.hora_cierre);
+                        if (d.fecha_cierre) setFechaActa(d.fecha_cierre.split('T')[0]);
+                        if (d.nombre_testigo_cierre1) setNombreTestigoCierre1(d.nombre_testigo_cierre1);
+                        if (d.tipo_id_cierre1) setTipoIdCierre1(d.tipo_id_cierre1);
+                        if (d.numero_id_cierre1) setNumeroIdCierre1(d.numero_id_cierre1);
+                        if (d.nombre_testigo_cierre2) setNombreTestigoCierre2(d.nombre_testigo_cierre2);
+                        if (d.tipo_id_cierre2) setTipoIdCierre2(d.tipo_id_cierre2);
+                        if (d.numero_id_cierre2) setNumeroIdCierre2(d.numero_id_cierre2);
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos módulo 6:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
+    }, []);
+
     const guardarBorrador = () => {
         const borrador = {
             modulo: 6, visita_id: contexto.visita_id, folio: contexto.folio,
@@ -189,6 +255,12 @@ const ActaCircunstanciada = () => {
                     articulo1, de1, articulo2, de2, articulo3, de3, articulo4, de4,
                     manifestaciones,
                     fecha_cierre: fechaActa, hora_cierre: horaActa,
+                    nombre_testigo_cierre1: nombreTestigoCierre1,
+                    tipo_id_cierre1: tipoIdCierre1,
+                    numero_id_cierre1: numeroIdCierre1,
+                    nombre_testigo_cierre2: nombreTestigoCierre2,
+                    tipo_id_cierre2: tipoIdCierre2,
+                    numero_id_cierre2: numeroIdCierre2,
                     folio: folio
                 })
             });
@@ -203,7 +275,12 @@ const ActaCircunstanciada = () => {
         }
     };
 
-    if (!contexto) return <div className="p-10 text-center font-bold">Cargando...</div>;
+    if (!contexto) return null;
+    if (cargando) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
+        </div>
+    );
     const { folio, datosPsg, supervisor, fecha } = contexto;
 
     return (
@@ -349,7 +426,7 @@ const ActaCircunstanciada = () => {
                 )}
 
                 {/* PÁGINA 4 */}
-                {pagina === 4 && (
+                {pagina === 4 && PAGINA4_HABILITADA && (
                     <div className="animate-fade-in space-y-6">
                         <h3 className="text-red-600 font-bold text-center text-lg uppercase">VII. HECHOS U OBSERVACIONES DETECTADAS</h3>
                         <div>
@@ -428,7 +505,7 @@ const ActaCircunstanciada = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && <button
+                            {puedeDescargar && !soloVista && <button
                                 onClick={(e) => { e.stopPropagation(); generarPdfModulo6({
                                     acta_no: actaNo,
                                     folio,
@@ -470,12 +547,18 @@ const ActaCircunstanciada = () => {
                 </div>
                 <div className="flex gap-4 items-center">
                     {pagina > 1 && (
-                        <button onClick={() => setPagina(pagina - 1)} className="border-2 border-red-600 text-red-600 px-4 py-2 rounded-full hover:bg-red-50 flex items-center gap-2 text-sm font-bold transition-colors">
+                        <button onClick={() => {
+                            const anterior = pagina - 1;
+                            setPagina(!PAGINA4_HABILITADA && anterior === 4 ? 3 : anterior);
+                        }} className="border-2 border-red-600 text-red-600 px-4 py-2 rounded-full hover:bg-red-50 flex items-center gap-2 text-sm font-bold transition-colors">
                             <ChevronLeft size={20} /> PÁGINA ANTERIOR
                         </button>
                     )}
                     {pagina < 5 ? (
-                        <button onClick={() => setPagina(pagina + 1)} className="bg-red-600 text-white px-4 py-2 rounded-full shadow hover:bg-red-700 flex items-center gap-2 text-sm font-bold transition-transform active:scale-95">
+                        <button onClick={() => {
+                            const siguiente = pagina + 1;
+                            setPagina(!PAGINA4_HABILITADA && siguiente === 4 ? 5 : siguiente);
+                        }} className="bg-red-600 text-white px-4 py-2 rounded-full shadow hover:bg-red-700 flex items-center gap-2 text-sm font-bold transition-transform active:scale-95">
                             PÁGINA SIGUIENTE <ChevronRight size={20} />
                         </button>
                     ) : (
