@@ -41,76 +41,15 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔴 CORRECCIÓN 3: Ruta protegida para documentos firmados (Transmitir desde Google Drive)
-import { google } from 'googleapis';
-import fs from 'fs';
-
-app.get('/uploads/documentos_firmados/:archivo', verificarToken, async (req, res) => {
-    try {
-        const safeFilename = path.basename(req.params.archivo);
-
-        // Buscar el File ID en la base de datos
-        const dbRes = await pool.query(
-            'SELECT ruta_archivo FROM documentos_firmados WHERE nombre_archivo = $1',
-            [safeFilename]
-        );
-
-        if (dbRes.rows.length === 0) {
-            return res.status(404).json({ error: 'Archivo no encontrado en la base de datos.' });
+// 🔴 CORRECCIÓN 3: Ruta protegida para documentos firmados
+app.get('/uploads/documentos_firmados/:archivo', verificarToken, (req, res) => {
+    const safeFilename = path.basename(req.params.archivo);
+    const rutaArchivo = path.join(__dirname, 'uploads', 'documentos_firmados', safeFilename);
+    res.sendFile(rutaArchivo, (err) => {
+        if (err) {
+            res.status(404).json({ error: 'Archivo no encontrado.' });
         }
-
-        const driveFileId = dbRes.rows[0].ruta_archivo;
-
-        // Obtener el cliente de Google Drive
-        let driveClient = null;
-        let credentials;
-        if (process.env.GOOGLE_CREDENTIALS) {
-            credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-        } else {
-            const credPath = path.resolve('./google-credentials.json');
-            if (fs.existsSync(credPath)) {
-                credentials = JSON.parse(fs.readFileSync(credPath, 'utf8'));
-            }
-        }
-
-        if (credentials) {
-            const auth = new google.auth.GoogleAuth({
-                credentials: {
-                    client_email: credentials.client_email,
-                    private_key: credentials.private_key.replace(/\\n/g, '\n')
-                },
-                scopes: ['https://www.googleapis.com/auth/drive']
-            });
-            driveClient = google.drive({ version: 'v3', auth });
-        }
-
-        if (!driveClient) {
-            return res.status(500).json({ error: 'Google Drive no configurado.' });
-        }
-
-        // Descargar y transmitir el archivo desde Google Drive al cliente
-        const response = await driveClient.files.get({
-            fileId: driveFileId,
-            alt: 'media',
-            supportsAllDrives: true
-        }, { responseType: 'stream' });
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
-
-        response.data
-            .on('error', err => {
-                console.error("Error en streaming de Google Drive:", err);
-                if (!res.headersSent) {
-                    res.status(500).json({ error: 'Error al descargar el archivo de Google Drive.' });
-                }
-            })
-            .pipe(res);
-
-    } catch (err) {
-        console.error("Error al obtener archivo firmado:", err);
-        res.status(500).json({ error: 'Error interno del servidor.' });
-    }
+    });
 });
 
 // ✅ Error 12: Un único health check en /api/health

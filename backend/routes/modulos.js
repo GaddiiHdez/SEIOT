@@ -5,44 +5,10 @@ import path from 'path';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import { verificarToken } from './auth.js';
-import { google } from 'googleapis';
 
 const router = express.Router();
 
-// ─── CONFIGURACIÓN GOOGLE DRIVE CLIENT ────────────────────────────────────────
-let drive = null;
-const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || '1jyGjAebaUzIDTgXnofaxxAe3vZCGhN4O';
-
-function getDriveClient() {
-    if (drive) return drive;
-    try {
-        let credentials;
-        if (process.env.GOOGLE_CREDENTIALS) {
-            credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-        } else {
-            const credPath = path.resolve('./google-credentials.json');
-            if (fs.existsSync(credPath)) {
-                credentials = JSON.parse(fs.readFileSync(credPath, 'utf8'));
-            }
-        }
-        if (credentials) {
-            const auth = new google.auth.GoogleAuth({
-                credentials: {
-                    client_email: credentials.client_email,
-                    private_key: credentials.private_key.replace(/\\n/g, '\n')
-                },
-                scopes: ['https://www.googleapis.com/auth/drive']
-            });
-            drive = google.drive({ version: 'v3', auth });
-            return drive;
-        }
-    } catch (e) {
-        console.error("Error al inicializar Google Drive client:", e);
-    }
-    return null;
-}
-
-// ─── CONFIGURACIÓN MULTER (Almacenamiento local temporal) ──────────────────────
+// ─── CONFIGURACIÓN MULTER (Almacenamiento local persistente) ───────────────────
 const storage = multer.diskStorage({
     destination: async (req, file, cb) => {
         const dir = './uploads/documentos_firmados';
@@ -87,7 +53,7 @@ async function verificarAccesoVisita(req, res, visita_id, client = pool) {
     return visita;
 }
 
-// ─── SUBIR DOCUMENTO FIRMADO A GOOGLE DRIVE ───────────────────────────────────
+// ─── SUBIR DOCUMENTO FIRMADO LOCAL ───────────────────────────────────────────
 router.post('/subir-firmado', verificarToken, upload.single('archivo'), async (req, res) => {
     try {
         if (!req.file) {
@@ -131,45 +97,14 @@ router.post('/subir-firmado', verificarToken, upload.single('archivo'), async (r
             });
         }
 
-        // Subir archivo a Google Drive
-        const driveClient = getDriveClient();
-        let fileIdOnDrive = null;
-
-        if (driveClient) {
-            try {
-                const response = await driveClient.files.create({
-                    requestBody: {
-                        name: nombreFinal,
-                        parents: [FOLDER_ID]
-                    },
-                    media: {
-                        mimeType: 'application/pdf',
-                        body: fs.createReadStream(rutaFinal)
-                    },
-                    supportsAllDrives: true
-                });
-                fileIdOnDrive = response.data.id;
-            } catch (driveError) {
-                console.error("Error subiendo a Google Drive:", driveError);
-                await fsPromises.unlink(rutaFinal).catch(() => {});
-                return res.status(500).json({ error: 'Error al subir el archivo a Google Drive.' });
-            }
-        } else {
-            await fsPromises.unlink(rutaFinal).catch(() => {});
-            return res.status(500).json({ error: 'Google Drive no está configurado.' });
-        }
-
-        // Borrar el archivo temporal local
-        await fsPromises.unlink(rutaFinal).catch(() => {});
-
         const resultado = await pool.query(
             `INSERT INTO documentos_firmados (visita_id, modulo, nombre_archivo, ruta_archivo)
              VALUES ($1, $2, $3, $4) RETURNING *`,
-            [visita_id, modulo, nombreFinal, fileIdOnDrive]
+            [visita_id, modulo, nombreFinal, rutaFinal]
         );
 
         res.json({
-            mensaje: 'Documento firmado subido correctamente a Google Drive.',
+            mensaje: 'Documento firmado subido correctamente.',
             documento: resultado.rows[0]
         });
 
@@ -179,7 +114,7 @@ router.post('/subir-firmado', verificarToken, upload.single('archivo'), async (r
     }
 });
 
-// ─── ELIMINAR DOCUMENTO FIRMADO ──────────────────────────────────────────────
+// ─── ELIMINAR DOCUMENTO FIRMADO LOCAL ─────────────────────────────────────────
 router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) => {
     try {
         const { visita_id, modulo } = req.params;
@@ -193,16 +128,12 @@ router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) =>
             return res.status(404).json({ error: 'No existe documento para eliminar.' });
         }
 
-        const driveFileId = resultado.rows[0].ruta_archivo;
+        const ruta = resultado.rows[0].ruta_archivo;
 
-        // Borrar de Google Drive
-        const driveClient = getDriveClient();
-        if (driveClient && driveFileId) {
-            try {
-                await driveClient.files.delete({ fileId: driveFileId });
-            } catch (driveError) {
-                console.error("Error eliminando de Google Drive:", driveError);
-            }
+        try {
+            await fsPromises.unlink(ruta);
+        } catch {
+            // El archivo físico puede no existir, continuar con eliminación en BD
         }
 
         await pool.query(
