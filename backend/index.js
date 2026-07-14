@@ -91,7 +91,8 @@ app.get('/uploads/documentos_firmados/:archivo', verificarToken, async (req, res
         // Descargar y transmitir el archivo desde Google Drive al cliente
         const response = await driveClient.files.get({
             fileId: driveFileId,
-            alt: 'media'
+            alt: 'media',
+            supportsAllDrives: true
         }, { responseType: 'stream' });
 
         res.setHeader('Content-Type', 'application/pdf');

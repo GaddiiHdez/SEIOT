@@ -145,7 +145,8 @@ router.post('/subir-firmado', verificarToken, upload.single('archivo'), async (r
                     media: {
                         mimeType: 'application/pdf',
                         body: fs.createReadStream(rutaFinal)
-                    }
+                    },
+                    supportsAllDrives: true
                 });
                 fileIdOnDrive = response.data.id;
             } catch (driveError) {
