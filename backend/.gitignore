@@ -1,3 +1,6 @@
 .env
 node_modules/
 uploads/
+google-credentials.json
+*.sql
+*.py
