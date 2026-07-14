@@ -74,13 +74,13 @@ app.get('/uploads/documentos_firmados/:archivo', verificarToken, async (req, res
         }
 
         if (credentials) {
-            const privateKey = credentials.private_key.replace(/\\n/g, '\n');
-            const auth = new google.auth.JWT(
-                credentials.client_email,
-                null,
-                privateKey,
-                ['https://www.googleapis.com/auth/drive']
-            );
+            const auth = new google.auth.GoogleAuth({
+                credentials: {
+                    client_email: credentials.client_email,
+                    private_key: credentials.private_key.replace(/\\n/g, '\n')
+                },
+                scopes: ['https://www.googleapis.com/auth/drive']
+            });
             driveClient = google.drive({ version: 'v3', auth });
         }
 
