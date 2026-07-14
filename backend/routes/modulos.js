@@ -26,10 +26,11 @@ function getDriveClient() {
             }
         }
         if (credentials) {
+            const privateKey = credentials.private_key.replace(/\\n/g, '\n');
             const auth = new google.auth.JWT(
                 credentials.client_email,
                 null,
-                credentials.private_key,
+                privateKey,
                 ['https://www.googleapis.com/auth/drive']
             );
             drive = google.drive({ version: 'v3', auth });
