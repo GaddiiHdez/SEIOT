@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, ShieldAlert, Users, FileText, BarChart2, CheckCircle, Wifi, Database, Info, HelpCircle } from 'lucide-react';
+import { BookOpen, ShieldAlert, Users, FileText, BarChart2, CheckCircle, Wifi, Database, Info, HelpCircle, AlertTriangle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 const ManualUsuario = () => {
