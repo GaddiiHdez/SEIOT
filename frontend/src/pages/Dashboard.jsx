@@ -1,9 +1,16 @@
 import { apiFetch } from '../utils/api.js';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X } from 'lucide-react';
+import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X, MoreVertical, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg'; 
+
+import { generarPdfModulo1 } from '../utils/generarPdfModulo1';
+import { generarPdfModulo2 } from '../utils/generarPdfModulo2';
+import { generarPdfModulo3 } from '../utils/generarPdfModulo3';
+import { generarPdfModulo4 } from '../utils/generarPdfModulo4';
+import { generarPdfModulo5 } from '../utils/generarPdfModulo5';
+import { generarPdfModulo6 } from '../utils/generarPdfModulo6'; 
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -33,7 +40,9 @@ const Dashboard = () => {
   const [datosPsg, setDatosPsg] = useState(visitaGuardada ? visitaGuardada.datosPsg : null);
   const [folioActivo, setFolioActivo] = useState(visitaGuardada ? visitaGuardada.folio : '');
   const [avance, setAvance] = useState(visitaGuardada?.avance || { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false });
-  const [pdfs, setPdfs] = useState({ 1: false, 2: false, 3: false, 4: false, 5: false, 6: false });
+  const [pdfs, setPdfs] = useState({ 1: null, 2: null, 3: null, 4: null, 5: null, 6: null });
+  const [menuAbierto, setMenuAbierto] = useState(null);
+  const [descargandoTodos, setDescargandoTodos] = useState(false);
   const [busquedaFolio, setBusquedaFolio] = useState('');
   const [supervisores, setSupervisores] = useState([]);
   const [supervisorSeleccionado, setSupervisorSeleccionado] = useState(visitaGuardada ? visitaGuardada.datosSupervisor : null);
@@ -57,12 +66,12 @@ const Dashboard = () => {
           const response = await apiFetch(`/api/modulos/firmado/${visitaId}/${modulo}`);
           if (response.ok) {
             const data = await response.json();
-            resultados[modulo] = data.existe;
+            resultados[modulo] = data.existe ? data.documento : null;
           } else {
-            resultados[modulo] = false;
+            resultados[modulo] = null;
           }
         } catch {
-          resultados[modulo] = false;
+          resultados[modulo] = null;
         }
       }));
       setPdfs(resultados);
@@ -70,6 +79,13 @@ const Dashboard = () => {
 
     consultarPdfs();
   }, [visitaId]);
+
+  // Cerrar menú al hacer clic en cualquier parte de la pantalla
+  useEffect(() => {
+    const cerrar = () => setMenuAbierto(null);
+    window.addEventListener('click', cerrar);
+    return () => window.removeEventListener('click', cerrar);
+  }, []);
 
 
   const handlePsgChange = async (e) => {
@@ -141,6 +157,208 @@ const Dashboard = () => {
         alert('No tienes permiso para ver visitas de otros usuarios.');
       } else { alert("No se encontró ese folio."); }
     } catch (error) { alert("No se encontró ese folio."); }
+  };
+
+  const descargarPdf = async (moduloId) => {
+    try {
+      let datosGuardados = null;
+      try {
+        const res = await apiFetch(`/api/modulos/modulo${moduloId}/${visitaId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.existe) {
+            datosGuardados = data.datos;
+            if (moduloId === 3 && data.checklist) {
+              const respuestas = {};
+              const recomendaciones = {};
+              data.checklist.forEach(item => {
+                respuestas[`p${item.pregunta_id}`] = item.respuesta;
+                if (item.observacion) recomendaciones[`p${item.pregunta_id}`] = item.observacion;
+              });
+              datosGuardados.respuestas = respuestas;
+              datosGuardados.recomendaciones = recomendaciones;
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Error al intentar cargar datos para PDF del modulo ${moduloId}:`, err);
+      }
+
+      const contexto = JSON.parse(localStorage.getItem('visitaActiva'));
+      if (!contexto) return;
+
+      let payload = {};
+      if (moduloId === 1) {
+        payload = {
+          oficio_no: datosGuardados?.oficio_no || `SDR/OF/${contexto.folio.split('/').pop() || ''}`,
+          fecha_emision: datosGuardados?.fecha_emision || new Date(),
+          nombre_psg: contexto.datosPsg?.nombre_titular || '',
+          domicilio: contexto.datosPsg?.domicilio || '',
+          nombre_servidor: contexto.datosSupervisor?.nombre || '',
+          cargo_servidor: contexto.datosSupervisor?.cargo || '',
+        };
+        await generarPdfModulo1(payload);
+      } else if (moduloId === 2) {
+        payload = {
+          oficio_no: datosGuardados?.oficio_no || `SDR/ORD/${contexto.folio.split('/').pop() || ''}`,
+          fecha: datosGuardados?.fecha || contexto.fecha || '',
+          nombre_psg: contexto.datosPsg?.nombre_titular || '',
+          domicilio: contexto.datosPsg?.domicilio || '',
+          calidad_sujeto: datosGuardados?.calidad_sujeto || contexto.datosPsg?.tipo_psg || '',
+          nombre_pc: datosGuardados?.nombre_pc || contexto.datosSupervisor?.nombre || '',
+          cargo_pc: datosGuardados?.cargo_pc || contexto.datosSupervisor?.cargo || '',
+          adscripcion: datosGuardados?.adscripcion || contexto.datosSupervisor?.adscripcion || '',
+          nombre_ordena: datosGuardados?.nombre_ordena || '',
+        };
+        await generarPdfModulo2(payload);
+      } else if (moduloId === 3) {
+        payload = {
+          fecha: datosGuardados?.fecha || contexto.fecha || '',
+          nombre_psg: datosGuardados?.nombre_psg || contexto.datosPsg?.nombre_titular || '',
+          tipo_psg: datosGuardados?.tipo_psg || contexto.datosPsg?.tipo_psg || '',
+          nombre_titular: datosGuardados?.nombre_titular || contexto.datosPsg?.representante || '',
+          telefono: datosGuardados?.telefono || contexto.datosPsg?.telefono || '',
+          municipio: datosGuardados?.municipio || contexto.datosPsg?.municipio || '',
+          localidad: datosGuardados?.localidad || contexto.datosPsg?.localidad || '',
+          latitud: datosGuardados?.latitud !== undefined && datosGuardados.latitud !== null ? datosGuardados.latitud : (contexto.datosPsg?.latitud || ''),
+          longitud: datosGuardados?.longitud !== undefined && datosGuardados.longitud !== null ? datosGuardados.longitud : (contexto.datosPsg?.longitud || ''),
+          cabezas: datosGuardados?.capacidad_instalada !== undefined && datosGuardados.capacidad_instalada !== null ? datosGuardados.capacidad_instalada : (contexto.datosPsg?.capacidad_maxima_bovinos || ''),
+          nombre_supervisor: datosGuardados?.nombre_supervisor || contexto.datosSupervisor?.nombre || '',
+          hora_inicio: datosGuardados?.hora_inicio || '',
+          hora_termino: datosGuardados?.hora_termino || '',
+          respuestas: datosGuardados?.respuestas || {},
+          recomendaciones: datosGuardados?.recomendaciones || {},
+          observaciones: datosGuardados?.observaciones || '',
+          cumple: datosGuardados?.cumple || false,
+          presenta_observaciones: datosGuardados?.presenta_observaciones || false,
+          requiere_seguimiento: datosGuardados?.requiere_seguimiento || false,
+          responsable_psg: datosGuardados?.responsable_psg || contexto.datosPsg?.nombre_titular || '',
+          responsable_supervisor: datosGuardados?.responsable_supervisor || contexto.datosSupervisor?.nombre || '',
+          nombre_testigo: datosGuardados?.nombre_testigo || '',
+        };
+        await generarPdfModulo3(payload);
+      } else if (moduloId === 4) {
+        payload = {
+          acta_no: datosGuardados?.acta_no || '',
+          folio: contexto.folio,
+          localidad: datosGuardados?.localidad || contexto.datosPsg?.localidad || '',
+          municipio: datosGuardados?.municipio || contexto.datosPsg?.municipio || '',
+          fecha: datosGuardados?.fecha || contexto.fecha || '',
+          hora: datosGuardados?.hora || '',
+          nombre_supervisor: datosGuardados?.nombre_supervisor || contexto.datosSupervisor?.nombre || '',
+          nombre_psg: datosGuardados?.nombre_psg || contexto.datosPsg?.nombre_titular || '',
+          tipo_psg: datosGuardados?.tipo_psg || contexto.datosPsg?.tipo_psg || '',
+          nombre_titular: datosGuardados?.nombre_titular || contexto.datosPsg?.representante || '',
+          domicilio: datosGuardados?.domicilio || contexto.datosPsg?.domicilio || '',
+          telefono: datosGuardados?.telefono || contexto.datosPsg?.telefono || '',
+          hora_inicio: datosGuardados?.hora_inicio || '',
+          hora_termino: datosGuardados?.hora_termino || '',
+          hechos_observados: datosGuardados?.hechos_observados || '',
+          no_realizo_manifestaciones: datosGuardados?.no_realizo_manifestaciones || false,
+          manifestaciones: datosGuardados?.manifestaciones || '',
+          nombre_testigo: datosGuardados?.nombre_testigo || '',
+          domicilio_testigo: datosGuardados?.domicilio_testigo || '',
+          nombre_testigo_cierre: datosGuardados?.nombre_testigo_cierre || '',
+        };
+        await generarPdfModulo4(payload);
+      } else if (moduloId === 5) {
+        payload = {
+          acta_no: datosGuardados?.acta_no || '',
+          folio: contexto.folio,
+          localidad: datosGuardados?.localidad || contexto.datosPsg?.localidad || '',
+          municipio: datosGuardados?.municipio || contexto.datosPsg?.municipio || '',
+          fecha: datosGuardados?.fecha || contexto.fecha || '',
+          hora: datosGuardados?.hora || '',
+          nombre_supervisor: datosGuardados?.nombre_supervisor || contexto.datosSupervisor?.nombre || '',
+          nombre_psg: datosGuardados?.nombre_psg || contexto.datosPsg?.nombre_titular || '',
+          tipo_psg: datosGuardados?.tipo_psg || contexto.datosPsg?.tipo_psg || '',
+          nombre_titular: datosGuardados?.nombre_titular || contexto.datosPsg?.representante || '',
+          domicilio: datosGuardados?.domicilio || contexto.datosPsg?.domicilio || '',
+          telefono: datosGuardados?.telefono || contexto.datosPsg?.telefono || '',
+          hora_inicio: datosGuardados?.hora_inicio || '',
+          hora_termino: datosGuardados?.hora_termino || '',
+          acta_hechos: datosGuardados?.acta_hechos || false,
+          otros_documentos: datosGuardados?.otros_documentos || '',
+          cumple: datosGuardados?.cumple || false,
+          presenta_observaciones: datosGuardados?.presenta_observaciones || false,
+          requiere_seguimiento: datosGuardados?.requiere_seguimiento || false,
+          observaciones_detectadas: datosGuardados?.observaciones_detectadas || '',
+          medidas_preventivas: datosGuardados?.medidas_preventivas || '',
+          no_realizo_manifestaciones: datosGuardados?.no_realizo_manifestaciones || false,
+          manifestaciones: datosGuardados?.manifestaciones || '',
+          nombre_testigo: datosGuardados?.nombre_testigo || '',
+        };
+        await generarPdfModulo5(payload);
+      } else if (moduloId === 6) {
+        payload = {
+          acta_no: datosGuardados?.acta_no || '',
+          folio: contexto.folio,
+          establecimiento: datosGuardados?.establecimiento || contexto.datosPsg?.nombre_titular || '',
+          clave_psg: datosGuardados?.clave_psg || contexto.datosPsg?.psg || '',
+          ubicacion: datosGuardados?.ubicacion || contexto.datosPsg?.domicilio || '',
+          localidad: datosGuardados?.localidad || contexto.datosPsg?.localidad || '',
+          municipio: datosGuardados?.municipio || contexto.datosPsg?.municipio || '',
+          estado: datosGuardados?.estado || contexto.datosPsg?.estado || 'NAYARIT',
+          nombre_oficial: datosGuardados?.nombre_oficial || contexto.datosSupervisor?.nombre || '',
+          tipo_id_responsable: datosGuardados?.tipo_id_responsable || contexto.datosPsg?.tipo_identificacion || '',
+          numero_id_responsable: datosGuardados?.numero_id_responsable || contexto.datosPsg?.numero_identificacion || '',
+          id_expedida_por: datosGuardados?.id_expedida_por || contexto.datosPsg?.expedida_por || '',
+          fecha_expedicion_id: datosGuardados?.fecha_expedicion_id || '',
+          ubicacion_compareciente: datosGuardados?.ubicacion_compareciente || contexto.datosPsg?.domicilio || '',
+          credencial_oficial_no: datosGuardados?.credencial_oficial_no || contexto.datosSupervisor?.credencial_oficial || '',
+          nombre_testigo1: datosGuardados?.nombre_testigo1 || '',
+          domicilio_testigo1: datosGuardados?.domicilio_testigo1 || '',
+          nombre_testigo2: datosGuardados?.nombre_testigo2 || '',
+          domicilio_testigo2: datosGuardados?.domicilio_testigo2 || '',
+          oficio_comision: datosGuardados?.oficio_comision || '',
+          fecha_comision: datosGuardados?.fecha_comision || '',
+          emite_comision: datosGuardados?.emite_comision || '',
+          hechos_observaciones: datosGuardados?.hechos_observaciones || '',
+          articulo1: datosGuardados?.articulo1 || '',
+          de1: datosGuardados?.de1 || '',
+          articulo2: datosGuardados?.articulo2 || '',
+          de2: datosGuardados?.de2 || '',
+          articulo3: datosGuardados?.articulo3 || '',
+          de3: datosGuardados?.de3 || '',
+          articulo4: datosGuardados?.articulo4 || '',
+          de4: datosGuardados?.de4 || '',
+          manifestaciones: datosGuardados?.manifestaciones || '',
+          fecha_cierre: datosGuardados?.fecha_cierre || '',
+          hora_cierre: datosGuardados?.hora_cierre || '',
+        };
+        await generarPdfModulo6(payload);
+      }
+    } catch (err) {
+      console.error(`Error al descargar el modulo ${moduloId}:`, err);
+      alert(`No se pudo generar el PDF del Módulo ${moduloId}.`);
+    }
+  };
+
+  const descargarTodosPdfs = async () => {
+    setDescargandoTodos(true);
+    for (let i = 1; i <= 6; i++) {
+      await descargarPdf(i);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    setDescargandoTodos(false);
+    alert("¡Los 6 formatos prellenados han sido descargados!");
+  };
+
+  const verPdfFirmado = async (moduloId) => {
+    const docInfo = pdfs[moduloId];
+    if (!docInfo || !docInfo.nombre_archivo) return;
+    try {
+      const res = await apiFetch(`/uploads/documentos_firmados/${docInfo.nombre_archivo}`);
+      if (!res || !res.ok) {
+        alert('No tienes permiso para ver este documento.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch {
+      alert('Error al obtener el documento.');
+    }
   };
 
   const tienePermiso = (mod) => usuario?.es_admin || usuario?.permisos?.[mod];
@@ -264,7 +482,14 @@ const Dashboard = () => {
                   <p className="text-xl font-mono text-red-700 font-bold">{folioActivo}</p>
                 </div>
               </div>
-
+              <button 
+                onClick={descargarTodosPdfs} 
+                disabled={descargandoTodos}
+                className="w-full md:w-auto bg-gradient-to-r from-red-700 to-red-900 text-white font-bold px-5 py-2.5 rounded-xl shadow hover:from-red-800 hover:to-red-950 flex items-center justify-center gap-2 text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download size={16} className={descargandoTodos ? "animate-spin" : ""} />
+                {descargandoTodos ? "DESCARGANDO..." : "DESCARGAR LOS 6 FORMATOS PRELLENADOS"}
+              </button>
             </div>
 
             <div className="transition-opacity duration-500">
@@ -274,7 +499,40 @@ const Dashboard = () => {
                   <div key={index} onClick={() => !modulo.bloqueado && modulo.ruta !== '#' && navigate(modulo.ruta)}
                     className={`relative p-6 rounded-xl shadow-md text-white transition-all ${modulo.bloqueado ? 'bg-gray-300 cursor-not-allowed opacity-80' : `${modulo.color} cursor-pointer hover:shadow-xl hover:-translate-y-1`}`}
                   >
-                    <div className="absolute top-4 right-4 bg-white/20 px-2 py-1 rounded text-[10px] font-bold">ETAPA 0{index + 1}</div>
+                    {/* Botón de Tres Puntos (Menú Contextual) */}
+                    {!modulo.bloqueado && (
+                      <div className="absolute top-3 right-2.5 z-30" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                          onClick={() => setMenuAbierto(menuAbierto === modulo.id ? null : modulo.id)} 
+                          className="hover:bg-white/20 p-1.5 rounded-full transition-colors outline-none flex items-center justify-center active:scale-95"
+                          title="Opciones de PDF"
+                        >
+                          <MoreVertical size={16} className="text-white" />
+                        </button>
+                        {menuAbierto === modulo.id && (
+                          <div className="absolute right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 w-48 text-slate-800 text-xs font-bold z-50 animate-scale-up">
+                            <button 
+                              onClick={() => { setMenuAbierto(null); descargarPdf(modulo.id); }}
+                              className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                            >
+                              <Download size={14} className="text-slate-500" />
+                              Descargar Prellenado
+                            </button>
+                            {pdfs[modulo.id] && (
+                              <button 
+                                onClick={() => { setMenuAbierto(null); verPdfFirmado(modulo.id); }}
+                                className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100 transition-colors"
+                              >
+                                <FileCheck size={14} className="text-blue-500" />
+                                Ver PDF Firmado
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className={`absolute top-4 ${modulo.bloqueado ? 'right-4' : 'right-10'} bg-white/20 px-2 py-1 rounded text-[10px] font-bold`}>ETAPA 0{index + 1}</div>
                     <div className="mb-4 bg-white/10 w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-sm">
                       {modulo.bloqueado ? <Lock size={24} className="text-gray-500" /> : modulo.icono}
                     </div>
