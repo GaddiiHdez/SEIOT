@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AlertProvider } from './context/AlertContext';
 import RutaProtegida from './components/RutaProtegida';
 
 import Login from './pages/Login';
@@ -17,11 +18,12 @@ import Consultas from './pages/Admin/Consultas';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Ruta pública */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+      <AlertProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Ruta pública */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Rutas protegidas */}
           <Route path="/dashboard" element={<RutaProtegida><Dashboard /></RutaProtegida>} />
@@ -35,6 +37,7 @@ function App() {
           <Route path="/admin/consultas" element={<RutaProtegida><Consultas /></RutaProtegida>} />
         </Routes>
       </BrowserRouter>
+      </AlertProvider>
     </AuthProvider>
   );
 }
