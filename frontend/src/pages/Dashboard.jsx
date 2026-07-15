@@ -64,6 +64,7 @@ const Dashboard = () => {
           psg: activa.psg,
           datosSupervisor: activa.datosSupervisor,
           avance: activa.avance,
+          estado_visita: activa.estado_visita,
           visita_id: activa.visita_id
         });
         recientes = recientes.slice(0, 4);
@@ -92,6 +93,7 @@ const Dashboard = () => {
       psg: nuevaVisita.psg,
       datosSupervisor: nuevaVisita.datosSupervisor,
       avance: nuevaVisita.avance,
+      estado_visita: nuevaVisita.estado_visita,
       visita_id: nuevaVisita.visita_id
     });
 
@@ -99,6 +101,15 @@ const Dashboard = () => {
     localStorage.setItem('seiot_visitas_recientes', JSON.stringify(recientes));
     setVisitasRecientes(recientes);
   };
+
+  // Mantener sincronizado el historial de visitas con el avance y estado actuales de la sesión activa
+  useEffect(() => {
+    if (!folioActivo) return;
+    const activa = JSON.parse(localStorage.getItem('visitaActiva') || 'null');
+    if (activa && activa.folio === folioActivo) {
+      agregarVisitaReciente(activa);
+    }
+  }, [avance, folioActivo]);
 
   useEffect(() => {
     apiFetch('/api/psg/supervisores')
