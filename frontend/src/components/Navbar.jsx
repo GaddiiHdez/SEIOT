@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, BarChart2, Users, ArrowLeft, X, Clock, ShieldAlert, Wrench } from 'lucide-react';
+import { LogOut, BarChart2, Users, ArrowLeft, X, Clock, ShieldAlert, Wrench, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg';
 
