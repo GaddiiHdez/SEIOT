@@ -48,6 +48,7 @@ const ActaCircunstanciada = () => {
 
     // Página 1
     const [actaNo, setActaNo] = useState("");
+    const [fecha, setFecha] = useState(contexto?.fecha || "");
     const [hora, setHora] = useState("");
     const [ubicacion, setUbicacion] = useState(contexto?.datosPsg?.domicilio || "");
 
@@ -104,6 +105,7 @@ const ActaCircunstanciada = () => {
                     if (data.existe && data.datos) {
                         const d = data.datos;
                         if (d.acta_no) setActaNo(d.acta_no);
+                        if (d.fecha) setFecha(new Date(d.fecha).toLocaleDateString('es-MX'));
                         if (d.hora) setHora(d.hora);
                         if (d.ubicacion) setUbicacion(d.ubicacion);
                         if (d.tipo_id_responsable) setTipoId(d.tipo_id_responsable);
@@ -141,6 +143,17 @@ const ActaCircunstanciada = () => {
                         if (d.nombre_testigo_cierre2) setNombreTestigoCierre2(d.nombre_testigo_cierre2);
                         if (d.tipo_id_cierre2) setTipoIdCierre2(d.tipo_id_cierre2);
                         if (d.numero_id_cierre2) setNumeroIdCierre2(d.numero_id_cierre2);
+                    } else {
+                        // Jalar datos del Modulo 3 si no existe registro
+                        const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
+                        if (responseM3.ok) {
+                            const dataM3 = await responseM3.json();
+                            if (dataM3.existe && dataM3.datos) {
+                                const d3 = dataM3.datos;
+                                if (d3.fecha) setFecha(new Date(d3.fecha).toLocaleDateString('es-MX'));
+                                if (d3.hora_inicio) setHora(d3.hora_inicio);
+                            }
+                        }
                     }
                 }
             } catch (error) {
@@ -151,7 +164,7 @@ const ActaCircunstanciada = () => {
         };
 
         cargarDatos();
-    }, []);
+    }, [contexto?.visita_id]);
 
     const guardarBorrador = () => {
         const borrador = {
@@ -233,7 +246,7 @@ const ActaCircunstanciada = () => {
                 body: JSON.stringify({
                     visita_id: contexto.visita_id,
                     acta_no: actaNo,
-                    fecha: contexto.fecha,
+                    fecha: fecha,
                     hora,
                     establecimiento: datosPsg.nombre_titular,
                     clave_psg: datosPsg.psg,
@@ -281,7 +294,7 @@ const ActaCircunstanciada = () => {
             <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
         </div>
     );
-    const { folio, datosPsg, supervisor, fecha } = contexto;
+    const { folio, datosPsg, supervisor } = contexto;
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-800">

@@ -43,6 +43,7 @@ const ActaHechos = () => {
     });
 
     const [actaNo, setActaNo] = useState("");
+    const [fecha, setFecha] = useState(contexto?.fecha || "");
     const [hora, setHora] = useState("");
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
@@ -70,6 +71,7 @@ const ActaHechos = () => {
                     if (data.existe && data.datos) {
                         const d = data.datos;
                         if (d.acta_no) setActaNo(d.acta_no);
+                        if (d.fecha) setFecha(new Date(d.fecha).toLocaleDateString('es-MX'));
                         if (d.hora) setHora(d.hora);
                         if (d.tipo_psg) setTipoPsg(d.tipo_psg);
                         if (d.telefono) setTelefono(d.telefono);
@@ -84,6 +86,21 @@ const ActaHechos = () => {
                         if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
                         if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
                         if (d.nombre_testigo_cierre) setNombreTestigoCierre(d.nombre_testigo_cierre);
+                    } else {
+                        // Jalar datos del Modulo 3 si no existe registro
+                        const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
+                        if (responseM3.ok) {
+                            const dataM3 = await responseM3.json();
+                            if (dataM3.existe && dataM3.datos) {
+                                const d3 = dataM3.datos;
+                                if (d3.fecha) setFecha(new Date(d3.fecha).toLocaleDateString('es-MX'));
+                                if (d3.hora_inicio) {
+                                    setHoraInicio(d3.hora_inicio);
+                                    setHora(d3.hora_inicio);
+                                }
+                                if (d3.hora_termino) setHoraTermino(d3.hora_termino);
+                            }
+                        }
                     }
                 }
             } catch (error) {
@@ -165,7 +182,7 @@ const ActaHechos = () => {
                 body: JSON.stringify({
                     visita_id: contexto.visita_id,
                     acta_no: actaNo,
-                    fecha: contexto.fecha,
+                    fecha: fecha,
                     hora,
                     hora_inicio: horaInicio,
                     hora_termino: horaTermino,
@@ -205,7 +222,7 @@ const ActaHechos = () => {
         </div>
     );
 
-    const { folio, datosPsg, supervisor, fecha } = contexto;
+    const { folio, datosPsg, supervisor } = contexto;
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-800">
