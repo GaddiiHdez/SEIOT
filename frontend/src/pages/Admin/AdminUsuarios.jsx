@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Users, Plus, ArrowLeft, Save, Trash2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { apiFetch } from '../../utils/api.js';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
+import Navbar from '../../components/Navbar';
 
 const PERMISOS_CONFIG = [
     { key: 'modulo1', label: 'Módulo 1 - Oficio de Notificación' },
@@ -154,19 +155,7 @@ const AdminUsuarios = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
-            {/* Header */}
-            <div className="bg-red-900 text-white p-4 flex items-center justify-between shadow-lg">
-                <div className="flex items-center gap-4">
-                    <img src={logoGobierno} alt="Logo" className="h-10 object-contain" />
-                    <div>
-                        <p className="text-xs text-white/70 uppercase tracking-widest">Panel de Administración</p>
-                        <h1 className="font-bold text-lg">Gestión de Usuarios</h1>
-                    </div>
-                </div>
-                <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-bold">
-                    <ArrowLeft size={18} /> Volver al Dashboard
-                </button>
-            </div>
+            <Navbar />
 
             <div className="max-w-5xl mx-auto p-6">
 

@@ -11,6 +11,7 @@ import { generarPdfModulo3 } from '../utils/generarPdfModulo3';
 import { generarPdfModulo4 } from '../utils/generarPdfModulo4';
 import { generarPdfModulo5 } from '../utils/generarPdfModulo5';
 import { generarPdfModulo6 } from '../utils/generarPdfModulo6'; 
+import Navbar from '../components/Navbar'; 
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -400,60 +401,14 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <nav className="bg-gradient-to-r from-red-950 via-red-900 to-red-950 text-white px-6 py-3 shadow-lg border-b-2 border-amber-500 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
-        <div className="flex items-center gap-4">
-          <div className="bg-white p-1 rounded-xl shadow-inner flex items-center justify-center">
-            <img src={logoGobierno} alt="Logo" className="h-10 object-contain rounded-lg" />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-xl tracking-tight leading-none text-white">SEIOT</h1>
-            <p className="text-[10px] text-amber-400 font-bold tracking-widest uppercase mt-0.5">MÓDULO DE SUPERVISIÓN</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-6">
-          {/* Módulos de administración */}
-          <div className="flex items-center gap-2">
-            {puedeConsultas && (
-              <button 
-                onClick={() => navigate('/admin/consultas')} 
-                className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 border border-white/25 text-white px-4 py-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
-              >
-                <BarChart2 size={14} /> Consultas
-              </button>
-            )}
-            {(usuario?.es_admin || usuario?.permisos?.panel_admin) && (
-              <button 
-                onClick={() => navigate('/admin/usuarios')} 
-                className="flex items-center gap-2 text-xs bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 px-4 py-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
-              >
-                <Users size={14} /> Usuarios
-              </button>
-            )}
-          </div>
-
-          {/* Saludo y acciones de sesión */}
-          <div className="flex items-center gap-4 border-l border-white/15 pl-6">
-            <span className="text-white/80 text-xs hidden md:block">
-              Hola, <span className="font-bold text-amber-300">{usuario?.nombre || 'Usuario'}</span>
-            </span>
-            {folioActivo && !esVista && permisosListos && (
-              <button 
-                onClick={() => { setFolioActivo(''); setPsgInput(''); setDatosPsg(null); setSupervisorSeleccionado(null); setAvance({ modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false }); localStorage.removeItem('visitaActiva'); localStorage.removeItem('desdeConsultas'); }} 
-                className="flex items-center gap-1.5 text-xs bg-orange-600/90 hover:bg-orange-700 text-white px-3.5 py-2.5 rounded-lg font-bold transition-all active:scale-95 shadow-sm"
-              >
-                <X size={14} /> Limpiar
-              </button>
-            )}
-            <button 
-              onClick={() => { localStorage.removeItem('seiot_token'); localStorage.removeItem('visitaActiva'); localStorage.removeItem('desdeConsultas'); window.history.go(-(window.history.length - 1)); window.location.replace('/login'); }} 
-              className="flex items-center gap-1.5 text-xs bg-red-700/80 hover:bg-red-800 text-white px-3.5 py-2.5 rounded-lg font-bold transition-all active:scale-95 shadow-sm border border-red-600/20"
-            >
-              <LogOut size={14} /> Salir
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Navbar 
+        folioActivo={folioActivo} 
+        setFolioActivo={setFolioActivo} 
+        setPsgInput={setPsgInput} 
+        setDatosPsg={setDatosPsg} 
+        setSupervisorSeleccionado={setSupervisorSeleccionado} 
+        setAvance={setAvance} 
+      />
 
       <div className="max-w-7xl mx-auto p-6">
 

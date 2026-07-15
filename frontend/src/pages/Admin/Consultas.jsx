@@ -5,6 +5,7 @@ import { apiFetch } from '../../utils/api.js';
 import { Search, Download, X, ArrowLeft, BarChart2, CheckCircle, Clock, LogOut } from 'lucide-react';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import * as XLSX from 'xlsx';
+import Navbar from '../../components/Navbar';
 
 // ─── MUNICIPIOS DE NAYARIT ────────────────────────────────────────────────────
 const MUNICIPIOS = [
@@ -181,25 +182,7 @@ const Consultas = () => {
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
 
-            {/* HEADER */}
-            <div className="bg-red-900 text-white p-4 flex items-center justify-between shadow-lg">
-                <div className="flex items-center gap-4">
-                    <img src={logoGobierno} alt="Logo" className="h-10 object-contain" />
-                    <div>
-                        <p className="text-xs text-white/70 uppercase tracking-widest">Panel de Administración</p>
-                        <h1 className="font-bold text-lg flex items-center gap-2"><BarChart2 size={20} /> Consultas</h1>
-                    </div>
-                </div>
-                {usuario?.rol === 'vista' ? (
-                    <button onClick={logout} className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-bold">
-                        <LogOut size={18} /> Cerrar Sesión
-                    </button>
-                ) : (
-                    <button onClick={() => { localStorage.removeItem('visitaActiva'); localStorage.removeItem('desdeConsultas'); window.location.replace('/dashboard'); }} className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-bold">
-                        <ArrowLeft size={18} /> Volver al Dashboard
-                    </button>
-                )}
-            </div>
+            <Navbar />
 
             <div className="max-w-7xl mx-auto p-6 space-y-6">
 
