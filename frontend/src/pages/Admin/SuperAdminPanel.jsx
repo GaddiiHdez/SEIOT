@@ -42,7 +42,7 @@ const SuperAdminPanel = () => {
         setLoadingBackup(true);
         setResultado(null);
         try {
-            const res = await apiFetch('/api/auth/superadmin/backup', {
+            const res = await apiFetch('/api/superadmin/backup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ confirmacion: claveBackup.trim() })
@@ -98,7 +98,7 @@ const SuperAdminPanel = () => {
             try {
                 const backupData = JSON.parse(e.target.result);
                 
-                const res = await apiFetch('/api/auth/superadmin/restore', {
+                const res = await apiFetch('/api/superadmin/restore', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -143,7 +143,7 @@ const SuperAdminPanel = () => {
         setLoadingReset(true);
         setResultado(null);
         try {
-            const res = await apiFetch('/api/auth/superadmin/reset', {
+            const res = await apiFetch('/api/superadmin/reset', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ confirmacion: claveReset.trim() })

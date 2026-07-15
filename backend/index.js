@@ -7,6 +7,7 @@ import pool from './db.js';
 import psgRoutes from './routes/psg.js';
 import authRoutes from './routes/auth.js';
 import modulosRoutes from './routes/modulos.js';
+import superadminRoutes from './routes/superadmin.js';
 import { verificarToken } from './routes/auth.js';
 
 dotenv.config();
@@ -61,6 +62,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/psg', psgRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/modulos', modulosRoutes);
+app.use('/api/superadmin', superadminRoutes);
 
 // Rutas de diagnóstico - solo en desarrollo
 if (process.env.NODE_ENV !== 'production') {
