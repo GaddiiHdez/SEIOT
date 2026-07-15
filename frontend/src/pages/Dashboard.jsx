@@ -463,8 +463,9 @@ const Dashboard = () => {
     { id: 5, nombre: "Acta de Supervisión", ruta: "/modulo5", icono: <FileSignature size={32} />, color: avance.modulo5 ? "bg-green-600" : "bg-blue-600", bloqueado: esVista ? !avance.modulo5 : (!tienePermiso('modulo5') || !avance.modulo4), completado: avance.modulo5 },
     { id: 6, nombre: "Acta Circunstanciada", ruta: "/modulo6", icono: <FileText size={32} />, color: avance.modulo6 ? "bg-green-600" : "bg-blue-600", bloqueado: esVista ? !avance.modulo6 : (!tienePermiso('modulo6') || !avance.modulo5), completado: avance.modulo6 },
   ];
-  const modulosCompletados = Object.values(avance).filter(Boolean).length;
-  const porcentajeAvance = Math.round((modulosCompletados / 6) * 100);
+  const esFinalizada = JSON.parse(localStorage.getItem('visitaActiva') || 'null')?.estado_visita === 'finalizado';
+  const modulosCompletados = esFinalizada ? 6 : Object.values(avance).filter(Boolean).length;
+  const porcentajeAvance = esFinalizada ? 100 : Math.round((modulosCompletados / 6) * 100);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -654,7 +655,7 @@ const Dashboard = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {visitasRecientes.map((vis, idx) => {
-                const complCount = Object.values(vis.avance || {}).filter(Boolean).length;
+                const complCount = vis.estado_visita === 'finalizado' ? 6 : Object.values(vis.avance || {}).filter(Boolean).length;
                 return (
                   <div 
                     key={idx}
