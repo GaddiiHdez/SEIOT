@@ -116,41 +116,68 @@ const AdminUsuarios = () => {
         try {
             if (usuarioEditando) {
                 // Actualizar permisos
-                await apiFetch(`/api/auth/usuarios/${usuarioEditando.id}`, {
+                const res = await apiFetch(`/api/auth/usuarios/${usuarioEditando.id}`, {
                     method: 'PUT', headers,
                     body: JSON.stringify({ nombre, rol, activo: usuarioEditando.activo, ...permisos })
                 });
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert(data.error || 'Error al actualizar usuario');
+                    setGuardando(false);
+                    return;
+                }
                 // Cambiar contraseña si se escribió una
                 if (password) {
-                    await apiFetch(`/api/auth/usuarios/${usuarioEditando.id}/password`, {
+                    const resPass = await apiFetch(`/api/auth/usuarios/${usuarioEditando.id}/password`, {
                         method: 'PUT', headers,
                         body: JSON.stringify({ password })
                     });
+                    if (!resPass.ok) {
+                        const dataPass = await resPass.json();
+                        alert(`El usuario se actualizó pero falló el cambio de contraseña: ${dataPass.error}`);
+                        setGuardando(false);
+                        return;
+                    }
                 }
                 alert('Usuario actualizado correctamente');
             } else {
-                await apiFetch('/api/auth/usuarios', {
+                const res = await apiFetch('/api/auth/usuarios', {
                     method: 'POST', headers,
                     body: JSON.stringify({ nombre, usuario: usuarioInput, password, rol, ...permisos })
                 });
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert(data.error || 'Error al crear usuario');
+                    setGuardando(false);
+                    return;
+                }
                 alert('Usuario creado correctamente');
             }
             setMostrarFormulario(false);
             cargarUsuarios();
-        } catch { alert('Error al guardar'); }
+        } catch { alert('Error de comunicación con el servidor'); }
         setGuardando(false);
     };
 
     const desactivar = async (id, activo) => {
         const accion = activo ? 'desactivar' : 'activar';
         if (!confirm(`¿Deseas ${accion} este usuario?`)) return;
-        const res = await apiFetch(`/api/auth/usuarios/${id}`, {
-            method: activo ? 'DELETE' : 'PUT', headers,
-            body: !activo ? JSON.stringify({ activo: true }) : undefined
-        });
-        const data = await res.json();
-        if (!res.ok) { alert(data.error); return; }
-        cargarUsuarios();
+        try {
+            const res = await apiFetch(`/api/auth/usuarios/${id}/status`, {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ activo: !activo })
+            });
+            const data = await res.json();
+            if (!res.ok) { 
+                alert(data.error || 'Error al cambiar estado del usuario'); 
+                return; 
+            }
+            alert(`Usuario ${activo ? 'desactivado' : 'activado'} correctamente`);
+            cargarUsuarios();
+        } catch {
+            alert('Error de conexión al servidor');
+        }
     };
 
     return (

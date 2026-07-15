@@ -242,9 +242,10 @@ router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
 router.put('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
     try {
         const { id } = req.params;
+        const usuarioId = parseInt(id);
         const { nombre, activo, rol, modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4, ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas } = req.body;
 
-        const checkS = await pool.query('SELECT superadmin FROM usuarios WHERE id = $1', [id]);
+        const checkS = await pool.query('SELECT superadmin FROM usuarios WHERE id = $1', [usuarioId]);
         if (checkS.rows[0]?.superadmin && !req.usuario.superadmin) {
             return res.status(403).json({ error: 'No se puede editar al superadmin.' });
         }
@@ -253,7 +254,7 @@ router.put('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => 
         await pool.query(
             `UPDATE usuarios SET nombre=$1, activo=$2, rol=$3, es_admin=$4, modulo1=$5, modulo2=$6, modulo3=$7, modulo4=$8, modulo5=$9, modulo6=$10, modulo6_pagina4=$11, ver_visitas_otros=$12, editar_campos=$13, eliminar_documentos=$14, descargar_pdfs=$15, panel_admin=$16, consultas=$17, modificado_en=NOW()
              WHERE id=$18`,
-            [nombre, activo, rol, es_admin, modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4, ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas, id]
+            [nombre, activo, rol, es_admin, modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4, ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas, usuarioId]
         );
 
         res.json({ mensaje: 'Usuario actualizado correctamente' });
@@ -267,14 +268,15 @@ router.put('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => 
 router.put('/usuarios/:id/password', verificarToken, async (req, res) => {
     try {
         const { id } = req.params;
+        const usuarioId = parseInt(id);
         const { password } = req.body;
 
-        if (!req.usuario.es_admin && req.usuario.id !== parseInt(id)) {
+        if (!req.usuario.es_admin && req.usuario.id !== usuarioId) {
             return res.status(403).json({ error: 'No autorizado' });
         }
 
         const password_hash = await bcrypt.hash(password, 10);
-        await pool.query('UPDATE usuarios SET password_hash=$1, modificado_en=NOW() WHERE id=$2', [password_hash, id]);
+        await pool.query('UPDATE usuarios SET password_hash=$1, modificado_en=NOW() WHERE id=$2', [password_hash, usuarioId]);
 
         res.json({ mensaje: 'Contraseña actualizada correctamente' });
     } catch (error) {
@@ -287,11 +289,12 @@ router.put('/usuarios/:id/password', verificarToken, async (req, res) => {
 router.delete('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const check = await pool.query('SELECT superadmin FROM usuarios WHERE id = $1', [id]);
+        const usuarioId = parseInt(id);
+        const check = await pool.query('SELECT superadmin FROM usuarios WHERE id = $1', [usuarioId]);
         if (check.rows[0]?.superadmin) {
             return res.status(403).json({ error: 'No se puede desactivar al superadmin.' });
         }
-        await pool.query('UPDATE usuarios SET activo=false, modificado_en=NOW() WHERE id=$1', [id]);
+        await pool.query('UPDATE usuarios SET activo=false, modificado_en=NOW() WHERE id=$1', [usuarioId]);
         res.json({ mensaje: 'Usuario desactivado correctamente' });
     } catch (error) {
         console.error('Error desactivar usuario:', error);
@@ -345,6 +348,32 @@ router.post('/superadmin/reset', verificarToken, async (req, res) => {
         await pool.query('ROLLBACK');
         console.error('Error reset base de datos:', error);
         res.status(500).json({ error: 'Error interno al intentar restablecer la base de datos.' });
+    }
+});
+
+// ─── ACTIVAR/DESACTIVAR USUARIO (solo admin) ─────────────────────────────────
+router.patch('/usuarios/:id/status', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const usuarioId = parseInt(id);
+        const { activo } = req.body;
+        
+        if (activo === undefined) {
+            return res.status(400).json({ error: 'Estado activo requerido.' });
+        }
+
+        if (activo === false) {
+            const check = await pool.query('SELECT superadmin FROM usuarios WHERE id = $1', [usuarioId]);
+            if (check.rows[0]?.superadmin) {
+                return res.status(403).json({ error: 'No se puede desactivar al superadmin.' });
+            }
+        }
+
+        await pool.query('UPDATE usuarios SET activo=$1, modificado_en=NOW() WHERE id=$2', [activo, usuarioId]);
+        res.json({ mensaje: `Usuario ${activo ? 'activado' : 'desactivado'} correctamente` });
+    } catch (error) {
+        console.error('Error cambiar estado activo usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
