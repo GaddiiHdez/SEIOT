@@ -73,6 +73,16 @@ export const AlertProvider = ({ children }) => {
         };
     }, []);
 
+    // Auto-cerrar alertas de éxito o info después de 3.5 segundos
+    useEffect(() => {
+        if (alertState.isOpen && (alertState.type === 'success' || alertState.type === 'info')) {
+            const timer = setTimeout(() => {
+                closeAlert();
+            }, 3500);
+            return () => clearTimeout(timer);
+        }
+    }, [alertState.isOpen, alertState.type]);
+
     const closeAlert = () => {
         setAlertState(prev => ({ ...prev, isOpen: false }));
     };
