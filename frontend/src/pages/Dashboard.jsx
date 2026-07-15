@@ -1,7 +1,7 @@
 import { apiFetch } from '../utils/api.js';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X, MoreVertical, Download } from 'lucide-react';
+import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X, MoreVertical, Download, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg'; 
 
@@ -47,6 +47,58 @@ const Dashboard = () => {
   const [busquedaFolio, setBusquedaFolio] = useState('');
   const [supervisores, setSupervisores] = useState([]);
   const [supervisorSeleccionado, setSupervisorSeleccionado] = useState(visitaGuardada ? visitaGuardada.datosSupervisor : null);
+  const [visitasRecientes, setVisitasRecientes] = useState([]);
+
+  useEffect(() => {
+    try {
+      const guardadas = JSON.parse(localStorage.getItem('seiot_visitas_recientes') || '[]');
+      setVisitasRecientes(guardadas);
+      
+      const activa = JSON.parse(localStorage.getItem('visitaActiva') || 'null');
+      if (activa) {
+        let recientes = [...guardadas];
+        recientes = recientes.filter(v => v.folio !== activa.folio);
+        recientes.unshift({
+          folio: activa.folio,
+          datosPsg: activa.datosPsg,
+          psg: activa.psg,
+          datosSupervisor: activa.datosSupervisor,
+          avance: activa.avance,
+          visita_id: activa.visita_id
+        });
+        recientes = recientes.slice(0, 4);
+        localStorage.setItem('seiot_visitas_recientes', JSON.stringify(recientes));
+        setVisitasRecientes(recientes);
+      }
+    } catch {
+      setVisitasRecientes([]);
+    }
+  }, []);
+
+  const agregarVisitaReciente = (nuevaVisita) => {
+    let recientes = [];
+    try {
+      recientes = JSON.parse(localStorage.getItem('seiot_visitas_recientes') || '[]');
+    } catch {
+      recientes = [];
+    }
+
+    // Filtrar para mover al inicio si ya existe
+    recientes = recientes.filter(v => v.folio !== nuevaVisita.folio);
+
+    recientes.unshift({
+      folio: nuevaVisita.folio,
+      datosPsg: nuevaVisita.datosPsg,
+      psg: nuevaVisita.psg,
+      datosSupervisor: nuevaVisita.datosSupervisor,
+      avance: nuevaVisita.avance,
+      visita_id: nuevaVisita.visita_id
+    });
+
+    recientes = recientes.slice(0, 4);
+    localStorage.setItem('seiot_visitas_recientes', JSON.stringify(recientes));
+    setVisitasRecientes(recientes);
+  };
 
   useEffect(() => {
     apiFetch('/api/psg/supervisores')
@@ -161,6 +213,16 @@ const Dashboard = () => {
       setFolioActivo(nuevoFolio);
       setBusquedaFolio('');
       guardarContextoGlobal(nuevoFolio, datosPsg, visita.id, supervisorSeleccionado);
+      
+      // Registrar visita en el historial
+      agregarVisitaReciente({
+        folio: nuevoFolio,
+        datosPsg: datosPsg,
+        psg: psgInput,
+        datosSupervisor: supervisorSeleccionado,
+        avance: { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false },
+        visita_id: visita.id
+      });
       alert(`VISITA INICIADA.\nFolio: ${nuevoFolio}`);
     } catch (error) { console.error('Error creando visita:', error); }
   };
@@ -177,6 +239,9 @@ const Dashboard = () => {
         const avanceRecuperado = visitaEncontrada.avance || { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false };
         localStorage.setItem('visitaActiva', JSON.stringify(visitaEncontrada));
         setAvance(avanceRecuperado);
+        
+        // Registrar visita en el historial
+        agregarVisitaReciente(visitaEncontrada);
         alert(`Expediente recuperado:\n${visitaEncontrada.folio}`);
       } else if (response.status === 403) {
         alert('No tienes permiso para ver visitas de otros usuarios.');
@@ -398,6 +463,8 @@ const Dashboard = () => {
     { id: 5, nombre: "Acta de Supervisión", ruta: "/modulo5", icono: <FileSignature size={32} />, color: avance.modulo5 ? "bg-green-600" : "bg-blue-600", bloqueado: esVista ? !avance.modulo5 : (!tienePermiso('modulo5') || !avance.modulo4), completado: avance.modulo5 },
     { id: 6, nombre: "Acta Circunstanciada", ruta: "/modulo6", icono: <FileText size={32} />, color: avance.modulo6 ? "bg-green-600" : "bg-blue-600", bloqueado: esVista ? !avance.modulo6 : (!tienePermiso('modulo6') || !avance.modulo5), completado: avance.modulo6 },
   ];
+  const modulosCompletados = Object.values(avance).filter(Boolean).length;
+  const porcentajeAvance = Math.round((modulosCompletados / 6) * 100);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -480,22 +547,37 @@ const Dashboard = () => {
         {/* --- ZONA 3: MÓDULOS --- */}
         {folioActivo && (
           <div className="animate-fade-in">
-            <div className="bg-yellow-50 rounded-xl shadow-sm p-4 mb-6 border border-yellow-200 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-yellow-100 p-2 rounded-full text-yellow-700"><FileText size={20} /></div>
-                <div>
-                  <p className="text-xs text-gray-500 font-bold uppercase">Folio Activo:</p>
-                  <p className="text-xl font-mono text-red-700 font-bold">{folioActivo}</p>
+            <div className="bg-yellow-50 rounded-xl shadow-sm p-6 mb-6 border border-yellow-200 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-yellow-100 p-2 rounded-full text-yellow-700"><FileText size={20} /></div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase">Folio Activo:</p>
+                    <p className="text-xl font-mono text-red-700 font-bold">{folioActivo}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={descargarTodosPdfs} 
+                  disabled={descargandoTodos}
+                  className="w-full md:w-auto bg-gradient-to-r from-red-700 to-red-900 text-white font-bold px-5 py-2.5 rounded-xl shadow hover:from-red-800 hover:to-red-950 flex items-center justify-center gap-2 text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download size={16} className={descargandoTodos ? "animate-spin" : ""} />
+                  {descargandoTodos ? "DESCARGANDO..." : "DESCARGAR LOS 6 FORMATOS PRELLENADOS"}
+                </button>
+              </div>
+
+              <div className="border-t border-yellow-200/60 pt-4">
+                <div className="flex justify-between items-center text-xs font-bold text-gray-600 mb-1.5">
+                  <span className="uppercase text-[10px] tracking-wide">Avance general de la supervisión:</span>
+                  <span className="text-red-700 font-mono">{modulosCompletados} de 6 etapas ({porcentajeAvance}%)</span>
+                </div>
+                <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden shadow-inner">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 h-full rounded-full transition-all duration-500 ease-out" 
+                    style={{ width: `${porcentajeAvance}%` }}
+                  />
                 </div>
               </div>
-              <button 
-                onClick={descargarTodosPdfs} 
-                disabled={descargandoTodos}
-                className="w-full md:w-auto bg-gradient-to-r from-red-700 to-red-900 text-white font-bold px-5 py-2.5 rounded-xl shadow hover:from-red-800 hover:to-red-950 flex items-center justify-center gap-2 text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Download size={16} className={descargandoTodos ? "animate-spin" : ""} />
-                {descargandoTodos ? "DESCARGANDO..." : "DESCARGAR LOS 6 FORMATOS PRELLENADOS"}
-              </button>
             </div>
 
             <div className="transition-opacity duration-500">
@@ -560,6 +642,50 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- ZONA 4: VISITAS RECIENTES --- */}
+        {visitasRecientes.length > 0 && (
+          <div className="mt-12 animate-fade-in border-t border-gray-200 pt-8">
+            <h2 className="text-gray-600 font-bold text-sm uppercase mb-4 flex items-center gap-2">
+              <Clock size={16} className="text-gray-500" /> Historial de Visitas Recientes
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {visitasRecientes.map((vis, idx) => {
+                const complCount = Object.values(vis.avance || {}).filter(Boolean).length;
+                return (
+                  <div 
+                    key={idx}
+                    onClick={() => {
+                      setFolioActivo(vis.folio);
+                      setDatosPsg(vis.datosPsg);
+                      setPsgInput(vis.psg);
+                      setSupervisorSeleccionado(vis.datosSupervisor);
+                      setAvance(vis.avance || { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false });
+                      localStorage.setItem('visitaActiva', JSON.stringify(vis));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      alert(`Folio cargado: ${vis.folio}`);
+                    }}
+                    className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between group active:scale-98"
+                  >
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-extrabold uppercase mb-1">Clave PSG: {vis.psg}</p>
+                      <p className="font-mono text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors truncate" title={vis.folio}>{vis.folio}</p>
+                      <p className="text-[11px] text-gray-500 font-bold mt-2 line-clamp-1">Titular: {vis.datosPsg?.nombre_titular || '...'}</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                      <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500">
+                        {complCount} / 6 etapas
+                      </span>
+                      <span className="text-[10px] text-blue-500 font-bold group-hover:underline flex items-center gap-0.5">
+                        Abrir →
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
