@@ -58,7 +58,7 @@ async function verificarAccesoVisita(req, res, visita_id, client = pool) {
         return null;
     }
     const visita = visitaCheck.rows[0];
-    const puedeVerOtros = req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
+    const puedeVerOtros = req.usuario.superadmin || req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
     if (!puedeVerOtros && (visita.capturista_id === null || visita.capturista_id !== req.usuario.id)) {
         res.status(403).json({ error: 'No tienes permiso para modificar esta visita.' });
         return null;

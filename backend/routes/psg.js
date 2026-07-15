@@ -98,7 +98,7 @@ router.get('/visitas/buscar', verificarToken, async (req, res) => {
     try {
         const folio = req.query.folio;
         if (!folio) return res.status(400).json({ error: 'Folio requerido' });
-        const puedeVerOtros = req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
+        const puedeVerOtros = req.usuario.superadmin || req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
 
         const resultado = await pool.query(
             `SELECT v.*, 
