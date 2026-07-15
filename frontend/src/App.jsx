@@ -16,7 +16,7 @@ import ActaCircunstanciada from './pages/Modulo6/ActaCircunstanciada';
 import AdminUsuarios from './pages/Admin/AdminUsuarios';
 import Consultas from './pages/Admin/Consultas';
 import SuperAdminPanel from './pages/Admin/SuperAdminPanel';
-import ManualUsuario from './pages/ManualUsuario';
+import ManualUsuario from './pages/Manual/ManualUsuario';
 
 const SyncManager = () => {
   useEffect(() => {
