@@ -348,27 +348,4 @@ router.post('/superadmin/reset', verificarToken, async (req, res) => {
     }
 });
 
-// ─── SUPERADMIN: LIMPIAR USUARIOS NO-ADMINISTRADORES ─────────────────────────
-router.post('/superadmin/limpiar-usuarios', verificarToken, async (req, res) => {
-    try {
-        if (!req.usuario?.superadmin) {
-            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
-        }
-
-        const { confirmacion } = req.body;
-        if (confirmacion !== 'RESET-DATOS-SEIOT') {
-            return res.status(400).json({ error: 'Clave de confirmación incorrecta.' });
-        }
-
-        const result = await pool.query(
-            "DELETE FROM usuarios WHERE es_admin = false AND superadmin = false RETURNING id"
-        );
-
-        res.json({ mensaje: `Se eliminaron correctamente ${result.rowCount} usuario(s) auxiliares.` });
-    } catch (error) {
-        console.error('Error limpiar usuarios:', error);
-        res.status(500).json({ error: 'Error interno al intentar limpiar usuarios.' });
-    }
-});
-
 export default router;
