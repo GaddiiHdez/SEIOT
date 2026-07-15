@@ -244,6 +244,10 @@ const ActaCircunstanciada = () => {
     const { folio, datosPsg, supervisor } = contexto || {};
 
     const handleGuardar = async () => {
+        if (!actaNo.trim() || !hora || !ubicacion.trim() || !tipoId || !numeroId.trim() || !expide || !fechaExpId || !ubicacionCompareciente.trim() || !credencialNo.trim() || !oficioComision.trim() || !fechaComision || !emiteComision || !hechosObservaciones.trim() || !horaActa || !fechaActa) {
+            alert("⚠️ Por favor completa todos los campos requeridos para la formalidad legal del Acta Circunstanciada antes de guardar.");
+            return;
+        }
         try {
             const response = await apiFetch('/api/modulos/modulo6', {
                 method: 'POST',

@@ -137,6 +137,10 @@ const OrdenSupervision = () => {
     }, [contexto, navigate]);
 
     const handleGuardar = async () => {
+        if (!fecha || !calidadSujeto.trim() || !nombrePC.trim() || !cargoPC.trim() || !adscripcion.trim() || !tipoIdentificacion.trim() || !folioIdentificacion.trim() || !nombreOrdena || !domicilio.trim()) {
+            alert("⚠️ Por favor completa todos los campos obligatorios antes de continuar (Fecha, Calidad de Sujeto, Datos del Personal Comisionado, Identificación, Quién Ordena y Domicilio).");
+            return;
+        }
         try {
             const response = await apiFetch('/api/modulos/modulo2', {
                 method: 'POST',

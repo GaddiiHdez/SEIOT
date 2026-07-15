@@ -22,9 +22,6 @@ const SuperAdminPanel = () => {
     // Estado de retroalimentación
     const [resultado, setResultado] = useState(null);
 
-    const CLAVE_RESET = 'RESET-DATOS-SEIOT';
-    const CLAVE_BACKUP = 'RESPALDO-DATOS-SEIOT';
-
     useEffect(() => {
         // Bloquear acceso si no es SuperAdmin
         if (!usuario?.superadmin) {
@@ -34,8 +31,8 @@ const SuperAdminPanel = () => {
 
     // Función: Descargar Respaldo JSON
     const handleDownloadBackup = async () => {
-        if (claveBackup.trim() !== CLAVE_BACKUP) {
-            alert('⚠️ La clave para respaldos es incorrecta.');
+        if (!claveBackup.trim()) {
+            alert('⚠️ La clave para respaldos es requerida.');
             return;
         }
 
@@ -76,8 +73,8 @@ const SuperAdminPanel = () => {
 
     // Función: Cargar y Restaurar Respaldo
     const handleRestoreDatabase = () => {
-        if (claveBackup.trim() !== CLAVE_BACKUP) {
-            alert('⚠️ La clave para respaldos es incorrecta.');
+        if (!claveBackup.trim()) {
+            alert('⚠️ La clave para respaldos es requerida.');
             return;
         }
 
@@ -133,8 +130,8 @@ const SuperAdminPanel = () => {
 
     // Función: Reiniciar a ceros
     const handleResetDatabase = async () => {
-        if (claveReset.trim() !== CLAVE_RESET) {
-            alert('⚠️ La clave para reiniciar el sistema es incorrecta.');
+        if (!claveReset.trim()) {
+            alert('⚠️ La clave para reiniciar el sistema es requerida.');
             return;
         }
 

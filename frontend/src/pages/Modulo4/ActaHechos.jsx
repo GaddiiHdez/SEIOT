@@ -179,6 +179,10 @@ const ActaHechos = () => {
     const { folio, datosPsg, supervisor } = contexto || {};
 
     const handleFinalizarVisita = async () => {
+        if (!actaNo.trim() || !hora || !horaInicio || !horaTermino || !hechosObservados.trim() || !domicilio.trim()) {
+            alert("⚠️ Por favor completa todos los campos obligatorios antes de finalizar (Acta No., Hora, Horario de Diligencia, Hechos u Observaciones y Domicilio).");
+            return;
+        }
         try {
             const saveResponse = await apiFetch('/api/modulos/modulo4', {
                 method: 'POST',
@@ -243,6 +247,10 @@ const ActaHechos = () => {
     };
 
     const handleGuardar = async () => {
+        if (!actaNo.trim() || !hora || !horaInicio || !horaTermino || !hechosObservados.trim() || !domicilio.trim()) {
+            alert("⚠️ Por favor completa todos los campos obligatorios antes de guardar (Acta No., Hora, Horario de Diligencia, Hechos u Observaciones y Domicilio).");
+            return;
+        }
         try {
             const response = await apiFetch('/api/modulos/modulo4', {
                 method: 'POST',

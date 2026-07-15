@@ -204,6 +204,10 @@ const ActaSupervision = () => {
     const { folio, datosPsg, supervisor } = contexto || {};
 
     const handleGuardar = async () => {
+        if (!actaNo.trim() || !hora || !horaInicio || !horaTermino || !conclusion) {
+            alert("⚠️ Por favor completa todos los campos obligatorios antes de continuar (Acta No., Hora, Horario de Diligencia y Conclusión).");
+            return;
+        }
         try {
             const response = await apiFetch('/api/modulos/modulo5', {
                 method: 'POST',

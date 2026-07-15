@@ -148,6 +148,10 @@ const Notificacion = () => {
     });
 
     const handleGuardar = async () => {
+        if (!nombreServidor.trim() || !cargoServidor.trim() || !domicilio.trim()) {
+            alert("⚠️ Por favor completa los campos obligatorios: Nombre del Servidor Público, Cargo y Domicilio antes de proceder.");
+            return;
+        }
         try {
             const response = await apiFetch('/api/modulos/modulo1', {
                 method: 'POST',

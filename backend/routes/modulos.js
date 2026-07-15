@@ -132,6 +132,16 @@ router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) =>
     try {
         const { visita_id, modulo } = req.params;
 
+        // 1. Verificar permiso específico de eliminar documentos
+        const puedeEliminar = req.usuario.es_admin || req.usuario.permisos?.eliminar_documentos;
+        if (!puedeEliminar) {
+            return res.status(403).json({ error: 'No tienes permiso para eliminar documentos firmados.' });
+        }
+
+        // 2. Verificar acceso a la visita
+        const visita = await verificarAccesoVisita(req, res, visita_id);
+        if (!visita) return;
+
         const resultado = await pool.query(
             'SELECT ruta_archivo FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
             [visita_id, modulo]
@@ -166,6 +176,10 @@ router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) =>
 router.get('/firmado/:visita_id/:modulo', verificarToken, async (req, res) => {
     try {
         const { visita_id, modulo } = req.params;
+
+        // Verificar acceso a la visita
+        const visita = await verificarAccesoVisita(req, res, visita_id);
+        if (!visita) return;
 
         const resultado = await pool.query(
             `SELECT id, nombre_archivo, fecha_subida 

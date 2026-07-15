@@ -282,14 +282,31 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
 
         const where = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
-        const [visitas, m1, m2, m3, m4, m5, m6] = await Promise.all([
-            pool.query(`SELECT v.*, p.razon_social, p.municipio, p.localidad, p.tipo_psg, p.telefono, p.domicilio FROM visitas v LEFT JOIN excel_psg p ON p.psg = v.psg ${where} ORDER BY v.fecha_inicio DESC`, params),
-            pool.query('SELECT * FROM modulo1_oficio_notificacion'),
-            pool.query('SELECT * FROM modulo2_orden_supervision'),
-            pool.query('SELECT * FROM modulo3_lista_verificacion'),
-            pool.query('SELECT * FROM modulo4_acta_hechos'),
-            pool.query('SELECT * FROM modulo5_acta_supervision'),
-            pool.query('SELECT * FROM modulo6_acta_circunstanciada'),
+        const visitas = await pool.query(
+            `SELECT v.id, v.folio, v.psg, v.supervisor, v.fecha_inicio,
+                    v.modulo1_completado, v.modulo2_completado, v.modulo3_completado,
+                    v.modulo4_completado, v.modulo5_completado, v.modulo6_completado,
+                    v.estado_visita, p.razon_social, p.municipio, p.localidad, p.tipo_psg, p.telefono, p.domicilio 
+             FROM visitas v 
+             LEFT JOIN excel_psg p ON p.psg = v.psg 
+             ${where} 
+             ORDER BY v.fecha_inicio DESC`, 
+            params
+        );
+
+        if (visitas.rows.length === 0) {
+            return res.json([]);
+        }
+
+        const visitaIds = visitas.rows.map(v => v.id);
+
+        const [m1, m2, m3, m4, m5, m6] = await Promise.all([
+            pool.query('SELECT * FROM modulo1_oficio_notificacion WHERE visita_id = ANY($1)', [visitaIds]),
+            pool.query('SELECT * FROM modulo2_orden_supervision WHERE visita_id = ANY($1)', [visitaIds]),
+            pool.query('SELECT * FROM modulo3_lista_verificacion WHERE visita_id = ANY($1)', [visitaIds]),
+            pool.query('SELECT * FROM modulo4_acta_hechos WHERE visita_id = ANY($1)', [visitaIds]),
+            pool.query('SELECT * FROM modulo5_acta_supervision WHERE visita_id = ANY($1)', [visitaIds]),
+            pool.query('SELECT * FROM modulo6_acta_circunstanciada WHERE visita_id = ANY($1)', [visitaIds]),
         ]);
 
         // Indexar módulos por visita_id
