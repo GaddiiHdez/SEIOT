@@ -19,7 +19,10 @@ export const AlertProvider = ({ children }) => {
         let type = 'info';
         let defaultTitle = 'Información';
 
-        if (
+        if (msgLower.includes('sin conexión') || msgLower.includes('sin conexion')) {
+            type = 'info';
+            defaultTitle = 'Guardado Local';
+        } else if (
             msgLower.includes('exito') || 
             msgLower.includes('éxito') || 
             msgLower.includes('correctamente') || 
@@ -73,9 +76,9 @@ export const AlertProvider = ({ children }) => {
         };
     }, []);
 
-    // Auto-cerrar alertas de éxito o info después de 3.5 segundos
+    // Auto-cerrar alertas de éxito después de 3.5 segundos
     useEffect(() => {
-        if (alertState.isOpen && (alertState.type === 'success' || alertState.type === 'info')) {
+        if (alertState.isOpen && alertState.type === 'success') {
             const timer = setTimeout(() => {
                 closeAlert();
             }, 3500);

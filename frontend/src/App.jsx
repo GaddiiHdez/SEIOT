@@ -34,7 +34,14 @@ const SyncManager = () => {
 
       for (const item of queue) {
         try {
-          const res = await apiFetch(item.endpoint, item.options);
+          const res = await apiFetch(item.endpoint, {
+            ...item.options,
+            isSyncing: true,
+            headers: {
+              ...item.options?.headers,
+              'Authorization': `Bearer ${localStorage.getItem('seiot_token')}`
+            }
+          });
           if (res && res.ok) {
             exitos++;
           } else {

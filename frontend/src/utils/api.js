@@ -56,9 +56,10 @@ export const apiFetch = async (endpoint, options = {}) => {
 
     const isPost = options.method === 'POST' || options.method === 'PUT';
     const isModuloSave = endpoint && endpoint.startsWith('/api/modulos/modulo');
+    const isSyncing = options.isSyncing;
 
     // Si no hay red y es un guardado de módulo, encolar localmente de inmediato
-    if (!navigator.onLine && isPost && isModuloSave) {
+    if (!navigator.onLine && isPost && isModuloSave && !isSyncing) {
         queueOfflineSync(endpoint, options);
         return new Response(JSON.stringify({ ok: true, offline: true, mensaje: 'Guardado en cola offline.' }), {
             status: 200,
@@ -80,7 +81,7 @@ export const apiFetch = async (endpoint, options = {}) => {
         return res;
     } catch (error) {
         // Si hay una falla de red (catch fetch), y es guardado de módulo, encolar
-        if (isPost && isModuloSave) {
+        if (isPost && isModuloSave && !isSyncing) {
             queueOfflineSync(endpoint, options);
             return new Response(JSON.stringify({ ok: true, offline: true, mensaje: 'Guardado en cola offline.' }), {
                 status: 200,
