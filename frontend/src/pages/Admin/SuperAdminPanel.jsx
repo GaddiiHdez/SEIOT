@@ -240,9 +240,9 @@ const SuperAdminPanel = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                             <button
                                 onClick={handleDownloadBackup}
-                                disabled={claveBackup.trim() !== CLAVE_BACKUP || loadingBackup}
+                                disabled={!claveBackup.trim() || loadingBackup}
                                 className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
-                                    claveBackup.trim() === CLAVE_BACKUP 
+                                    claveBackup.trim() 
                                         ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-950/40' 
                                         : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
                                 }`}
@@ -260,9 +260,9 @@ const SuperAdminPanel = () => {
 
                             <button
                                 onClick={handleRestoreDatabase}
-                                disabled={claveBackup.trim() !== CLAVE_BACKUP || !selectedFile || loadingRestore}
+                                disabled={!claveBackup.trim() || !selectedFile || loadingRestore}
                                 className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
-                                    (claveBackup.trim() === CLAVE_BACKUP && selectedFile) 
+                                    (claveBackup.trim() && selectedFile) 
                                         ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-950/40' 
                                         : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
                                 }`}
@@ -314,9 +314,9 @@ const SuperAdminPanel = () => {
 
                         <button
                             onClick={handleResetDatabase}
-                            disabled={claveReset.trim() !== CLAVE_RESET || loadingReset}
+                            disabled={!claveReset.trim() || loadingReset}
                             className={`w-full font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 mt-8 ${
-                                claveReset.trim() === CLAVE_RESET 
+                                claveReset.trim() 
                                     ? 'bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white shadow-md shadow-red-950/40' 
                                     : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
                             }`}
