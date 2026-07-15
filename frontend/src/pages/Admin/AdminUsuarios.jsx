@@ -369,7 +369,7 @@ const AdminUsuarios = () => {
                 {/* VENTANA EMERGENTE MODAL (Crear / Editar) */}
                 {mostrarFormulario && (
                     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-100 flex flex-col transform transition-all duration-300 scale-100 max-h-[90vh] overflow-hidden animate-scale-up">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full border border-slate-100 flex flex-col transform transition-all duration-300 scale-100 max-h-[90vh] overflow-hidden animate-scale-up">
                             
                             {/* Cabecera del Modal */}
                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -457,10 +457,10 @@ const AdminUsuarios = () => {
                                         <span>Permisos Individuales</span>
                                         <span className="text-[10px] text-slate-400 lowercase font-bold">Personaliza los accesos precargados</span>
                                     </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-1">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                                         {PERMISOS_CONFIG.map(p => (
-                                            <div key={p.key} className="flex items-center justify-between gap-3 bg-white border border-slate-200/50 rounded-xl p-2.5 shadow-sm hover:border-slate-350 transition-all">
-                                                <span className="text-xs text-slate-600 font-bold leading-tight">{p.label}</span>
+                                            <div key={p.key} className="flex items-center justify-between gap-3 bg-white border border-slate-200/50 rounded-xl p-2 shadow-sm hover:border-slate-350 transition-all">
+                                                <span className="text-[11px] text-slate-600 font-bold leading-tight">{p.label}</span>
                                                 <Switch valor={permisos[p.key]} onChange={() => togglePermiso(p.key)} />
                                             </div>
                                         ))}
