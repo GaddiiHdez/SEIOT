@@ -2,6 +2,8 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../db.js';
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
 
@@ -294,6 +296,78 @@ router.delete('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) 
     } catch (error) {
         console.error('Error desactivar usuario:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// ─── SUPERADMIN: REINICIAR BASE DE DATOS Y PDFS ──────────────────────────────
+router.post('/superadmin/reset', verificarToken, async (req, res) => {
+    try {
+        if (!req.usuario?.superadmin) {
+            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
+        }
+
+        const { confirmacion } = req.body;
+        if (confirmacion !== 'RESET-DATOS-SEIOT') {
+            return res.status(400).json({ error: 'Clave de confirmación incorrecta.' });
+        }
+
+        // 1. Truncar tablas relacionales
+        await pool.query('BEGIN');
+        await pool.query(`
+            TRUNCATE TABLE 
+                public.documentos_firmados, 
+                public.modulo1_oficio_notificacion, 
+                public.modulo2_orden_supervision, 
+                public.modulo3_checklist, 
+                public.modulo3_lista_verificacion, 
+                public.modulo4_acta_hechos, 
+                public.modulo5_acta_supervision, 
+                public.modulo6_acta_circunstanciada, 
+                public.visitas 
+            RESTART IDENTITY CASCADE
+        `);
+        await pool.query('COMMIT');
+
+        // 2. Eliminar archivos PDF físicamente
+        const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
+        if (fs.existsSync(uploadsDir)) {
+            const files = fs.readdirSync(uploadsDir);
+            for (const file of files) {
+                const filePath = path.join(uploadsDir, file);
+                if (fs.lstatSync(filePath).isFile()) {
+                    fs.unlinkSync(filePath);
+                }
+            }
+        }
+
+        res.json({ mensaje: 'Base de datos y archivos PDF limpiados correctamente. El sistema está en ceros.' });
+    } catch (error) {
+        await pool.query('ROLLBACK');
+        console.error('Error reset base de datos:', error);
+        res.status(500).json({ error: 'Error interno al intentar restablecer la base de datos.' });
+    }
+});
+
+// ─── SUPERADMIN: LIMPIAR USUARIOS NO-ADMINISTRADORES ─────────────────────────
+router.post('/superadmin/limpiar-usuarios', verificarToken, async (req, res) => {
+    try {
+        if (!req.usuario?.superadmin) {
+            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
+        }
+
+        const { confirmacion } = req.body;
+        if (confirmacion !== 'RESET-DATOS-SEIOT') {
+            return res.status(400).json({ error: 'Clave de confirmación incorrecta.' });
+        }
+
+        const result = await pool.query(
+            "DELETE FROM usuarios WHERE es_admin = false AND superadmin = false RETURNING id"
+        );
+
+        res.json({ mensaje: `Se eliminaron correctamente ${result.rowCount} usuario(s) auxiliares.` });
+    } catch (error) {
+        console.error('Error limpiar usuarios:', error);
+        res.status(500).json({ error: 'Error interno al intentar limpiar usuarios.' });
     }
 });
 
