@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, BarChart2, Users, ArrowLeft, X, Clock, ShieldAlert } from 'lucide-react';
+import { LogOut, BarChart2, Users, ArrowLeft, X, Clock, ShieldAlert, Wrench } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg';
 
@@ -108,9 +108,10 @@ const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupe
             {usuario?.superadmin && (
               <button 
                 onClick={() => navigate('/admin/super')} 
-                className="flex items-center gap-2 text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
+                className="flex items-center justify-center text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 p-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
+                title="Mantenimiento de SuperAdmin"
               >
-                <ShieldAlert size={14} /> Mantenimiento
+                <Wrench size={14} />
               </button>
             )}
           </div>
