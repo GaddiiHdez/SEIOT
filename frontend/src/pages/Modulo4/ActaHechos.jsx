@@ -66,6 +66,7 @@ const ActaHechos = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo4/${contexto.visita_id}`);
+                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -89,6 +90,7 @@ const ActaHechos = () => {
                     } else {
                         // Jalar datos del Modulo 3 si no existe registro
                         const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
+                        if (!responseM3) return; // null-check: si el token expiró, apiFetch ya redirigió
                         if (responseM3.ok) {
                             const dataM3 = await responseM3.json();
                             if (dataM3.existe && dataM3.datos) {
@@ -174,9 +176,10 @@ const ActaHechos = () => {
         }
     }, [contexto, navigate]);
 
+    const { folio, datosPsg, supervisor } = contexto || {};
+
     const handleFinalizarVisita = async () => {
         try {
-            // Guardar los datos del Módulo 4 primero
             const saveResponse = await apiFetch('/api/modulos/modulo4', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -206,6 +209,7 @@ const ActaHechos = () => {
                 })
             });
 
+            if (!saveResponse) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (!saveResponse.ok) {
                 alert("Error al guardar los datos del acta de hechos.");
                 return;
@@ -216,6 +220,7 @@ const ActaHechos = () => {
                 method: 'POST'
             });
 
+            if (!finalizeResponse) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (!finalizeResponse.ok) {
                 alert("Error al finalizar la visita.");
                 return;
@@ -267,6 +272,7 @@ const ActaHechos = () => {
                     nombre_testigo_cierre: nombreTestigoCierre
                 })
             });
+            if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (!response.ok) { alert("Error al guardar."); return; }
             const contextoActualizado = { ...contexto, avance: { ...contexto.avance, modulo4: true } };
             localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
@@ -284,8 +290,6 @@ const ActaHechos = () => {
             <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
         </div>
     );
-
-    const { folio, datosPsg, supervisor } = contexto;
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-800">

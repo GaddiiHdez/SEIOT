@@ -1,5 +1,20 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { LOGO_HEADER, LOGO_FOOTER } from './imagenesMembretes';
+// Función auxiliar para dividir texto largo en líneas para el PDF
+const wrapText = (text, maxChars = 85) => {
+    if (!text) return [];
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+        if ((currentLine + ' ' + word).trim().length <= maxChars) {
+            currentLine = (currentLine + ' ' + word).trim();
+        } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines.slice(0, 4); // máximo 4 líneas para no desbordar el espacio del PDF
+};
 
 export const generarPdfModulo5 = async (datos) => {
     const pdfDoc = await PDFDocument.create();
@@ -32,8 +47,21 @@ export const generarPdfModulo5 = async (datos) => {
         page.drawLine({ start: { x: 56, y: yPos }, end: { x: 556, y: yPos }, thickness: 0.4, color: gray });
     };
 
-    // Parsear fecha
-    const fecha = datos.fecha ? new Date(datos.fecha) : new Date();
+    // Parsear fecha de forma robusta (soporta YYYY-MM-DD e ISO)
+    let fecha;
+    if (datos.fecha) {
+        // Intentar primero como ISO (YYYY-MM-DD)
+        const partes = datos.fecha.split(/[-\/T]/);
+        if (partes[0].length === 4) {
+            // Formato ISO: YYYY-MM-DD
+            fecha = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+        } else {
+            // Formato DD/MM/YYYY o DD/M/YYYY
+            fecha = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+        }
+    } else {
+        fecha = new Date();
+    }
     const dia = fecha.getDate().toString();
     const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const mes = meses[fecha.getMonth()];
@@ -141,8 +169,11 @@ export const generarPdfModulo5 = async (datos) => {
     y2 -= 14;
 
     if (datos.observaciones_detectadas) {
-        page2.drawText(datos.observaciones_detectadas.substring(0, 90), { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
-        y2 -= 13;
+        const lineas = wrapText(datos.observaciones_detectadas);
+        lineas.forEach(linea => {
+            page2.drawText(linea, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
+            y2 -= 13;
+        });
     }
     for (let i = 0; i < 3; i++) { lineaObservacion(page2, y2); y2 -= 16; }
 
@@ -155,8 +186,11 @@ export const generarPdfModulo5 = async (datos) => {
     y2 -= 14;
 
     if (datos.medidas_preventivas) {
-        page2.drawText(datos.medidas_preventivas.substring(0, 90), { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
-        y2 -= 13;
+        const lineas = wrapText(datos.medidas_preventivas);
+        lineas.forEach(linea => {
+            page2.drawText(linea, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
+            y2 -= 13;
+        });
     }
     for (let i = 0; i < 3; i++) { lineaObservacion(page2, y2); y2 -= 16; }
 
@@ -167,8 +201,11 @@ export const generarPdfModulo5 = async (datos) => {
     y2 -= 14;
 
     if (datos.manifestaciones) {
-        page2.drawText(datos.manifestaciones.substring(0, 90), { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
-        y2 -= 13;
+        const lineas = wrapText(datos.manifestaciones);
+        lineas.forEach(linea => {
+            page2.drawText(linea, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
+            y2 -= 13;
+        });
     }
     for (let i = 0; i < 3; i++) { lineaObservacion(page2, y2); y2 -= 16; }
 

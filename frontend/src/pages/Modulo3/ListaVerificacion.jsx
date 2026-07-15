@@ -67,6 +67,7 @@ const ListaVerificacion = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
+                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -176,6 +177,8 @@ const ListaVerificacion = () => {
         }
     }, [contexto, navigate]);
 
+    const { folio, datosPsg, supervisor, fecha } = contexto || {};
+
     const handleRespuesta = (preguntaId, valor) => {
         setRespuestas(prev => ({ ...prev, [`p${preguntaId}`]: valor }));
     };
@@ -218,6 +221,7 @@ const ListaVerificacion = () => {
                     recomendaciones
                 })
             });
+            if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (!response.ok) { alert("Error al guardar."); return; }
             const contextoActualizado = { ...contexto, avance: { ...contexto.avance, modulo3: true } };
             localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
@@ -235,8 +239,6 @@ const ListaVerificacion = () => {
             <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
         </div>
     );
-
-    const { folio, datosPsg, supervisor, fecha } = contexto;
 
     const preguntasData = [
         { id: 13, categoria: "Aspecto documental", texto: "¿La autorización de PSG se encuentra vigente por un año a partir de la fecha de expedición?", pagina: 2 },

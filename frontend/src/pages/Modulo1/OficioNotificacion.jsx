@@ -62,6 +62,7 @@ const Notificacion = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo1/${contexto.visita_id}`);
+                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -164,6 +165,7 @@ const Notificacion = () => {
                 })
             });
 
+            if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (response.ok) {
                 const contextoActualizado = {
                     ...contexto,

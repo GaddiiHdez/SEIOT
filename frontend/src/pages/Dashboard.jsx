@@ -213,7 +213,8 @@ const Dashboard = () => {
   const handleNuevaVisita = async () => {
     if (!supervisorSeleccionado) { alert("Por favor selecciona un supervisor."); return; }
     const random = Math.floor(Math.random() * 900) + 100;
-    const nuevoFolio = `SDR/${psgInput}/2026/${random}`;
+    const anioActual = new Date().getFullYear();
+    const nuevoFolio = `SDR/${psgInput}/${anioActual}/${random}`;
     try {
       const response = await apiFetch('/api/psg/visitas', {
         method: 'POST',

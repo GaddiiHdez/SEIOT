@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
 import pool from './db.js';
 import psgRoutes from './routes/psg.js';
 import authRoutes from './routes/auth.js';
@@ -16,6 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(helmet());
 
 const allowedOrigins = [
     'http://localhost:5173',

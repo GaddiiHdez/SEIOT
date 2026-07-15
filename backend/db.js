@@ -34,7 +34,10 @@ if (process.env.DATABASE_URL) {
 }
 
 pool.connect()
-    .then(() => console.log('✅ Conectado a PostgreSQL'))
+    .then(client => {
+        console.log('✅ Conectado a PostgreSQL');
+        client.release(); // Liberar la conexión de vuelta al pool
+    })
     .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
 
 export default pool;

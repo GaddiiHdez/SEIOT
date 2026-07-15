@@ -1,6 +1,24 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { LOGO_HEADER, LOGO_FOOTER } from './imagenesMembretes';
 
+// Función auxiliar para dividir texto largo en líneas para el PDF
+const wrapText = (text, maxChars = 85) => {
+    if (!text) return [];
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    for (const word of words) {
+        if ((currentLine + ' ' + word).trim().length <= maxChars) {
+            currentLine = (currentLine + ' ' + word).trim();
+        } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines.slice(0, 4); // máximo 4 líneas para no desbordar el espacio del PDF
+};
+
 export const generarPdfModulo6 = async (datos) => {
     // Mapear valores de dropdowns a texto legible
     const tipoIdMap = { 'INE': 'INE', 'CREDENCIAL': 'Credencial', 'PASAPORTE': 'Pasaporte', 'CEDULA_PROFESIONAL': 'Cedula Profesional', 'LICENCIA': 'Licencia de Conducir', 'OTRO': 'Otro' };
@@ -37,15 +55,37 @@ export const generarPdfModulo6 = async (datos) => {
         page.drawLine({ start: { x: 56, y: yPos }, end: { x: 556, y: yPos }, thickness: 0.4, color: gray });
     };
 
-    // Parsear fecha
-    const fecha = datos.fecha ? new Date(datos.fecha) : new Date();
+    // Parsear fecha de forma robusta (soporta YYYY-MM-DD e ISO)
+    let fecha;
+    const rawFecha = datos.fecha || datos.fecha_inicio;
+    if (rawFecha) {
+        const partes = rawFecha.split(/[-\/T]/);
+        if (partes[0].length === 4) {
+            fecha = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+        } else {
+            fecha = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+        }
+    } else {
+        fecha = new Date();
+    }
     const dia = fecha.getDate().toString();
     const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const mes = meses[fecha.getMonth()];
     const anio = fecha.getFullYear().toString();
 
-    // Fecha cierre
-    const fechaCierre = datos.fecha_cierre ? new Date(datos.fecha_cierre) : new Date();
+    // Fecha cierre (adaptable a fecha_cierre o fecha_acta)
+    let fechaCierre;
+    const rawCierre = datos.fecha_cierre || datos.fecha_acta;
+    if (rawCierre) {
+        const partes = rawCierre.split(/[-\/T]/);
+        if (partes[0].length === 4) {
+            fechaCierre = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+        } else {
+            fechaCierre = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+        }
+    } else {
+        fechaCierre = new Date();
+    }
     const diaCierre = fechaCierre.getDate().toString();
     const mesCierre = meses[fechaCierre.getMonth()];
     const anioCierre = fechaCierre.getFullYear().toString();
@@ -179,8 +219,11 @@ export const generarPdfModulo6 = async (datos) => {
     y2 -= 14;
 
     if (datos.hechos_observaciones) {
-        page2.drawText(datos.hechos_observaciones.substring(0, 90), { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
-        y2 -= 13;
+        const lineas = wrapText(datos.hechos_observaciones);
+        lineas.forEach(linea => {
+            page2.drawText(linea, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
+            y2 -= 13;
+        });
     }
     for (let i = 0; i < 3; i++) { lineaObs(page2, y2); y2 -= 16; }
 
@@ -216,8 +259,11 @@ export const generarPdfModulo6 = async (datos) => {
     y3 -= 14;
 
     if (datos.manifestaciones) {
-        page3.drawText(datos.manifestaciones.substring(0, 90), { x: 56, y: y3, size: 9.5, font: fontNormal, color: black });
-        y3 -= 13;
+        const lineas = wrapText(datos.manifestaciones);
+        lineas.forEach(linea => {
+            page3.drawText(linea, { x: 56, y: y3, size: 9.5, font: fontNormal, color: black });
+            y3 -= 13;
+        });
     }
     for (let i = 0; i < 5; i++) { lineaObs(page3, y3); y3 -= 16; }
 
@@ -230,7 +276,7 @@ export const generarPdfModulo6 = async (datos) => {
     y3 -= 13;
     page3.drawText('sanciones, y que sera turnada a la autoridad competente para los efectos administrativos conducentes.', { x: 56, y: y3, size: 9.5, font: fontNormal, color: black });
     y3 -= 13;
-    page3.drawText(`Siendo las ${datos.hora_cierre || ''} horas del dia ${diaCierre} de ${mesCierre} de ${anioCierre}, se dio por concluida la`, { x: 56, y: y3, size: 9.5, font: fontNormal, color: black });
+    page3.drawText(`Siendo las ${datos.hora_cierre || datos.hora_acta || ''} horas del dia ${diaCierre} de ${mesCierre} de ${anioCierre}, se dio por concluida la`, { x: 56, y: y3, size: 9.5, font: fontNormal, color: black });
     y3 -= 13;
     page3.drawText('diligencia, levantandose la presente acta en tres tantos, entregandose un ejemplar debidamente', { x: 56, y: y3, size: 9.5, font: fontNormal, color: black });
     y3 -= 13;

@@ -79,6 +79,7 @@ const ActaSupervision = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo5/${contexto.visita_id}`);
+                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -93,9 +94,6 @@ const ActaSupervision = () => {
                         if (d.hora_termino) setHoraTermino(d.hora_termino);
                         if (d.acta_hechos !== undefined) setActaHechos(d.acta_hechos);
                         if (d.otros_documentos) setOtrosDocumentos(d.otros_documentos);
-                        if (d.cumple) setConclusion('cumple');
-                        else if (d.presenta_observaciones) setConclusion('observaciones');
-                        else if (d.requiere_seguimiento) setConclusion('seguimiento');
                         if (d.observaciones_detectadas) setObservacionesDetectadas(d.observaciones_detectadas);
                         if (d.medidas_preventivas) setMedidasPreventivas(d.medidas_preventivas);
                         if (d.no_realizo_manifestaciones !== undefined) setNoRealizo(d.no_realizo_manifestaciones);
@@ -104,6 +102,10 @@ const ActaSupervision = () => {
                         if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
                         if (d.tipo_id_testigo) setTipoIdTestigo(d.tipo_id_testigo);
                         if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
+                        // Reconstruir conclusión
+                        if (d.cumple) setConclusion('cumple');
+                        else if (d.presenta_observaciones) setConclusion('observaciones');
+                        else if (d.requiere_seguimiento) setConclusion('seguimiento');
                     } else {
                         // Jalar datos del Modulo 3 si no existe registro
                         const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
@@ -131,13 +133,16 @@ const ActaSupervision = () => {
         cargarDatos();
     }, [contexto?.visita_id]);
 
+    // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
+
+    // ── CARGAR DATOS DE BORRADOR ─────────────────────────────────────────────
     const guardarBorrador = () => {
         const borrador = {
             modulo: 5, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: { actaNo, hora, tipoPsg, domicilio, telefono, horaInicio, horaTermino,
+            campos: { actaNo, fecha, hora, tipoPsg, domicilio, telefono, horaInicio, horaTermino,
                       actaHechos, otrosDocumentos, conclusion, observacionesDetectadas,
-                      medidasPreventivas, noRealizo, manifestaciones,
-                      nombreTestigo, domicilioTestigo, tipoIdTestigo, numeroIdTestigo }
+                      medidasPreventivas, noRealizo, manifestaciones, nombreTestigo,
+                      domicilioTestigo, tipoIdTestigo, numeroIdTestigo }
         };
         const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -159,6 +164,7 @@ const ActaSupervision = () => {
                 if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
                 const c = b.campos;
                 if (c.actaNo !== undefined) setActaNo(c.actaNo);
+                if (c.fecha !== undefined) setFecha(c.fecha);
                 if (c.hora !== undefined) setHora(c.hora);
                 if (c.tipoPsg !== undefined) setTipoPsg(c.tipoPsg);
                 if (c.domicilio !== undefined) setDomicilio(c.domicilio);
@@ -195,6 +201,8 @@ const ActaSupervision = () => {
         }
     }, [contexto, navigate]);
 
+    const { folio, datosPsg, supervisor } = contexto || {};
+
     const handleGuardar = async () => {
         try {
             const response = await apiFetch('/api/modulos/modulo5', {
@@ -230,6 +238,7 @@ const ActaSupervision = () => {
                     numero_id_testigo: numeroIdTestigo
                 })
             });
+            if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (!response.ok) { alert("Error al guardar."); return; }
             const contextoActualizado = { ...contexto, avance: { ...contexto.avance, modulo5: true } };
             localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
@@ -247,7 +256,6 @@ const ActaSupervision = () => {
             <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
         </div>
     );
-    const { folio, datosPsg, supervisor } = contexto;
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-800">

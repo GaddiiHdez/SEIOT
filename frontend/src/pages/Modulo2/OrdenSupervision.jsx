@@ -60,6 +60,7 @@ const OrdenSupervision = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo2/${contexto.visita_id}`);
+                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -144,7 +145,7 @@ const OrdenSupervision = () => {
                     visita_id: contexto.visita_id,
                     fecha,
                     nombre_psg: datosPsg.nombre_titular,
-                    domicilio: datosPsg.domicilio,
+                    domicilio: domicilio,
                     calidad_sujeto: calidadSujeto,
                     nombre_pc: nombrePC,
                     cargo_pc: cargoPC,
@@ -155,6 +156,7 @@ const OrdenSupervision = () => {
                 })
             });
 
+            if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
             if (!response.ok) { alert("Error al guardar."); return; }
 
             const contextoActualizado = {

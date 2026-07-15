@@ -91,8 +91,6 @@ const ActaCircunstanciada = () => {
     const [tipoIdCierre2, setTipoIdCierre2] = useState("");
     const [numeroIdCierre2, setNumeroIdCierre2] = useState("");
 
-    // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
-
     // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
     useEffect(() => {
         if (!contexto?.visita_id) { setCargando(false); return; }
@@ -100,6 +98,7 @@ const ActaCircunstanciada = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo6/${contexto.visita_id}`);
+                if (!response) return; 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -135,8 +134,8 @@ const ActaCircunstanciada = () => {
                         if (d.articulo4) setArticulo4(d.articulo4);
                         if (d.de4) setDe4(d.de4);
                         if (d.manifestaciones) setManifestaciones(d.manifestaciones);
-                        if (d.hora_cierre) setHoraActa(d.hora_cierre);
-                        if (d.fecha_cierre) setFechaActa(d.fecha_cierre.split('T')[0]);
+                        if (d.hora_acta) setHoraActa(d.hora_acta);
+                        if (d.fecha_acta) setFechaActa(d.fecha_acta.split('T')[0]);
                         if (d.nombre_testigo_cierre1) setNombreTestigoCierre1(d.nombre_testigo_cierre1);
                         if (d.tipo_id_cierre1) setTipoIdCierre1(d.tipo_id_cierre1);
                         if (d.numero_id_cierre1) setNumeroIdCierre1(d.numero_id_cierre1);
@@ -166,18 +165,22 @@ const ActaCircunstanciada = () => {
         cargarDatos();
     }, [contexto?.visita_id]);
 
+    // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
+
+    // ── CARGAR DATOS DE BORRADOR ─────────────────────────────────────────────
     const guardarBorrador = () => {
         const borrador = {
             modulo: 6, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: { actaNo, hora, ubicacion, tipoId, numeroId, expide, fechaExpId,
-                      ubicacionCompareciente, credencialNo,
-                      nombreTestigo1, domicilioTestigo1, tipoIdTestigo1, numeroIdTestigo1,
-                      nombreTestigo2, domicilioTestigo2, tipoIdTestigo2, numeroIdTestigo2,
-                      oficioComision, fechaComision, emiteComision, hechosObservaciones,
-                      articulo1, de1, articulo2, de2, articulo3, de3, articulo4, de4,
-                      manifestaciones, horaActa, fechaActa,
-                      nombreTestigoCierre1, tipoIdCierre1, numeroIdCierre1,
-                      nombreTestigoCierre2, tipoIdCierre2, numeroIdCierre2 }
+            campos: {
+                actaNo, fecha, hora, ubicacion, tipoId, numeroId, expide, fechaExpId,
+                ubicacionCompareciente, credencialNo, nombreTestigo1, domicilioTestigo1,
+                tipoIdTestigo1, numeroIdTestigo1, nombreTestigo2, domicilioTestigo2,
+                tipoIdTestigo2, numeroIdTestigo2, oficioComision, fechaComision,
+                emiteComision, hechosObservaciones, articulo1, de1, articulo2, de2,
+                articulo3, de3, articulo4, de4, manifestaciones, horaActa, fechaActa,
+                nombreTestigoCierre1, tipoIdCierre1, numeroIdCierre1,
+                nombreTestigoCierre2, tipoIdCierre2, numeroIdCierre2
+            }
         };
         const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -199,10 +202,10 @@ const ActaCircunstanciada = () => {
                 if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
                 const c = b.campos;
                 const set = (val, fn) => { if (val !== undefined) fn(val); };
-                set(c.actaNo, setActaNo); set(c.hora, setHora); set(c.ubicacion, setUbicacion);
-                set(c.tipoId, setTipoId); set(c.numeroId, setNumeroId); set(c.expide, setExpide);
-                set(c.fechaExpId, setFechaExpId); set(c.ubicacionCompareciente, setUbicacionCompareciente);
-                set(c.credencialNo, setCredencialNo);
+                set(c.actaNo, setActaNo); set(c.fecha, setFecha); set(c.hora, setHora);
+                set(c.ubicacion, setUbicacion); set(c.tipoId, setTipoId); set(c.numeroId, setNumeroId);
+                set(c.expide, setExpide); set(c.fechaExpId, setFechaExpId);
+                set(c.ubicacionCompareciente, setUbicacionCompareciente); set(c.credencialNo, setCredencialNo);
                 set(c.nombreTestigo1, setNombreTestigo1); set(c.domicilioTestigo1, setDomicilioTestigo1);
                 set(c.tipoIdTestigo1, setTipoIdTestigo1); set(c.numeroIdTestigo1, setNumeroIdTestigo1);
                 set(c.nombreTestigo2, setNombreTestigo2); set(c.domicilioTestigo2, setDomicilioTestigo2);
@@ -238,6 +241,8 @@ const ActaCircunstanciada = () => {
         }
     }, [contexto, navigate]);
 
+    const { folio, datosPsg, supervisor } = contexto || {};
+
     const handleGuardar = async () => {
         try {
             const response = await apiFetch('/api/modulos/modulo6', {
@@ -261,13 +266,25 @@ const ActaCircunstanciada = () => {
                     fecha_expedicion_id: fechaExpId,
                     ubicacion_compareciente: ubicacionCompareciente,
                     credencial_oficial_no: credencialNo,
-                    nombre_testigo1: nombreTestigo1, domicilio_testigo1: domicilioTestigo1, tipo_id_testigo1: tipoIdTestigo1, numero_id_testigo1: numeroIdTestigo1,
-                    nombre_testigo2: nombreTestigo2, domicilio_testigo2: domicilioTestigo2, tipo_id_testigo2: tipoIdTestigo2, numero_id_testigo2: numeroIdTestigo2,
-                    oficio_comision: oficioComision, fecha_comision: fechaComision, emite_comision: emiteComision,
+                    nombre_testigo1: nombreTestigo1,
+                    domicilio_testigo1: domicilioTestigo1,
+                    tipo_id_testigo1: tipoIdTestigo1,
+                    numero_id_testigo1: numeroIdTestigo1,
+                    nombre_testigo2: nombreTestigo2,
+                    domicilio_testigo2: domicilioTestigo2,
+                    tipo_id_testigo2: tipoIdTestigo2,
+                    numero_id_testigo2: numeroIdTestigo2,
+                    oficio_comision: oficioComision,
+                    fecha_comision: fechaComision,
+                    emite_comision: emiteComision,
                     hechos_observaciones: hechosObservaciones,
-                    articulo1, de1, articulo2, de2, articulo3, de3, articulo4, de4,
+                    articulo1, de1,
+                    articulo2, de2,
+                    articulo3, de3,
+                    articulo4, de4,
                     manifestaciones,
-                    fecha_cierre: fechaActa, hora_cierre: horaActa,
+                    hora_acta: horaActa,
+                    fecha_acta: fechaActa,
                     nombre_testigo_cierre1: nombreTestigoCierre1,
                     tipo_id_cierre1: tipoIdCierre1,
                     numero_id_cierre1: numeroIdCierre1,
@@ -277,6 +294,7 @@ const ActaCircunstanciada = () => {
                     folio: folio
                 })
             });
+            if (!response) return; 
             if (!response.ok) { alert("Error al guardar."); return; }
             const contextoActualizado = { ...contexto, avance: { ...contexto.avance, modulo6: true } };
             localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
@@ -294,7 +312,6 @@ const ActaCircunstanciada = () => {
             <p className="text-gray-500 font-bold animate-pulse">Cargando datos...</p>
         </div>
     );
-    const { folio, datosPsg, supervisor } = contexto;
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-800">

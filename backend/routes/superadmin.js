@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
 import fs from 'fs';
+const fsPromises = fs.promises;
 import path from 'path';
 import { verificarToken } from './auth.js';
 
@@ -8,6 +9,7 @@ const router = express.Router();
 
 // ─── SUPERADMIN: REINICIAR BASE DE DATOS Y PDFS ──────────────────────────────
 router.post('/reset', verificarToken, async (req, res) => {
+    const client = await pool.connect();
     try {
         if (!req.usuario?.superadmin) {
             return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
@@ -19,39 +21,46 @@ router.post('/reset', verificarToken, async (req, res) => {
         }
 
         // 1. Truncar tablas relacionales
-        await pool.query('BEGIN');
-        await pool.query(`
+        await client.query('BEGIN');
+        await client.query(`
             TRUNCATE TABLE 
-                public.documentos_firmados, 
-                public.modulo1_oficio_notificacion, 
-                public.modulo2_orden_supervision, 
-                public.modulo3_checklist, 
-                public.modulo3_lista_verificacion, 
-                public.modulo4_acta_hechos, 
-                public.modulo5_acta_supervision, 
-                public.modulo6_acta_circunstanciada, 
-                public.visitas 
+            	public.documentos_firmados, 
+            	public.modulo1_oficio_notificacion, 
+            	public.modulo2_orden_supervision, 
+            	public.modulo3_checklist, 
+            	public.modulo3_lista_verificacion, 
+            	public.modulo4_acta_hechos, 
+            	public.modulo5_acta_supervision, 
+            	public.modulo6_acta_circunstanciada, 
+            	public.visitas 
             RESTART IDENTITY CASCADE
         `);
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
 
-        // 2. Eliminar archivos PDF físicamente
+        // 2. Eliminar archivos PDF físicamente de forma asíncrona
         const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
         if (fs.existsSync(uploadsDir)) {
-            const files = fs.readdirSync(uploadsDir);
-            for (const file of files) {
+            const files = await fsPromises.readdir(uploadsDir);
+            await Promise.all(files.map(async (file) => {
                 const filePath = path.join(uploadsDir, file);
-                if (fs.lstatSync(filePath).isFile()) {
-                    fs.unlinkSync(filePath);
+                const stat = await fsPromises.stat(filePath);
+                if (stat.isFile()) {
+                    await fsPromises.unlink(filePath);
                 }
-            }
+            }));
         }
 
         res.json({ mensaje: 'Base de datos y archivos PDF limpiados correctamente. El sistema está en ceros.' });
     } catch (error) {
-        await pool.query('ROLLBACK');
+        try {
+            await client.query('ROLLBACK');
+        } catch (rollbackErr) {
+            console.error('Error al hacer rollback en reset:', rollbackErr);
+        }
         console.error('Error reset base de datos:', error);
         res.status(500).json({ error: 'Error interno al intentar restablecer la base de datos.' });
+    } finally {
+        client.release();
     }
 });
 
@@ -89,7 +98,12 @@ router.post('/backup', verificarToken, async (req, res) => {
         };
 
         for (const tabla of tablas) {
-            const queryResult = await pool.query(`SELECT * FROM ${tabla}`);
+            let queryText = `SELECT * FROM ${tabla}`;
+            if (tabla === 'usuarios') {
+                // Excluimos password_hash para proteger los datos
+                queryText = 'SELECT id, nombre, usuario, rol, es_admin, activo, superadmin, permisos, creado_en FROM usuarios';
+            }
+            const queryResult = await pool.query(queryText);
             backup[tabla] = queryResult.rows;
         }
 
