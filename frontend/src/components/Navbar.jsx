@@ -5,6 +5,21 @@ import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg';
 
 const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupervisorSeleccionado, setAvance }) => {
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { usuario, logout, permisosListos } = useAuth();
@@ -90,6 +105,14 @@ const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupe
 
         {/* Sección de Usuario / Sesión */}
         <div className="flex items-center gap-4 border-l border-white/15 pl-6">
+          {/* Indicador de red */}
+          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-wider uppercase shadow-inner">
+            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse shadow shadow-emerald-400/40' : 'bg-rose-500 animate-pulse shadow shadow-rose-500/40'}`} />
+            <span className={isOnline ? 'text-emerald-300' : 'text-rose-300'}>
+              {isOnline ? 'En línea' : 'Sin red'}
+            </span>
+          </div>
+
           <span className="text-white/80 text-xs hidden md:block">
             Hola, <span className="font-bold text-amber-300">{usuario?.nombre || 'Usuario'}</span>
           </span>
