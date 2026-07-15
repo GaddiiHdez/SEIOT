@@ -194,21 +194,21 @@ const ManualUsuario = () => {
                                     <div className="border-l-4 border-blue-505 pl-4 py-1.5 space-y-2">
                                         <h3 className="font-extrabold text-slate-850 text-xs uppercase tracking-wider">1. Descargar Respaldo (Backup)</h3>
                                         <p className="text-slate-600 text-xs leading-relaxed">
-                                            Ingresa la clave secreta **`RESPALDO-DATOS-SEIOT`** y presiona **"Descargar Respaldo"**. El navegador descargará un archivo estructurado en formato `.json` que contiene todas las tablas históricas (usuarios, visitas, respuestas de formularios modulares).
+                                            Ingresa la clave secreta de respaldos autorizada y presiona **"Descargar Respaldo"**. El navegador descargará un archivo estructurado en formato `.json` que contiene todas las tablas históricas (usuarios, visitas, respuestas de formularios modulares).
                                         </p>
                                     </div>
 
                                     <div className="border-l-4 border-emerald-505 pl-4 py-1.5 space-y-2">
                                         <h3 className="font-extrabold text-slate-850 text-xs uppercase tracking-wider">2. Restaurar Copia de Seguridad</h3>
                                         <p className="text-slate-600 text-xs leading-relaxed">
-                                            Selecciona el archivo `.json` de respaldo en el selector de archivos, ingresa la clave **`RESPALDO-DATOS-SEIOT`** y presiona **"Restaurar Sistema"**. El servidor limpiará las tablas e insertará los registros respaldados respetando las relaciones y llaves primarias.
+                                            Selecciona el archivo `.json` de respaldo en el selector de archivos, ingresa la clave secreta de respaldos autorizada y presiona **"Restaurar Sistema"**. El servidor limpiará las tablas e insertará los registros respaldados respetando las relaciones y llaves primarias.
                                         </p>
                                     </div>
 
                                     <div className="border-l-4 border-red-505 pl-4 py-1.5 space-y-2">
                                         <h3 className="font-extrabold text-slate-850 text-xs uppercase tracking-wider">3. Reiniciar Sistema a Ceros</h3>
                                         <p className="text-slate-600 text-xs leading-relaxed">
-                                            Para vaciar la base de datos antes de una etapa de producción real: ingresa la clave secreta **`RESET-DATOS-SEIOT`** y presiona el botón rojo. Esto truncará todas las visitas, formularios y eliminará físicamente los PDFs del servidor. **Nota: Conservará intacto el catálogo de productores (PSG), supervisores y cuentas de usuario.**
+                                            Para vaciar la base de datos antes de una etapa de producción real: ingresa la clave secreta de reinicio autorizada y presiona el botón rojo. Esto truncará todas las visitas, formularios y eliminará físicamente los PDFs del servidor. **Nota: Conservará intacto el catálogo de productores (PSG), supervisores y cuentas de usuario.**
                                         </p>
                                     </div>
                                 </div>
@@ -284,7 +284,7 @@ const ManualUsuario = () => {
                                     <div className="border border-slate-100 bg-slate-50/50 p-4 rounded-2xl">
                                         <h3 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-2">Carga y Firma de Documentos PDF</h3>
                                         <p className="text-slate-600 text-xs leading-relaxed">
-                                            Cada módulo posee una sección de **"Firma Digital y Archivo Físico"** en la parte inferior. Tras descargar el PDF generado y firmarlo de forma física en campo, el supervisor debe escanearlo o tomarle fotografía en PDF y cargarlo en la zona de subida del módulo correspondiente para que el registro quede respaldado y validado en producción.
+                                            Cada módulo posee una sección de **"Firma Digital y Archivo Físico"** en la parte inferior. Tras descargar el PDF generado y firmarlo de forma física en campo, el supervisor debe escanear el documento **únicamente utilizando un escáner o equipo multifuncional** (está estrictamente prohibido subir fotos tomadas con el celular, ya que los archivos resultan demasiado pesados y aumentan los costos de almacenamiento) y cargarlo en formato PDF en la zona de subida del módulo correspondiente para que el registro quede respaldado y validado en producción.
                                         </p>
                                     </div>
                                 </div>
