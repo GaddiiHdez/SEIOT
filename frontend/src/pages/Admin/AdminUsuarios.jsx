@@ -233,6 +233,8 @@ const AdminUsuarios = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input 
                             type="text" 
+                            name="search_user_filter"
+                            autoComplete="off"
                             value={filtroNombre} 
                             onChange={(e) => setFiltroNombre(e.target.value)} 
                             placeholder="Buscar por nombre o usuario..." 
@@ -402,6 +404,8 @@ const AdminUsuarios = () => {
                                     <div>
                                         <label className="block text-xs font-extrabold text-slate-500 mb-1 uppercase tracking-wider">Usuario</label>
                                         <input 
+                                            name="username_input"
+                                            autoComplete="new-password"
                                             value={usuarioInput} 
                                             onChange={e => setUsuarioInput(e.target.value)} 
                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-red-850 text-slate-700 font-bold transition-all disabled:opacity-75 disabled:bg-slate-100 disabled:cursor-not-allowed" 
@@ -416,6 +420,8 @@ const AdminUsuarios = () => {
                                         <div className="relative">
                                             <input 
                                                 type={mostrarPassword ? 'text' : 'password'} 
+                                                name="password_input"
+                                                autoComplete="new-password"
                                                 value={password} 
                                                 onChange={e => setPassword(e.target.value)} 
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-red-850 text-slate-700 font-bold transition-all pr-10" 
