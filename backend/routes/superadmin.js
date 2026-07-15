@@ -203,4 +203,47 @@ router.post('/restore', verificarToken, async (req, res) => {
     }
 });
 
+// Obtener la configuración actual de folios
+router.get('/config-folios', verificarToken, async (req, res) => {
+    try {
+        if (!req.usuario?.es_admin && !req.usuario?.superadmin) {
+            return res.status(403).json({ error: 'No autorizado.' });
+        }
+        const resultado = await pool.query("SELECT nomenclatura, consecutivo_actual, longitud_consecutivo FROM configuracion_folios WHERE clave = 'general'");
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'Configuración no encontrada.' });
+        }
+        res.json(resultado.rows[0]);
+    } catch (error) {
+        console.error('Error obteniendo config-folios:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// Guardar la configuración de folios
+router.put('/config-folios', verificarToken, async (req, res) => {
+    try {
+        if (!req.usuario?.superadmin) {
+            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
+        }
+        const { nomenclatura, consecutivo_actual, longitud_consecutivo } = req.body;
+        
+        if (!nomenclatura || typeof consecutivo_actual !== 'number' || typeof longitud_consecutivo !== 'number') {
+            return res.status(400).json({ error: 'Datos de configuración incompletos o inválidos.' });
+        }
+        
+        await pool.query(
+            `UPDATE configuracion_folios 
+             SET nomenclatura = $1, consecutivo_actual = $2, longitud_consecutivo = $3 
+             WHERE clave = 'general'`,
+            [nomenclatura.trim(), consecutivo_actual, longitud_consecutivo]
+        );
+        
+        res.json({ mensaje: 'Configuración de folios actualizada correctamente.' });
+    } catch (error) {
+        console.error('Error guardando config-folios:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
 export default router;

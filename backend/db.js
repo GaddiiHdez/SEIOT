@@ -39,10 +39,34 @@ if (process.env.DATABASE_URL) {
     });
 }
 
+const initConfigTable = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS public.configuracion_folios (
+                clave VARCHAR(50) PRIMARY KEY,
+                nomenclatura VARCHAR(100) NOT NULL DEFAULT 'SDR/{PSG}/{ANIO}/{CONSECUTIVO}',
+                consecutivo_actual INT NOT NULL DEFAULT 1,
+                longitud_consecutivo INT NOT NULL DEFAULT 3
+            )
+        `);
+        const res = await pool.query("SELECT * FROM public.configuracion_folios WHERE clave = 'general'");
+        if (res.rows.length === 0) {
+            await pool.query(`
+                INSERT INTO public.configuracion_folios (clave, nomenclatura, consecutivo_actual, longitud_consecutivo)
+                VALUES ('general', 'SDR/{PSG}/{ANIO}/{CONSECUTIVO}', 1, 3)
+            `);
+        }
+        console.log('✅ Tabla configuracion_folios inicializada');
+    } catch (err) {
+        console.error('❌ Error al inicializar configuracion_folios:', err);
+    }
+};
+
 pool.connect()
-    .then(client => {
+    .then(async client => {
         console.log('✅ Conectado a PostgreSQL');
-        client.release(); // Liberar la conexión de vuelta al pool
+        client.release();
+        await initConfigTable();
     })
     .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
 

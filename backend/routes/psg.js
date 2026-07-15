@@ -33,22 +33,62 @@ router.get('/supervisores', verificarToken, async (req, res) => {
 });
 
 
+// Helper para generar el siguiente folio de manera transaccional
+const generarFolioInterno = async (client, psg) => {
+    // Bloquear la fila de configuración para evitar condiciones de carrera simultáneas
+    const configRes = await client.query(
+        "SELECT nomenclatura, consecutivo_actual, longitud_consecutivo FROM configuracion_folios WHERE clave = 'general' FOR UPDATE"
+    );
+    
+    if (configRes.rows.length === 0) {
+        throw new Error('Configuración de folios no encontrada.');
+    }
+    
+    const { nomenclatura, consecutivo_actual, longitud_consecutivo } = configRes.rows[0];
+    const anioActual = new Date().getFullYear();
+    const consecutivoStr = String(consecutivo_actual).padStart(longitud_consecutivo, '0');
+    
+    const folio = nomenclatura
+        .replace(/{PSG}/g, psg)
+        .replace(/{ANIO}/g, anioActual)
+        .replace(/{CONSECUTIVO}/g, consecutivoStr);
+        
+    await client.query(
+        "UPDATE configuracion_folios SET consecutivo_actual = consecutivo_actual + 1 WHERE clave = 'general'"
+    );
+    
+    return folio;
+};
+
 // Crear nueva visita
 router.post('/visitas', verificarToken, async (req, res) => {
+    const client = await pool.connect();
     try {
-        const { folio, psg, supervisor } = req.body;
+        let { folio, psg, supervisor } = req.body;
         const capturista_id = req.usuario.id;
 
-        const resultado = await pool.query(
+        await client.query('BEGIN');
+
+        // Generar folio dinámicamente si no se recibe uno pre-establecido (ej. offline)
+        if (!folio) {
+            folio = await generarFolioInterno(client, psg);
+        }
+
+        const resultado = await client.query(
             `INSERT INTO visitas (folio, psg, supervisor, capturista_id)
             VALUES ($1, $2, $3, $4)
             RETURNING *`,
             [folio, psg, supervisor, capturista_id]
         );
 
+        await client.query('COMMIT');
         res.json(resultado.rows[0]);
     } catch (error) {
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        await client.query('ROLLBACK');
+        console.error('Error creando visita:', error);
+        res.status(500).json({ error: 'Error al iniciar la visita o generar el folio en el servidor.' });
+    } finally {
+        client.release();
     }
 });
 // Buscar visita por folio

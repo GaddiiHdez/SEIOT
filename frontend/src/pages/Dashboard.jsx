@@ -216,16 +216,21 @@ const Dashboard = () => {
 
   const handleNuevaVisita = async () => {
     if (!supervisorSeleccionado) { alert("Por favor selecciona un supervisor."); return; }
-    const random = Math.floor(Math.random() * 900) + 100;
-    const anioActual = new Date().getFullYear();
-    const nuevoFolio = `SDR/${psgInput}/${anioActual}/${random}`;
     try {
       const response = await apiFetch('/api/psg/visitas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folio: nuevoFolio, psg: psgInput, supervisor: supervisorSeleccionado.nombre })
+        body: JSON.stringify({ psg: psgInput, supervisor: supervisorSeleccionado.nombre })
       });
+      
+      if (!response || !response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.error || "Error al generar la visita.");
+        return;
+      }
+      
       const visita = await response.json();
+      const nuevoFolio = visita.folio;
       setFolioActivo(nuevoFolio);
       setBusquedaFolio('');
       guardarContextoGlobal(nuevoFolio, datosPsg, visita.id, supervisorSeleccionado);
@@ -240,7 +245,10 @@ const Dashboard = () => {
         visita_id: visita.id
       });
       alert(`VISITA INICIADA.\nFolio: ${nuevoFolio}`);
-    } catch (error) { console.error('Error creando visita:', error); }
+    } catch (error) { 
+      console.error('Error creando visita:', error); 
+      alert("Error de conexión al intentar iniciar la visita.");
+    }
   };
 
   const handleBuscarVisita = async () => {

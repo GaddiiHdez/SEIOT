@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../utils/api.js';
-import { ShieldAlert, Trash2, AlertTriangle, KeyRound, Loader2, Download, Upload, RefreshCw } from 'lucide-react';
+import { ShieldAlert, Trash2, AlertTriangle, KeyRound, Loader2, Download, Upload, RefreshCw, Save } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
 const SuperAdminPanel = () => {
@@ -22,12 +22,73 @@ const SuperAdminPanel = () => {
     // Estado de retroalimentación
     const [resultado, setResultado] = useState(null);
 
+    // Estados para Configuración de Folios
+    const [nomenclatura, setNomenclatura] = useState('SDR/{PSG}/{ANIO}/{CONSECUTIVO}');
+    const [consecutivo, setConsecutivo] = useState(1);
+    const [longitudConsecutivo, setLongitudConsecutivo] = useState(3);
+    const [loadingConfig, setLoadingConfig] = useState(false);
+
     useEffect(() => {
         // Bloquear acceso si no es SuperAdmin
         if (!usuario?.superadmin) {
             navigate('/dashboard');
         }
     }, [usuario, navigate]);
+
+    useEffect(() => {
+        const cargarConfigFolios = async () => {
+            try {
+                const res = await apiFetch('/api/superadmin/config-folios');
+                if (res.ok) {
+                    const data = await res.json();
+                    setNomenclatura(data.nomenclatura);
+                    setConsecutivo(data.consecutivo_actual);
+                    setLongitudConsecutivo(data.longitud_consecutivo);
+                }
+            } catch (err) {
+                console.error('Error cargando config de folios:', err);
+            }
+        };
+        if (usuario?.superadmin) {
+            cargarConfigFolios();
+        }
+    }, [usuario]);
+
+    const handleSaveConfigFolios = async (e) => {
+        e.preventDefault();
+        setLoadingConfig(true);
+        setResultado(null);
+        try {
+            const res = await apiFetch('/api/superadmin/config-folios', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nomenclatura,
+                    consecutivo_actual: parseInt(consecutivo) || 1,
+                    longitud_consecutivo: parseInt(longitudConsecutivo) || 3
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setResultado({ tipo: 'success', mensaje: data.mensaje || 'Configuración de folios guardada correctamente.' });
+            } else {
+                setResultado({ tipo: 'error', mensaje: data.error });
+            }
+        } catch {
+            setResultado({ tipo: 'error', mensaje: 'Error al conectar con el servidor.' });
+        } finally {
+            setLoadingConfig(false);
+        }
+    };
+
+    const generarPreviewFolio = () => {
+        const anio = new Date().getFullYear();
+        const consecutivoStr = String(consecutivo || 1).padStart(parseInt(longitudConsecutivo) || 3, '0');
+        return nomenclatura
+            .replace(/{PSG}/g, '18-017-0002-P02')
+            .replace(/{ANIO}/g, anio)
+            .replace(/{CONSECUTIVO}/g, consecutivoStr);
+    };
 
     // Función: Descargar Respaldo JSON
     const handleDownloadBackup = async () => {
@@ -333,6 +394,108 @@ const SuperAdminPanel = () => {
                         </button>
                     </div>
 
+                </div>
+
+                {/* SECCIÓN: NOMENCLATURA Y GESTIÓN DE FOLIOS */}
+                <div className="mt-8 bg-slate-800/40 backdrop-blur border border-slate-700/50 p-8 rounded-3xl shadow-xl">
+                    <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-700/50">
+                        <KeyRound className="text-yellow-500" size={24} />
+                        <div>
+                            <h2 className="font-extrabold text-sm uppercase tracking-wider text-slate-200">Nomenclatura y Asignación de Folios</h2>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Controla la estructura y el consecutivo de los expedientes.</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSaveConfigFolios} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            {/* NOMENCLATURA */}
+                            <div className="md:col-span-2">
+                                <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    Nomenclatura del Folio
+                                </label>
+                                <input
+                                    type="text"
+                                    value={nomenclatura}
+                                    onChange={(e) => setNomenclatura(e.target.value)}
+                                    placeholder="Ej: SDR/{PSG}/{ANIO}/{CONSECUTIVO}"
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-xs outline-none focus:border-yellow-500 transition-all font-mono"
+                                    required
+                                />
+                                <div className="mt-2 text-[10px] text-slate-500 leading-relaxed">
+                                    <span className="font-bold text-slate-400">Etiquetas dinámicas:</span>
+                                    <code className="text-yellow-500/80 bg-slate-950 px-1 py-0.5 rounded ml-1 font-mono">{`{PSG}`}</code> (Clave PSG), 
+                                    <code className="text-yellow-500/80 bg-slate-950 px-1 py-0.5 rounded ml-1 font-mono">{`{ANIO}`}</code> (Año actual), 
+                                    <code className="text-yellow-500/80 bg-slate-950 px-1 py-0.5 rounded ml-1 font-mono">{`{CONSECUTIVO}`}</code> (Número de secuencia).
+                                </div>
+                            </div>
+
+                            {/* NÚMERO CONSECUTIVO */}
+                            <div>
+                                <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    Consecutivo Inicial / Siguiente
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={consecutivo}
+                                    onChange={(e) => setConsecutivo(Math.max(1, parseInt(e.target.value) || 1))}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-xs outline-none focus:border-yellow-500 transition-all font-mono"
+                                    required
+                                />
+                                <p className="mt-2 text-[9px] text-slate-500 leading-relaxed font-semibold">
+                                    Define a partir de qué número iniciará o continuará la numeración.
+                                </p>
+                            </div>
+
+                            {/* LONGITUD CONSECUTIVO */}
+                            <div>
+                                <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">
+                                    Longitud del Consecutivo (Dígitos)
+                                </label>
+                                <select
+                                    value={longitudConsecutivo}
+                                    onChange={(e) => setLongitudConsecutivo(parseInt(e.target.value))}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-xs outline-none focus:border-yellow-500 transition-all font-sans text-slate-300 font-bold"
+                                >
+                                    <option value={1}>1 dígito (Ej: 1)</option>
+                                    <option value={2}>2 dígitos (Ej: 01)</option>
+                                    <option value={3}>3 dígitos (Ej: 001)</option>
+                                    <option value={4}>4 dígitos (Ej: 0001)</option>
+                                    <option value={5}>5 dígitos (Ej: 00001)</option>
+                                </select>
+                                <p className="mt-2 text-[9px] text-slate-500 leading-relaxed font-semibold">
+                                    Rellena con ceros a la izquierda.
+                                </p>
+                            </div>
+
+                            {/* PREVISUALIZACIÓN EN TIEMPO REAL */}
+                            <div className="md:col-span-2 bg-slate-950/60 border border-slate-750 p-4 rounded-xl flex flex-col justify-between">
+                                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">Vista previa de folio generado (Ejemplo):</span>
+                                <div className="text-sm font-mono text-yellow-400 font-bold tracking-tight mt-1 overflow-x-auto whitespace-nowrap">
+                                    {generarPreviewFolio()}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                            <button
+                                type="submit"
+                                disabled={loadingConfig}
+                                className="bg-yellow-600 hover:bg-yellow-700 text-slate-950 font-bold px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2 text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                {loadingConfig ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={14} /> GUARDANDO...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={14} /> GUARDAR NOMENCLATURA
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
