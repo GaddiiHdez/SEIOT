@@ -8,6 +8,19 @@ import { verificarToken } from './auth.js';
 
 const router = express.Router();
 
+// Helper para convertir DD/MM/YYYY a YYYY-MM-DD antes de guardar en PostgreSQL
+function formatDateForDb(fechaStr) {
+    if (!fechaStr || typeof fechaStr !== 'string') return null;
+    const parts = fechaStr.split('/');
+    if (parts.length === 3) {
+        const [day, month, year] = parts;
+        if (year.length === 4) {
+            return `${year}-${month}-${day}`;
+        }
+    }
+    return fechaStr;
+}
+
 // ─── CONFIGURACIÓN MULTER (Almacenamiento local persistente) ───────────────────
 const storage = multer.diskStorage({
     destination: async (req, file, cb) => {
@@ -253,6 +266,8 @@ router.post('/modulo2', verificarToken, async (req, res) => {
         const visita = await verificarAccesoVisita(req, res, visita_id, client);
         if (!visita) { await client.query('ROLLBACK'); return; }
 
+        const fechaVal = formatDateForDb(fecha);
+
         const resultado = await client.query(
             `INSERT INTO modulo2_orden_supervision 
             (visita_id, fecha, nombre_psg, domicilio, calidad_sujeto, nombre_pc, cargo_pc, adscripcion, tipo_identificacion, folio_identificacion, nombre_ordena)
@@ -270,7 +285,7 @@ router.post('/modulo2', verificarToken, async (req, res) => {
                 folio_identificacion = EXCLUDED.folio_identificacion,
                 nombre_ordena = EXCLUDED.nombre_ordena
             RETURNING *`,
-            [visita_id, fecha, nombre_psg, domicilio, calidad_sujeto, nombre_pc, cargo_pc, adscripcion, tipo_identificacion, folio_identificacion, nombre_ordena]
+            [visita_id, fechaVal, nombre_psg, domicilio, calidad_sujeto, nombre_pc, cargo_pc, adscripcion, tipo_identificacion, folio_identificacion, nombre_ordena]
         );
 
         await client.query(
@@ -327,11 +342,12 @@ router.post('/modulo3', verificarToken, async (req, res) => {
         const visita = await verificarAccesoVisita(req, res, visita_id, client);
         if (!visita) { await client.query('ROLLBACK'); return; }
 
-        const latitudVal = latitud !== '' && latitud !== null ? parseFloat(latitud) : null;
-        const longitudVal = longitud !== '' && longitud !== null ? parseFloat(longitud) : null;
-        const capacidadVal = capacidad_instalada !== '' && capacidad_instalada !== null ? parseInt(capacidad_instalada) : null;
+        const latitudVal = (latitud !== '' && latitud !== null && latitud !== undefined && !isNaN(parseFloat(latitud))) ? parseFloat(latitud) : null;
+        const longitudVal = (longitud !== '' && longitud !== null && longitud !== undefined && !isNaN(parseFloat(longitud))) ? parseFloat(longitud) : null;
+        const capacidadVal = (capacidad_instalada !== '' && capacidad_instalada !== null && capacidad_instalada !== undefined && !isNaN(parseInt(capacidad_instalada))) ? parseInt(capacidad_instalada) : null;
         const horaInicioVal = hora_inicio !== '' && hora_inicio !== null ? hora_inicio : null;
         const horaTerminoVal = hora_termino !== '' && hora_termino !== null ? hora_termino : null;
+        const fechaVal = formatDateForDb(fecha);
 
         await client.query(
             `INSERT INTO modulo3_lista_verificacion 
@@ -362,7 +378,7 @@ router.post('/modulo3', verificarToken, async (req, res) => {
                 domicilio_testigo = EXCLUDED.domicilio_testigo,
                 tipo_id_testigo = EXCLUDED.tipo_id_testigo,
                 numero_id_testigo = EXCLUDED.numero_id_testigo`,
-            [visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitudVal, longitudVal, capacidadVal, nombre_supervisor, fecha, horaInicioVal, horaTerminoVal, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo]
+            [visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitudVal, longitudVal, capacidadVal, nombre_supervisor, fechaVal, horaInicioVal, horaTerminoVal, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo]
         );
 
         for (const [key, respuesta] of Object.entries(respuestas)) {
@@ -429,6 +445,7 @@ router.post('/modulo4', verificarToken, async (req, res) => {
 
         const nullTime = v => (v !== '' && v !== null && v !== undefined) ? v : null;
         const nullStr = v => (v !== '' && v !== null && v !== undefined) ? v : null;
+        const fechaVal = formatDateForDb(fecha);
 
         const resultado = await client.query(
             `INSERT INTO modulo4_acta_hechos 
@@ -458,7 +475,7 @@ router.post('/modulo4', verificarToken, async (req, res) => {
                 numero_id_testigo = EXCLUDED.numero_id_testigo,
                 nombre_testigo_cierre = EXCLUDED.nombre_testigo_cierre
             RETURNING *`,
-            [visita_id, nullStr(acta_no), nullStr(fecha), nullTime(hora), nullTime(hora_inicio), nullTime(hora_termino), nullStr(hechos_observados), no_realizo_manifestaciones, nullStr(manifestaciones), nullStr(localidad), nullStr(municipio), nullStr(nombre_psg), nullStr(tipo_psg), nullStr(nombre_titular), nullStr(domicilio), nullStr(telefono), nullStr(nombre_supervisor), nullStr(nombre_testigo), nullStr(domicilio_testigo), nullStr(tipo_id_testigo), nullStr(numero_id_testigo), nullStr(nombre_testigo_cierre)]
+            [visita_id, nullStr(acta_no), nullStr(fechaVal), nullTime(hora), nullTime(hora_inicio), nullTime(hora_termino), nullStr(hechos_observados), no_realizo_manifestaciones, nullStr(manifestaciones), nullStr(localidad), nullStr(municipio), nullStr(nombre_psg), nullStr(tipo_psg), nullStr(nombre_titular), nullStr(domicilio), nullStr(telefono), nullStr(nombre_supervisor), nullStr(nombre_testigo), nullStr(domicilio_testigo), nullStr(tipo_id_testigo), nullStr(numero_id_testigo), nullStr(nombre_testigo_cierre)]
         );
 
         await client.query(
@@ -513,6 +530,7 @@ router.post('/modulo5', verificarToken, async (req, res) => {
 
         const nullTime = v => (v !== '' && v !== null && v !== undefined) ? v : null;
         const nullStr = v => (v !== '' && v !== null && v !== undefined) ? v : null;
+        const fechaVal = formatDateForDb(fecha);
 
         const resultado = await client.query(
             `INSERT INTO modulo5_acta_supervision 
@@ -547,7 +565,7 @@ router.post('/modulo5', verificarToken, async (req, res) => {
                 tipo_id_testigo = EXCLUDED.tipo_id_testigo,
                 numero_id_testigo = EXCLUDED.numero_id_testigo
             RETURNING *`,
-            [visita_id, nullStr(acta_no), nullStr(fecha), nullTime(hora), nullTime(hora_inicio), nullTime(hora_termino), acta_hechos, nullStr(otros_documentos), cumple, presenta_observaciones, requiere_seguimiento, nullStr(observaciones_detectadas), nullStr(medidas_preventivas), no_realizo_manifestaciones, nullStr(manifestaciones), nullStr(localidad), nullStr(municipio), nullStr(nombre_psg), nullStr(tipo_psg), nullStr(nombre_titular), nullStr(domicilio), nullStr(telefono), nullStr(nombre_supervisor), nullStr(nombre_testigo), nullStr(domicilio_testigo), nullStr(tipo_id_testigo), nullStr(numero_id_testigo)]
+            [visita_id, nullStr(acta_no), nullStr(fechaVal), nullTime(hora), nullTime(hora_inicio), nullTime(hora_termino), acta_hechos, nullStr(otros_documentos), cumple, presenta_observaciones, requiere_seguimiento, nullStr(observaciones_detectadas), nullStr(medidas_preventivas), no_realizo_manifestaciones, nullStr(manifestaciones), nullStr(localidad), nullStr(municipio), nullStr(nombre_psg), nullStr(tipo_psg), nullStr(nombre_titular), nullStr(domicilio), nullStr(telefono), nullStr(nombre_supervisor), nullStr(nombre_testigo), nullStr(domicilio_testigo), nullStr(tipo_id_testigo), nullStr(numero_id_testigo)]
         );
 
         await client.query(
@@ -602,7 +620,10 @@ router.post('/modulo6', verificarToken, async (req, res) => {
 
         const n = v => (v !== '' && v !== null && v !== undefined) ? v : null;
         const nTime = v => (v !== '' && v !== null && v !== undefined) ? v : null;
-        const nDate = v => (v !== '' && v !== null && v !== undefined) ? v : null;
+        const nDate = v => {
+            const formatted = formatDateForDb(v);
+            return (formatted !== '' && formatted !== null && formatted !== undefined) ? formatted : null;
+        };
 
         const resultado = await client.query(
             `INSERT INTO modulo6_acta_circunstanciada 
