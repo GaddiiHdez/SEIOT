@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Plus, ArrowLeft, Save, Trash2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Plus, ArrowLeft, Save, Trash2, Eye, EyeOff, ChevronDown, ChevronUp, Search, Filter, UserCheck, UserX, X } from 'lucide-react';
 import { apiFetch } from '../../utils/api.js';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import Navbar from '../../components/Navbar';
@@ -50,6 +50,8 @@ const AdminUsuarios = () => {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [usuarioEditando, setUsuarioEditando] = useState(null);
     const [expandido, setExpandido] = useState(null);
+    const [filtroNombre, setFiltroNombre] = useState('');
+    const [filtroRol, setFiltroRol] = useState('');
 
     // Formulario
     const [nombre, setNombre] = useState('');
@@ -180,115 +182,158 @@ const AdminUsuarios = () => {
         }
     };
 
+    const usuariosFiltrados = usuarios.filter(u => {
+        const matchesNombre = u.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) || 
+                             u.usuario.toLowerCase().includes(filtroNombre.toLowerCase());
+        const matchesRol = filtroRol === '' || u.rol === filtroRol;
+        return matchesNombre && matchesRol;
+    });
+
+    const getRolBadgeStyles = (rol) => {
+        switch (rol) {
+            case 'admin':
+            case 'superadmin':
+                return 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-sm shadow-red-950/20';
+            case 'supervisor':
+                return 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-950/20';
+            case 'vista':
+                return 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-sm shadow-slate-950/20';
+            default:
+                return 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-sm shadow-green-950/20';
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-100 font-sans">
+        <div className="min-h-screen bg-slate-50/50 font-sans pb-16">
             <Navbar />
 
-            <div className="max-w-5xl mx-auto p-6">
-
-                {/* Botón crear */}
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-2 text-gray-700">
-                        <Users size={20} />
-                        <span className="font-bold">{usuarios.length} usuario(s) registrados</span>
+            <div className="max-w-6xl mx-auto p-6 md:p-8">
+                
+                {/* Cabecera de la sección */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <span className="text-[10px] bg-red-800/10 border border-red-800/20 text-red-900 font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                            Seguridad & Personal
+                        </span>
+                        <h1 className="text-2xl font-extrabold text-slate-800 mt-1">Gestión de Usuarios</h1>
+                        <p className="text-xs text-slate-500 mt-0.5">Controla quién accede al sistema y personaliza sus permisos de supervisión.</p>
                     </div>
-                    <button onClick={abrirCrear} className="bg-red-800 text-white px-4 py-2 rounded shadow hover:bg-red-900 flex items-center gap-2 font-bold text-sm">
-                        <Plus size={18} /> NUEVO USUARIO
+
+                    <button 
+                        onClick={abrirCrear} 
+                        className="bg-gradient-to-r from-red-800 to-red-900 text-white px-5 py-2.5 rounded-xl shadow-lg hover:from-red-900 hover:to-red-950 flex items-center gap-2 font-bold text-xs tracking-wider transition-all active:scale-95 shrink-0"
+                    >
+                        <Plus size={16} /> NUEVO USUARIO
                     </button>
                 </div>
 
-                {/* Formulario crear/editar */}
-                {mostrarFormulario && (
-                    <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
-                        <h2 className="font-bold text-gray-800 text-lg mb-4 border-b pb-2">
-                            {usuarioEditando ? `Editando: ${usuarioEditando.nombre}` : 'Nuevo Usuario'}
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1 uppercase">Nombre completo</label>
-                                <input value={nombre} onChange={e => setNombre(e.target.value)} className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-red-700" placeholder="Nombre completo" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1 uppercase">Usuario</label>
-                                <input value={usuarioInput} onChange={e => setUsuarioInput(e.target.value)} className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-red-700" placeholder="Usuario para login" disabled={!!usuarioEditando} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1 uppercase">
-                                    {usuarioEditando ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña'}
-                                </label>
-                                <div className="relative">
-                                    <input type={mostrarPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-red-700 pr-10" placeholder={usuarioEditando ? 'Nueva contraseña...' : 'Contraseña'} />
-                                    <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-                                        {mostrarPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1 uppercase">Rol base</label>
-                                <select value={rol} onChange={e => aplicarRol(e.target.value)} className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-red-700 font-bold">
-                                    <option value="admin">Admin</option>
-                                    <option value="supervisor">Supervisor</option>
-                                    <option value="capturista">Capturista</option>
-                                    <option value="vista">Vista</option>
-                                </select>
-                                <p className="text-xs text-gray-400 mt-1">Seleccionar un rol precarga los permisos, pero puedes ajustarlos</p>
-                            </div>
-                        </div>
-
-                        {/* Switches de permisos */}
-                        <div className="border border-gray-200 rounded-lg p-4 mb-4">
-                            <h3 className="font-bold text-gray-700 text-sm mb-3 uppercase">Permisos individuales</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {PERMISOS_CONFIG.map(p => (
-                                    <div key={p.key} className="flex items-center justify-between gap-2 bg-gray-50 rounded p-2">
-                                        <span className="text-sm text-gray-700">{p.label}</span>
-                                        <Switch valor={permisos[p.key]} onChange={() => togglePermiso(p.key)} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 justify-end">
-                            <button onClick={() => setMostrarFormulario(false)} className="px-4 py-2 border border-gray-300 rounded text-sm font-bold text-gray-600 hover:bg-gray-50">
-                                Cancelar
-                            </button>
-                            <button onClick={guardar} disabled={guardando} className="bg-red-800 text-white px-6 py-2 rounded shadow hover:bg-red-900 flex items-center gap-2 text-sm font-bold disabled:opacity-60">
-                                <Save size={16} /> {guardando ? 'Guardando...' : 'GUARDAR'}
-                            </button>
-                        </div>
+                {/* Filtros de búsqueda */}
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div className="relative w-full sm:max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input 
+                            type="text" 
+                            value={filtroNombre} 
+                            onChange={(e) => setFiltroNombre(e.target.value)} 
+                            placeholder="Buscar por nombre o usuario..." 
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs outline-none focus:border-red-800 transition-all font-bold text-slate-700" 
+                        />
                     </div>
-                )}
 
-                {/* Lista de usuarios */}
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Filter className="text-slate-400 shrink-0" size={16} />
+                        <select 
+                            value={filtroRol} 
+                            onChange={(e) => setFiltroRol(e.target.value)}
+                            className="w-full sm:w-44 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs outline-none focus:border-red-800 transition-all font-bold text-slate-600"
+                        >
+                            <option value="">Todos los roles</option>
+                            <option value="admin">Administrador</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="capturista">Capturista</option>
+                            <option value="vista">Vista</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Listado de usuarios */}
                 {cargando ? (
-                    <div className="text-center py-10 text-gray-400 font-bold">Cargando usuarios...</div>
+                    <div className="text-center py-20 text-slate-400 font-bold text-sm flex flex-col items-center gap-2">
+                        <Loader2 className="animate-spin text-red-800" size={24} /> Cargando plantilla de personal...
+                    </div>
+                ) : usuariosFiltrados.length === 0 ? (
+                    <div className="text-center py-16 bg-white border border-slate-200/60 rounded-2xl p-6 text-slate-400 font-bold text-sm">
+                        No se encontraron usuarios registrados con los criterios seleccionados.
+                    </div>
                 ) : (
-                    <div className="space-y-3">
-                        {usuarios.map(u => (
-                            <div key={u.id} className={`bg-white rounded-xl shadow border ${!u.activo ? 'opacity-60 border-gray-200' : 'border-gray-200'}`}>
-                                <div className="p-4 flex items-center justify-between">
+                    <div className="grid grid-cols-1 gap-4">
+                        {usuariosFiltrados.map(u => (
+                            <div 
+                                key={u.id} 
+                                className={`bg-white rounded-2xl shadow-sm border transition-all duration-200 ${
+                                    !u.activo 
+                                        ? 'opacity-65 border-slate-200 bg-slate-50/30' 
+                                        : 'border-slate-200/80 hover:shadow-md hover:border-slate-300'
+                                }`}
+                            >
+                                <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm ${u.es_admin ? 'bg-red-800' : u.rol === 'supervisor' ? 'bg-blue-600' : u.rol === 'vista' ? 'bg-gray-500' : 'bg-green-600'}`}>
+                                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-extrabold text-sm ${getRolBadgeStyles(u.rol)}`}>
                                             {u.nombre.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-gray-800">{u.nombre}</p>
-                                            <p className="text-xs text-gray-500">@{u.usuario} — <span className="font-bold uppercase">{u.rol}</span> {!u.activo && <span className="text-red-500 font-bold">INACTIVO</span>}</p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="font-extrabold text-slate-800 text-sm">{u.nombre}</p>
+                                                <span className="text-[9px] bg-slate-100 border border-slate-200 text-slate-500 font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">
+                                                    {u.rol}
+                                                </span>
+                                                {u.superadmin && (
+                                                    <span className="text-[9px] bg-yellow-50 border border-yellow-200 text-yellow-700 font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">
+                                                        ⭐ SuperAdmin
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 font-bold mt-0.5">
+                                                @{u.usuario}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => setExpandido(expandido === u.id ? null : u.id)} className="text-gray-400 hover:text-gray-600 p-1">
-                                            {expandido === u.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+
+                                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                                        {/* Indicador de estado */}
+                                        <div className={`flex items-center gap-1 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border ${
+                                            u.activo 
+                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                                                : 'bg-rose-50 border-rose-200 text-rose-700'
+                                        }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${u.activo ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                                            {u.activo ? 'Activo' : 'Inactivo'}
+                                        </div>
+
+                                        <button 
+                                            onClick={() => setExpandido(expandido === u.id ? null : u.id)} 
+                                            className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-lg border border-transparent hover:border-slate-200 transition-all outline-none"
+                                            title="Ver permisos"
+                                        >
+                                            {expandido === u.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                         </button>
-                                        {u.superadmin ? (
-                                            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-xs font-bold border border-yellow-300">⭐ SUPERADMIN</span>
-                                        ) : (
+
+                                        {!u.superadmin && (
                                             <>
-                                                <button onClick={() => abrirEditar(u)} className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700">
+                                                <button 
+                                                    onClick={() => abrirEditar(u)} 
+                                                    className="bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 hover:text-slate-900 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 outline-none"
+                                                >
                                                     Editar
                                                 </button>
-                                                <button onClick={() => desactivar(u.id, u.activo)} className={`px-3 py-1 rounded text-xs font-bold ${u.activo ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>
+                                                <button 
+                                                    onClick={() => desactivar(u.id, u.activo)} 
+                                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 outline-none ${
+                                                        u.activo 
+                                                            ? 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700' 
+                                                            : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700'
+                                                    }`}
+                                                >
                                                     {u.activo ? 'Desactivar' : 'Activar'}
                                                 </button>
                                             </>
@@ -298,12 +343,16 @@ const AdminUsuarios = () => {
 
                                 {/* Permisos expandidos */}
                                 {expandido === u.id && (
-                                    <div className="border-t border-gray-100 p-4">
-                                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">Permisos activos:</p>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    <div className="border-t border-slate-100 p-4 bg-slate-50/50 rounded-b-2xl animate-fade-in">
+                                        <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">Permisos asignados:</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                             {PERMISOS_CONFIG.map(p => (
-                                                <div key={p.key} className={`flex items-center gap-1 text-xs rounded px-2 py-1 ${u[p.key] ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
-                                                    <span className={`w-2 h-2 rounded-full ${u[p.key] ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                                <div key={p.key} className={`flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 border ${
+                                                    u[p.key] 
+                                                        ? 'bg-white border-green-200 text-green-700 font-bold shadow-sm' 
+                                                        : 'bg-slate-100/40 border-slate-200/40 text-slate-400 font-medium'
+                                                }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${u[p.key] ? 'bg-green-500' : 'bg-slate-300'}`}></span>
                                                     {p.label}
                                                 </div>
                                             ))}
@@ -312,6 +361,132 @@ const AdminUsuarios = () => {
                                 )}
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* VENTANA EMERGENTE MODAL (Crear / Editar) */}
+                {mostrarFormulario && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-100 flex flex-col transform transition-all duration-300 scale-100 max-h-[90vh] overflow-hidden animate-scale-up">
+                            
+                            {/* Cabecera del Modal */}
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                <div>
+                                    <span className="text-[9px] bg-red-800/10 border border-red-800/20 text-red-950 font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">
+                                        Formulario
+                                    </span>
+                                    <h2 className="font-extrabold text-slate-800 text-lg mt-0.5">
+                                        {usuarioEditando ? `Editar Usuario: ${usuarioEditando.nombre}` : 'Nuevo Usuario'}
+                                    </h2>
+                                </div>
+                                <button 
+                                    onClick={() => setMostrarFormulario(false)}
+                                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-150 rounded-lg transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Contenido del Modal (Scrollable) */}
+                            <div className="p-6 overflow-y-auto space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-extrabold text-slate-500 mb-1 uppercase tracking-wider">Nombre completo</label>
+                                        <input 
+                                            value={nombre} 
+                                            onChange={e => setNombre(e.target.value)} 
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-red-850 text-slate-700 font-bold transition-all" 
+                                            placeholder="Nombre completo del empleado" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-extrabold text-slate-500 mb-1 uppercase tracking-wider">Usuario</label>
+                                        <input 
+                                            value={usuarioInput} 
+                                            onChange={e => setUsuarioInput(e.target.value)} 
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-red-850 text-slate-700 font-bold transition-all disabled:opacity-75 disabled:bg-slate-100 disabled:cursor-not-allowed" 
+                                            placeholder="Nombre de usuario para acceder" 
+                                            disabled={!!usuarioEditando} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-extrabold text-slate-500 mb-1 uppercase tracking-wider">
+                                            {usuarioEditando ? 'Nueva contraseña (vacío para conservar)' : 'Contraseña'}
+                                        </label>
+                                        <div className="relative">
+                                            <input 
+                                                type={mostrarPassword ? 'text' : 'password'} 
+                                                value={password} 
+                                                onChange={e => setPassword(e.target.value)} 
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-red-850 text-slate-700 font-bold transition-all pr-10" 
+                                                placeholder={usuarioEditando ? 'Ingresar nueva contraseña...' : 'Contraseña de acceso'} 
+                                            />
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setMostrarPassword(!mostrarPassword)} 
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                            >
+                                                {mostrarPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-extrabold text-slate-500 mb-1 uppercase tracking-wider">Rol de acceso</label>
+                                        <select 
+                                            value={rol} 
+                                            onChange={e => aplicarRol(e.target.value)} 
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-red-850 text-slate-700 font-bold transition-all"
+                                        >
+                                            <option value="admin">Administrador</option>
+                                            <option value="supervisor">Supervisor</option>
+                                            <option value="capturista">Capturista</option>
+                                            <option value="vista">Vista</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Listado de Switches de Permisos */}
+                                <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+                                    <h3 className="font-extrabold text-slate-700 text-xs mb-3 uppercase tracking-wider border-b border-slate-200/50 pb-2 flex justify-between items-center">
+                                        <span>Permisos Individuales</span>
+                                        <span className="text-[10px] text-slate-400 lowercase font-bold">Personaliza los accesos precargados</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-1">
+                                        {PERMISOS_CONFIG.map(p => (
+                                            <div key={p.key} className="flex items-center justify-between gap-3 bg-white border border-slate-200/50 rounded-xl p-2.5 shadow-sm hover:border-slate-350 transition-all">
+                                                <span className="text-xs text-slate-600 font-bold leading-tight">{p.label}</span>
+                                                <Switch valor={permisos[p.key]} onChange={() => togglePermiso(p.key)} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Botonera de Acciones (Footer del Modal) */}
+                            <div className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end bg-slate-50">
+                                <button 
+                                    onClick={() => setMostrarFormulario(false)} 
+                                    className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-150 hover:text-slate-700 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={guardar} 
+                                    disabled={guardando} 
+                                    className="bg-gradient-to-r from-red-800 to-red-900 text-white px-5 py-2 rounded-xl shadow hover:from-red-900 hover:to-red-950 flex items-center gap-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {guardando ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={14} /> Guardando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={14} /> GUARDAR USUARIO
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
