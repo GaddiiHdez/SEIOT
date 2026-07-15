@@ -16,6 +16,7 @@ import ActaCircunstanciada from './pages/Modulo6/ActaCircunstanciada';
 import AdminUsuarios from './pages/Admin/AdminUsuarios';
 import Consultas from './pages/Admin/Consultas';
 import SuperAdminPanel from './pages/Admin/SuperAdminPanel';
+import ManualUsuario from './pages/ManualUsuario';
 
 const SyncManager = () => {
   useEffect(() => {
@@ -98,6 +99,7 @@ function App() {
           <Route path="/admin/usuarios" element={<RutaProtegida><AdminUsuarios /></RutaProtegida>} />
           <Route path="/admin/consultas" element={<RutaProtegida><Consultas /></RutaProtegida>} />
           <Route path="/admin/super" element={<RutaProtegida><SuperAdminPanel /></RutaProtegida>} />
+          <Route path="/manual" element={<RutaProtegida><ManualUsuario /></RutaProtegida>} />
         </Routes>
       </BrowserRouter>
       </AlertProvider>

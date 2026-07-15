@@ -127,6 +127,15 @@ const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupe
             </span>
           </div>
 
+          {/* Botón de Manual de Usuario */}
+          <button 
+            onClick={() => navigate('/manual')}
+            className="flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all active:scale-95 shadow-sm outline-none"
+            title="Manual de Usuario"
+          >
+            <BookOpen size={14} />
+          </button>
+
           {/* Historial de Visitas Recientes (Dropdown discreto) */}
           {path === '/dashboard' && visitasRecientes && visitasRecientes.length > 0 && (
             <div className="relative">
