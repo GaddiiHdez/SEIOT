@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, BarChart2, Users, ArrowLeft, X } from 'lucide-react';
+import { LogOut, BarChart2, Users, ArrowLeft, X, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg';
 
-const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupervisorSeleccionado, setAvance }) => {
+const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupervisorSeleccionado, setAvance, visitasRecientes, agregarVisitaReciente }) => {
+  const [menuRecientesAbierto, setMenuRecientesAbierto] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
 
   React.useEffect(() => {
@@ -112,6 +113,73 @@ const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupe
               {isOnline ? 'En línea' : 'Sin red'}
             </span>
           </div>
+
+          {/* Historial de Visitas Recientes (Dropdown discreto) */}
+          {path === '/dashboard' && visitasRecientes && visitasRecientes.length > 0 && (
+            <div className="relative">
+              <button 
+                onClick={() => setMenuRecientesAbierto(!menuRecientesAbierto)}
+                className="flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all active:scale-95 shadow-sm outline-none"
+                title="Historial de Visitas Recientes"
+              >
+                <Clock size={14} />
+              </button>
+              {menuRecientesAbierto && (
+                <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-3 w-80 text-slate-800 text-xs z-50 animate-scale-up">
+                  <div className="px-4 pb-2 border-b border-gray-100 flex items-center justify-between text-slate-500 font-bold uppercase tracking-wide text-[9px]">
+                    <span>Visitas Recientes</span>
+                    <Clock size={11} />
+                  </div>
+                  <div className="max-h-64 overflow-y-auto mt-1.5">
+                    {visitasRecientes.map((vis, idx) => {
+                      const count = vis.estado_visita === 'finalizado' ? 6 : Object.values(vis.avance || {}).filter(Boolean).length;
+                      const isFin = vis.estado_visita === 'finalizado';
+                      
+                      let labelAvance = `${count} / 6 etapas`;
+                      if (isFin) {
+                        const keys = ['modulo1', 'modulo2', 'modulo3', 'modulo4', 'modulo5', 'modulo6'];
+                        let last = 0;
+                        keys.forEach((key, kIdx) => {
+                          if (vis.avance?.[key]) last = kIdx + 1;
+                        });
+                        labelAvance = `Etapa ${last} (Concluido)`;
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            if (setFolioActivo) setFolioActivo(vis.folio);
+                            if (setDatosPsg) setDatosPsg(vis.datosPsg);
+                            if (setPsgInput) setPsgInput(vis.psg);
+                            if (setSupervisorSeleccionado) setSupervisorSeleccionado(vis.datosSupervisor);
+                            if (setAvance) setAvance(vis.avance || { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false });
+                            localStorage.setItem('visitaActiva', JSON.stringify(vis));
+                            if (agregarVisitaReciente) agregarVisitaReciente(vis);
+                            setMenuRecientesAbierto(false);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            alert(`Folio cargado: ${vis.folio}`);
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex flex-col gap-1 transition-colors border-b border-slate-50 last:border-b-0"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="font-mono font-bold text-slate-900 truncate max-w-[160px]">{vis.folio}</span>
+                            <span className={`text-[9px] px-2 py-0.5 rounded font-extrabold ${isFin ? 'bg-green-50 text-green-700 border border-green-200/50' : 'bg-slate-100 text-slate-600'}`}>
+                              {labelAvance}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
+                            <span>PSG: {vis.psg}</span>
+                            <span className="truncate max-w-[120px] font-normal">{vis.datosPsg?.nombre_titular || '...'}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <span className="text-white/80 text-xs hidden md:block">
             Hola, <span className="font-bold text-amber-300">{usuario?.nombre || 'Usuario'}</span>

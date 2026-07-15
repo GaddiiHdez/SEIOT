@@ -503,6 +503,8 @@ const Dashboard = () => {
         setDatosPsg={setDatosPsg} 
         setSupervisorSeleccionado={setSupervisorSeleccionado} 
         setAvance={setAvance} 
+        visitasRecientes={visitasRecientes}
+        agregarVisitaReciente={agregarVisitaReciente}
       />
 
       <div className="max-w-7xl mx-auto p-6">
@@ -670,50 +672,6 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* --- ZONA 4: VISITAS RECIENTES --- */}
-        {visitasRecientes.length > 0 && (
-          <div className="mt-12 animate-fade-in border-t border-gray-200 pt-8">
-            <h2 className="text-gray-600 font-bold text-sm uppercase mb-4 flex items-center gap-2">
-              <Clock size={16} className="text-gray-500" /> Historial de Visitas Recientes
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {visitasRecientes.map((vis, idx) => {
-                const complCount = vis.estado_visita === 'finalizado' ? 6 : Object.values(vis.avance || {}).filter(Boolean).length;
-                return (
-                  <div 
-                    key={idx}
-                    onClick={() => {
-                      setFolioActivo(vis.folio);
-                      setDatosPsg(vis.datosPsg);
-                      setPsgInput(vis.psg);
-                      setSupervisorSeleccionado(vis.datosSupervisor);
-                      setAvance(vis.avance || { modulo1: false, modulo2: false, modulo3: false, modulo4: false, modulo5: false, modulo6: false });
-                      localStorage.setItem('visitaActiva', JSON.stringify(vis));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                      alert(`Folio cargado: ${vis.folio}`);
-                    }}
-                    className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between group active:scale-98"
-                  >
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-extrabold uppercase mb-1">Clave PSG: {vis.psg}</p>
-                      <p className="font-mono text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors truncate" title={vis.folio}>{vis.folio}</p>
-                      <p className="text-[11px] text-gray-500 font-bold mt-2 line-clamp-1">Titular: {vis.datosPsg?.nombre_titular || '...'}</p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                      <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500">
-                        {getTextoAvanceCompacto(vis)}
-                      </span>
-                      <span className="text-[10px] text-blue-500 font-bold group-hover:underline flex items-center gap-0.5">
-                        Abrir →
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}
