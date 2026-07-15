@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Plus, ArrowLeft, Save, Trash2, Eye, EyeOff, ChevronDown, ChevronUp, Search, Filter, UserCheck, UserX, X } from 'lucide-react';
+import { Users, Plus, ArrowLeft, Save, Trash2, Eye, EyeOff, ChevronDown, ChevronUp, Search, Filter, UserCheck, UserX, X, Loader2 } from 'lucide-react';
 import { apiFetch } from '../../utils/api.js';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import Navbar from '../../components/Navbar';
