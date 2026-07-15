@@ -116,6 +116,7 @@ router.get('/visitas/buscar', verificarToken, async (req, res) => {
             },
             visita_id: v.id,
             fecha: new Date(v.fecha_inicio).toLocaleDateString('es-MX'),
+            estado_visita: v.estado_visita,
             avance: {
                 modulo1: v.modulo1_completado || false,
                 modulo2: v.modulo2_completado || false,
@@ -178,9 +179,9 @@ router.get('/consultas', verificarToken, async (req, res) => {
         }
 
         if (estatus === 'finalizado') {
-            condiciones.push(`v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true`);
+            condiciones.push(`(v.estado_visita = 'finalizado' OR (v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true))`);
         } else if (estatus === 'en_proceso') {
-            condiciones.push(`NOT (v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true)`);
+            condiciones.push(`v.estado_visita != 'finalizado' AND NOT (v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true)`);
         }
 
         if (modulos_completados) {
@@ -212,6 +213,7 @@ router.get('/consultas', verificarToken, async (req, res) => {
                 v.id, v.folio, v.psg, v.supervisor, v.fecha_inicio,
                 v.modulo1_completado, v.modulo2_completado, v.modulo3_completado,
                 v.modulo4_completado, v.modulo5_completado, v.modulo6_completado,
+                v.estado_visita,
                 p.razon_social, p.municipio, p.localidad, p.tipo_psg,
                 u.nombre AS capturista_nombre
              FROM visitas v
@@ -261,9 +263,9 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
                 if (lista.length > 0) { condiciones.push(`p.municipio = ANY($${i})`); params.push(lista); i++; }
             }
             if (estatus === 'finalizado') {
-                condiciones.push(`v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true`);
+                condiciones.push(`(v.estado_visita = 'finalizado' OR (v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true))`);
             } else if (estatus === 'en_proceso') {
-                condiciones.push(`NOT (v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true)`);
+                condiciones.push(`v.estado_visita != 'finalizado' AND NOT (v.modulo1_completado = true AND v.modulo2_completado = true AND v.modulo3_completado = true AND v.modulo4_completado = true AND v.modulo5_completado = true AND v.modulo6_completado = true)`);
             }
             if (modulos_completados) {
                 const mods = modulos_completados.split(',').map(m => m.trim()).filter(Boolean);
@@ -301,6 +303,7 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
             municipio: v.municipio, localidad: v.localidad, tipo_psg: v.tipo_psg,
             telefono: v.telefono, domicilio: v.domicilio,
             supervisor: v.supervisor, fecha_inicio: v.fecha_inicio,
+            estado_visita: v.estado_visita,
             modulo1_completado: v.modulo1_completado, modulo2_completado: v.modulo2_completado,
             modulo3_completado: v.modulo3_completado, modulo4_completado: v.modulo4_completado,
             modulo5_completado: v.modulo5_completado, modulo6_completado: v.modulo6_completado,
@@ -326,6 +329,26 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
         res.json(datos);
     } catch (error) {
         console.error('Error exportar:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// Finalizar visita voluntariamente
+router.post('/visitas/finalizar/:visita_id', verificarToken, async (req, res) => {
+    try {
+        const { visita_id } = req.params;
+        const resultado = await pool.query(
+            "UPDATE visitas SET estado_visita = 'finalizado' WHERE id = $1 RETURNING *",
+            [visita_id]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'Visita no encontrada.' });
+        }
+
+        res.json({ mensaje: 'Visita finalizada correctamente.', visita: resultado.rows[0] });
+    } catch (error) {
+        console.error('Error al finalizar visita:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });

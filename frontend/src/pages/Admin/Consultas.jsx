@@ -158,8 +158,9 @@ const Consultas = () => {
         .filter(Boolean).length;
 
     const esFinalizado = (row) =>
-        row.modulo1_completado && row.modulo2_completado && row.modulo3_completado &&
-        row.modulo4_completado && row.modulo5_completado && row.modulo6_completado;
+        row.estado_visita === 'finalizado' ||
+        (row.modulo1_completado && row.modulo2_completado && row.modulo3_completado &&
+         row.modulo4_completado && row.modulo5_completado && row.modulo6_completado);
 
     // ─── ABRIR VISITA EN NUEVA PESTAÑA ───────────────────────────────────────
     const abrirVisita = async (row) => {

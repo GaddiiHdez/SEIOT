@@ -1,6 +1,6 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen, Pencil, Lock} from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen, Pencil, Lock, CheckSquare } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -173,6 +173,69 @@ const ActaHechos = () => {
             navigate('/dashboard');
         }
     }, [contexto, navigate]);
+
+    const handleFinalizarVisita = async () => {
+        try {
+            // Guardar los datos del Módulo 4 primero
+            const saveResponse = await apiFetch('/api/modulos/modulo4', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    visita_id: contexto.visita_id,
+                    acta_no: actaNo,
+                    fecha: fecha,
+                    hora,
+                    hora_inicio: horaInicio,
+                    hora_termino: horaTermino,
+                    hechos_observados: hechosObservados,
+                    no_realizo_manifestaciones: noRealizo,
+                    manifestaciones,
+                    localidad: datosPsg.localidad,
+                    municipio: datosPsg.municipio,
+                    nombre_psg: datosPsg.nombre_titular,
+                    tipo_psg: tipoPsg,
+                    nombre_titular: datosPsg.representante || "",
+                    domicilio,
+                    telefono,
+                    nombre_supervisor: contexto?.datosSupervisor?.nombre || supervisor,
+                    nombre_testigo: nombreTestigo,
+                    domicilio_testigo: domicilioTestigo,
+                    tipo_id_testigo: tipoIdTestigo,
+                    numero_id_testigo: numeroIdTestigo,
+                    nombre_testigo_cierre: nombreTestigoCierre
+                })
+            });
+
+            if (!saveResponse.ok) {
+                alert("Error al guardar los datos del acta de hechos.");
+                return;
+            }
+
+            // Marcar la visita como finalizada en la BD
+            const finalizeResponse = await apiFetch(`/api/psg/visitas/finalizar/${contexto.visita_id}`, {
+                method: 'POST'
+            });
+
+            if (!finalizeResponse.ok) {
+                alert("Error al finalizar la visita.");
+                return;
+            }
+
+            // Actualizar contexto local para indicar el cambio de estado
+            const contextoActualizado = { 
+                ...contexto, 
+                estado_visita: 'finalizado',
+                avance: { ...contexto.avance, modulo4: true } 
+            };
+            localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
+            
+            alert("¡Visita Finalizada Exitosamente!\nLa visita ha sido registrada como concluida.");
+            navigate('/dashboard');
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión al finalizar la visita.");
+        }
+    };
 
     const handleGuardar = async () => {
         try {
@@ -418,9 +481,16 @@ const ActaHechos = () => {
                             PÁGINA SIGUIENTE <ChevronRight size={20} />
                         </button>
                     ) : (
-                        !soloVista && <button onClick={handleGuardar} className="border-2 border-black text-black px-4 py-2 rounded flex items-center gap-2 shadow hover:bg-gray-100 font-bold text-xs transition-all active:scale-95">
-                            <Save size={20} /> GUARDAR
-                        </button>
+                        !soloVista && (
+                            <div className="flex gap-2">
+                                <button onClick={handleFinalizarVisita} className="bg-gradient-to-r from-red-600 to-rose-700 text-white px-4 py-2 rounded flex items-center gap-2 shadow-lg hover:from-red-700 hover:to-rose-800 font-bold text-xs transition-all active:scale-95">
+                                    <CheckSquare size={16} /> FINALIZAR VISITA
+                                </button>
+                                <button onClick={handleGuardar} className="border-2 border-black text-black px-4 py-2 rounded flex items-center gap-2 shadow hover:bg-gray-100 font-bold text-xs transition-all active:scale-95">
+                                    <Save size={20} /> GUARDAR
+                                </button>
+                            </div>
+                        )
                     )}
                 </div>
             </div>
