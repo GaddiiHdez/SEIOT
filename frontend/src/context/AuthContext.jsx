@@ -26,6 +26,8 @@ const AuthProvider = ({ children }) => {
                 const data = await response.json();
                 setUsuario(prev => prev ? {
                     ...prev,
+                    nombre: data.nombre,
+                    usuario: data.usuario,
                     es_admin: data.es_admin,
                     rol: data.rol,
                     permisos: {
