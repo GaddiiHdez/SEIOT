@@ -22,10 +22,12 @@ router.get('/buscar/:psg', verificarToken, async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
-// Obtener todos los supervisores activos
+// Obtener todos los supervisores activos (filtrado temporal para producción)
 router.get('/supervisores', verificarToken, async (req, res) => {
     try {
-        const resultado = await pool.query('SELECT * FROM excel_supervisores ORDER BY nombre');
+        const resultado = await pool.query(
+            "SELECT * FROM excel_supervisores WHERE id = 18 OR nombre = 'MVZ. Octavio Herrera Ulloa' ORDER BY nombre"
+        );
         res.json(resultado.rows);
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor.' });
