@@ -144,7 +144,7 @@ router.get('/consultas', verificarToken, async (req, res) => {
 
         const puedeVerOtros = req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
 
-        const { psg, folio, municipios, estatus, modulos_completados, fecha_desde, fecha_hasta } = req.query;
+        let { psg, folio, municipios, estatus, modulos_completados, fecha_desde, fecha_hasta, page, limit } = req.query;
 
         let condiciones = [];
         let params = [];
@@ -208,8 +208,12 @@ router.get('/consultas', verificarToken, async (req, res) => {
 
         const where = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
-        const resultado = await pool.query(
-            `SELECT 
+        // Consultar el conteo total
+        const countQuery = `SELECT COUNT(*) FROM visitas v LEFT JOIN excel_psg p ON p.psg = v.psg ${where}`;
+        const countResult = await pool.query(countQuery, params);
+        const total = parseInt(countResult.rows[0].count);
+
+        let queryStr = `SELECT 
                 v.id, v.folio, v.psg, v.supervisor, v.fecha_inicio,
                 v.modulo1_completado, v.modulo2_completado, v.modulo3_completado,
                 v.modulo4_completado, v.modulo5_completado, v.modulo6_completado,
@@ -220,11 +224,23 @@ router.get('/consultas', verificarToken, async (req, res) => {
              LEFT JOIN excel_psg p ON p.psg = v.psg
              LEFT JOIN usuarios u ON u.id = v.capturista_id
              ${where}
-             ORDER BY v.fecha_inicio DESC`,
-            params
-        );
+             ORDER BY v.fecha_inicio DESC`;
 
-        res.json(resultado.rows);
+        // Paginación si es aplicable
+        const pageVal = parseInt(page);
+        const limitVal = parseInt(limit);
+        if (!isNaN(pageVal) && !isNaN(limitVal)) {
+            const offset = (pageVal - 1) * limitVal;
+            queryStr += ` LIMIT $${i} OFFSET $${i+1}`;
+            params.push(limitVal, offset);
+        }
+
+        const resultado = await pool.query(queryStr, params);
+
+        res.json({
+            rows: resultado.rows,
+            total
+        });
     } catch (error) {
         console.error('Error consultas:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });

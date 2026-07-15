@@ -120,7 +120,7 @@ export const generarPdfModulo2 = async (datos) => {
         'Verificar el cumplimiento de las disposiciones aplicables en materia de sanidad, origen y trazabilidad',
         'ganadera, así como la correcta ejecución de las actividades que correspondan al sujeto supervisado,',
         'de conformidad con lo establecido en el Manual de Procedimientos para Supervisiones y Control',
-        'Zoosanitario de la Secretaria de Desarrollo Rural y sus Organismos Auxiliares.',
+        'Zoosanitario de la Secretaría de Desarrollo Rural y sus Organismos Auxiliares.',
     ];
     textoObjeto.forEach(linea => {
         page1.drawText(linea, { x: 56, y: yOpc, size: 9.5, font: fontNormal, color: black });

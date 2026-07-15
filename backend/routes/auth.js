@@ -74,30 +74,50 @@ function construirPermisos(user) {
     };
 }
 
+// Simple in-memory cache for user permissions
+const cacheUsuarios = new Map();
+const CACHE_TTL = 30000; // 30 segundos de TTL
+
+export const invalidarCacheUsuario = (id) => {
+    cacheUsuarios.delete(parseInt(id));
+};
+
 // ─── MIDDLEWARE: VERIFICAR TOKEN ──────────────────────────────────────────────
-// Consulta permisos actuales en BD en cada request para cambios en tiempo real
+// Consulta permisos actuales en BD en cada request para cambios en tiempo real (con caché de 30s)
 export const verificarToken = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No autorizado' });
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
+        const cacheKey = decoded.id;
+        const cached = cacheUsuarios.get(cacheKey);
 
-        // Consultar usuario y permisos actuales en BD
-        const resultado = await pool.query(
-            `SELECT id, nombre, usuario, es_admin, superadmin, rol, activo,
-                    modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4,
-                    ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs,
-                    panel_admin, consultas
-             FROM usuarios WHERE id = $1`,
-            [decoded.id]
-        );
+        let user;
+        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+            user = cached.user;
+        } else {
+            // Consultar usuario y permisos actuales en BD
+            const resultado = await pool.query(
+                `SELECT id, nombre, usuario, es_admin, superadmin, rol, activo,
+                        modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4,
+                        ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs,
+                        panel_admin, consultas
+                 FROM usuarios WHERE id = $1`,
+                [decoded.id]
+            );
 
-        // Si el usuario no existe o fue desactivado
-        if (resultado.rows.length === 0 || !resultado.rows[0].activo) {
-            return res.status(401).json({ error: 'Usuario no autorizado o desactivado.' });
+            // Si el usuario no existe o fue desactivado
+            if (resultado.rows.length === 0 || !resultado.rows[0].activo) {
+                cacheUsuarios.delete(cacheKey);
+                return res.status(401).json({ error: 'Usuario no autorizado o desactivado.' });
+            }
+
+            user = resultado.rows[0];
+            cacheUsuarios.set(cacheKey, {
+                user,
+                timestamp: Date.now()
+            });
         }
-
-        const user = resultado.rows[0];
 
         // Combinar datos del token con permisos actuales de BD
         req.usuario = {
@@ -257,6 +277,7 @@ router.put('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => 
             [nombre, activo, rol, es_admin, modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4, ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas, usuarioId]
         );
 
+        invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: 'Usuario actualizado correctamente' });
     } catch (error) {
         console.error('Error actualizar usuario:', error);
@@ -278,6 +299,7 @@ router.put('/usuarios/:id/password', verificarToken, async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
         await pool.query('UPDATE usuarios SET password_hash=$1, modificado_en=NOW() WHERE id=$2', [password_hash, usuarioId]);
 
+        invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: 'Contraseña actualizada correctamente' });
     } catch (error) {
         console.error('Error cambiar contraseña:', error);
@@ -295,6 +317,7 @@ router.delete('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) 
             return res.status(403).json({ error: 'No se puede desactivar al superadmin.' });
         }
         await pool.query('UPDATE usuarios SET activo=false, modificado_en=NOW() WHERE id=$1', [usuarioId]);
+        invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: 'Usuario desactivado correctamente' });
     } catch (error) {
         console.error('Error desactivar usuario:', error);
@@ -322,6 +345,7 @@ router.patch('/usuarios/:id/status', verificarToken, verificarAdmin, async (req,
         }
 
         await pool.query('UPDATE usuarios SET activo=$1, modificado_en=NOW() WHERE id=$2', [activo, usuarioId]);
+        invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: `Usuario ${activo ? 'activado' : 'desactivado'} correctamente` });
     } catch (error) {
         console.error('Error cambiar estado activo usuario:', error);

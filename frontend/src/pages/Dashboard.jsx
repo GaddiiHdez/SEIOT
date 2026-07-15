@@ -11,7 +11,11 @@ import { generarPdfModulo3 } from '../utils/generarPdfModulo3';
 import { generarPdfModulo4 } from '../utils/generarPdfModulo4';
 import { generarPdfModulo5 } from '../utils/generarPdfModulo5';
 import { generarPdfModulo6 } from '../utils/generarPdfModulo6'; 
-import Navbar from '../components/Navbar'; 
+import Navbar from '../components/Navbar';
+import IdentificacionPsg from '../components/Dashboard/IdentificacionPsg';
+import GestionVisita from '../components/Dashboard/GestionVisita';
+import ProgresoVisita from '../components/Dashboard/ProgresoVisita';
+import ModuloCard from '../components/Dashboard/ModuloCard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -522,166 +526,61 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto p-6">
 
         {/* --- ZONA 1: IDENTIFICACIÓN DEL PSG --- */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border-t-4 border-blue-600">
-          <h2 className="text-gray-700 font-bold mb-4">1. IDENTIFICACIÓN DEL PSG</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div>
-              <label htmlFor="psg-input" className="block text-xs font-bold text-gray-500 mb-1 uppercase">Ingrese Clave PSG:</label>
-              <div className="flex items-center gap-2 bg-white p-2 rounded border-2 border-blue-100 focus-within:border-blue-500 transition-colors">
-                <MapPin size={20} className="text-blue-600" />
-                <input id="psg-input" type="text" value={psgInput} onChange={handlePsgChange} placeholder="Ej: 18-017-0002-P02" disabled={!!folioActivo} className={`bg-transparent font-bold text-gray-800 w-full outline-none text-lg uppercase ${folioActivo ? 'cursor-not-allowed opacity-70' : ''}`} />
-                {folioActivo && <Lock size={16} className="text-gray-400" />}
-              </div>
-              {datosPsg && (
-                <div className="mt-2 flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded border border-green-200">
-                  <CheckCircle size={16} />
-                  <span className="text-xs font-bold">TITULAR: {datosPsg.nombre_titular}</span>
-                </div>
-              )}
-            </div>
-
-            {(!esVista || folioActivo) && <div>
-              <label htmlFor="supervisor-select" className="block text-xs font-bold text-gray-500 mb-1 uppercase">Supervisor:</label>
-              {folioActivo ? (
-                <div className="flex items-center gap-2 p-2 bg-gray-100 rounded border border-gray-200">
-                  <User size={20} className="text-gray-500" />
-                  <span className="font-bold text-gray-700 text-sm">{supervisorSeleccionado?.nombre || '...'}</span>
-                </div>
-              ) : (
-                <select id="supervisor-select" onChange={handleSupervisorChange} defaultValue="" className="w-full p-2 border-2 border-blue-100 rounded text-sm font-bold text-gray-700 outline-none focus:border-blue-500">
-                  <option value="" disabled>-- Selecciona un supervisor --</option>
-                  {supervisores.map(s => (
-                    <option key={s.id} value={s.id}>{s.nombre}</option>
-                  ))}
-                </select>
-              )}
-              {supervisorSeleccionado && (
-                <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-200">
-                  <span className="font-bold">Cargo:</span> {supervisorSeleccionado.cargo} | <span className="font-bold">Adscripción:</span> {supervisorSeleccionado.adscripcion}
-                </div>
-              )}
-            </div>}
-          </div>
-        </div>
+        <IdentificacionPsg
+          psgInput={psgInput}
+          handlePsgChange={handlePsgChange}
+          folioActivo={folioActivo}
+          datosPsg={datosPsg}
+          esVista={esVista}
+          supervisorSeleccionado={supervisorSeleccionado}
+          handleSupervisorChange={handleSupervisorChange}
+          supervisores={supervisores}
+        />
 
         {/* --- ZONA 2: GESTIÓN DE VISITA --- */}
-        {datosPsg && !folioActivo && !esVista && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border-t-4 border-green-600">
-            <h2 className="text-gray-700 font-bold mb-4">2. GESTIÓN DE LA VISITA</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-                {puedeCrearVisita ? (
-                  <button onClick={handleNuevaVisita} className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded shadow hover:bg-green-700 flex items-center justify-center gap-2"><PlusCircle size={20} /> GENERAR NUEVO FOLIO</button>
-                ) : (
-                  <div className="w-full bg-gray-100 text-gray-400 font-bold py-3 px-4 rounded border border-gray-200 flex items-center justify-center gap-2 text-sm">
-                    <PlusCircle size={20} /> Sin permiso para crear visitas
-                  </div>
-                )}
-              </div>
-              <div className="border border-gray-200 rounded-lg p-6 bg-gray-50 flex gap-2">
-                <input type="text" value={busquedaFolio} onChange={(e) => setBusquedaFolio(e.target.value)} placeholder="Ej: SDR/180170002P02/2026/999" className="flex-1 border border-gray-300 rounded px-3 text-sm outline-none font-mono" />
-                <button onClick={handleBuscarVisita} className="bg-blue-800 text-white px-4 rounded hover:bg-blue-900"><Search size={18} /></button>
-              </div>
-            </div>
-          </div>
-        )}
+        <GestionVisita
+          datosPsg={datosPsg}
+          folioActivo={folioActivo}
+          esVista={esVista}
+          puedeCrearVisita={puedeCrearVisita}
+          handleNuevaVisita={handleNuevaVisita}
+          busquedaFolio={busquedaFolio}
+          setBusquedaFolio={setBusquedaFolio}
+          handleBuscarVisita={handleBuscarVisita}
+        />
 
         {/* --- ZONA 3: MÓDULOS --- */}
         {folioActivo && (
           <div className="animate-fade-in">
-            <div className="bg-yellow-50 rounded-xl shadow-sm p-6 mb-6 border border-yellow-200 flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full text-yellow-700"><FileText size={20} /></div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase">Folio Activo:</p>
-                    <p className="text-xl font-mono text-red-700 font-bold">{folioActivo}</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={descargarTodosPdfs} 
-                  disabled={descargandoTodos}
-                  className="w-full md:w-auto bg-gradient-to-r from-red-700 to-red-900 text-white font-bold px-5 py-2.5 rounded-xl shadow hover:from-red-800 hover:to-red-950 flex items-center justify-center gap-2 text-xs tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Download size={16} className={descargandoTodos ? "animate-spin" : ""} />
-                  {descargandoTodos ? "DESCARGANDO..." : "DESCARGAR LOS 6 FORMATOS PRELLENADOS"}
-                </button>
-              </div>
-
-              <div className="border-t border-yellow-200/60 pt-4">
-                <div className="flex justify-between items-center text-xs font-bold text-gray-600 mb-1.5">
-                  <span className="uppercase text-[10px] tracking-wide">Avance general de la supervisión:</span>
-                  <span className="text-red-700 font-mono">{getTextoAvance(avance, esFinalizada, modulosCompletados, porcentajeAvance)}</span>
-                </div>
-                <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden shadow-inner">
-                  <div 
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 h-full rounded-full transition-all duration-500 ease-out" 
-                    style={{ width: `${porcentajeAvance}%` }}
-                  />
-                </div>
-              </div>
-            </div>
+            <ProgresoVisita
+              folioActivo={folioActivo}
+              descargandoTodos={descargandoTodos}
+              descargarTodosPdfs={descargarTodosPdfs}
+              avance={avance}
+              esFinalizada={esFinalizada}
+              modulosCompletados={modulosCompletados}
+              porcentajeAvance={porcentajeAvance}
+              getTextoAvance={getTextoAvance}
+            />
 
             <div className="transition-opacity duration-500">
-              <h2 className="text-gray-700 font-bold text-lg mb-4 flex items-center gap-2"><ClipboardList className="text-red-900" />3. DOCUMENTACIÓN REQUERIDA</h2>
+              <h2 className="text-gray-700 font-bold text-lg mb-4 flex items-center gap-2">
+                <ClipboardList className="text-red-900" />
+                3. DOCUMENTACIÓN REQUERIDA
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {modulos.map((modulo, index) => (
-                  <div key={index} onClick={() => !modulo.bloqueado && modulo.ruta !== '#' && navigate(modulo.ruta)}
-                    className={`relative p-6 rounded-xl shadow-md text-white transition-all ${modulo.bloqueado ? 'bg-gray-300 cursor-not-allowed opacity-80' : `${modulo.color} cursor-pointer hover:shadow-xl hover:-translate-y-1`}`}
-                  >
-                    {/* Botón de Tres Puntos (Menú Contextual) */}
-                    {!modulo.bloqueado && (
-                      <div className="absolute top-3 right-2.5 z-30" onClick={(e) => e.stopPropagation()}>
-                        <button 
-                          onClick={() => setMenuAbierto(menuAbierto === modulo.id ? null : modulo.id)} 
-                          className="hover:bg-white/20 p-1.5 rounded-full transition-colors outline-none flex items-center justify-center active:scale-95"
-                          title="Opciones de PDF"
-                        >
-                          <MoreVertical size={16} className="text-white" />
-                        </button>
-                        {menuAbierto === modulo.id && (
-                          <div className="absolute right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 w-48 text-slate-800 text-xs font-bold z-50 animate-scale-up">
-                            <button 
-                              onClick={() => { setMenuAbierto(null); descargarPdf(modulo.id); }}
-                              className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 transition-colors"
-                            >
-                              <Download size={14} className="text-slate-500" />
-                              Descargar Prellenado
-                            </button>
-                            {pdfs[modulo.id] && (
-                              <button 
-                                onClick={() => { setMenuAbierto(null); verPdfFirmado(modulo.id); }}
-                                className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100 transition-colors"
-                              >
-                                <FileCheck size={14} className="text-blue-500" />
-                                Ver PDF Firmado
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className={`absolute top-4 ${modulo.bloqueado ? 'right-4' : 'right-10'} bg-white/20 px-2 py-1 rounded text-[10px] font-bold`}>ETAPA 0{index + 1}</div>
-                    <div className="mb-4 bg-white/10 w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      {modulo.bloqueado ? <Lock size={24} className="text-gray-500" /> : modulo.icono}
-                    </div>
-                    <h3 className={`text-lg font-bold leading-tight ${modulo.bloqueado ? 'text-gray-500' : 'text-white'}`}>{modulo.nombre}</h3>
-                    <div className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
-                      {modulo.completado ? (
-                        <span className="flex items-center gap-1 text-green-100 bg-green-700/30 px-2 py-1 rounded border border-green-400"><CheckCircle size={12} /> Completado</span>
-                      ) : modulo.bloqueado ? (
-                        <span className="text-gray-500 flex items-center gap-1"><Lock size={10} /> Bloqueado</span>
-                      ) : (
-                        <span className="opacity-80">Disponible</span>
-                      )}
-                      {pdfs[modulo.id] && (
-                        <span className="flex items-center gap-1 text-blue-100 bg-blue-700/30 px-2 py-1 rounded border border-blue-300 ml-1" title="Tiene PDF firmado">
-                          <FileCheck size={12} /> PDF
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <ModuloCard
+                    key={index}
+                    modulo={modulo}
+                    index={index}
+                    navigate={navigate}
+                    menuAbierto={menuAbierto}
+                    setMenuAbierto={setMenuAbierto}
+                    descargarPdf={descargarPdf}
+                    verPdfFirmado={verPdfFirmado}
+                    pdfs={pdfs}
+                  />
                 ))}
               </div>
             </div>

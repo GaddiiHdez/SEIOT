@@ -42,7 +42,7 @@ export const generarPdfModulo6 = async (datos) => {
     const agregarMembrete = (page) => {
         page.drawImage(headerImg, { x: 0, y: 662, width: 612, height: 130 });
         page.drawImage(footerImg, { x: 0, y: 0, width: 612, height: 130 });
-        page.drawText('SECRETARIA DE DESARROLLO RURAL', { x: 220, y: 62, size: 7.5, font: fontBold, color: gray });
+        page.drawText('SECRETARÍA DE DESARROLLO RURAL', { x: 220, y: 62, size: 7.5, font: fontBold, color: gray });
         page.drawText('Av. Jacarandas No. 371 Sur Colonia El Tecolote C.P. 63135 Tepic, Nayarit.', { x: 155, y: 51, size: 7.5, font: fontNormal, color: gray });
         page.drawText('311 216 22 63 | 311 216 22 74', { x: 228, y: 40, size: 7.5, font: fontNormal, color: gray });
     };
@@ -98,7 +98,7 @@ export const generarPdfModulo6 = async (datos) => {
 
     page1.drawText('ACTA CIRCUNSTANCIADA', { x: 200, y: 648, size: 14, font: fontBold, color: black });
     page1.drawText('DE SUPERVISION ZOOSANITARIA Y DE TRAZABILIDAD**', { x: 130, y: 633, size: 11, font: fontBold, color: black });
-    page1.drawText('SECRETARIA DE DESARROLLO RURAL', { x: 195, y: 615, size: 10, font: fontBold, color: black });
+    page1.drawText('SECRETARÍA DE DESARROLLO RURAL', { x: 195, y: 615, size: 10, font: fontBold, color: black });
     page1.drawText('GOBIERNO DEL ESTADO DE NAYARIT', { x: 198, y: 601, size: 10, font: fontBold, color: black });
     page1.drawText(`ACTA CIRCUNSTANCIADA No. ${datos.acta_no || ''}`, { x: 320, y: 585, size: 10, font: fontBold, color: black });
     page1.drawText(`FOLIO: ${datos.folio || ''}`, { x: 390, y: 571, size: 10, font: fontBold, color: black });
@@ -118,7 +118,7 @@ export const generarPdfModulo6 = async (datos) => {
     y -= 13;
 
     const textoLegal = [
-        'caracter de personal oficial estatal adscrito a la Secretaria de Desarrollo Rural, debidamente',
+        'caracter de personal oficial estatal adscrito a la Secretaría de Desarrollo Rural, debidamente',
         'facultado, se constituyo en el lugar senalado para practicar supervision zoosanitaria y de trazabilidad,',
         'con fundamento en lo dispuesto por los articulos 38, fracciones IX y XXI, de la Ley Organica del Poder',
         'Ejecutivo del Estado de Nayarit; 159, fracciones IV, V, VI y IX, de la Ley Ganadera y de Desarrollo',
@@ -128,9 +128,9 @@ export const generarPdfModulo6 = async (datos) => {
         'Ganado Bovino dentro y hacia el Estado de Nayarit, Derivado de las Campanas contra la Tuberculosis',
         'y Brucelosis Bovina; asi como en el Convenio de Coordinacion para realizar acciones de verificacion e',
         'inspeccion vinculadas al control de la movilizacion agropecuaria, acuicola y pesquera, celebrado entre',
-        'la Secretaria de Agricultura y Desarrollo Rural y el Gobierno del Estado de Nayarit, particularmente en',
+        'la Secretaría de Agricultura y Desarrollo Rural y el Gobierno del Estado de Nayarit, particularmente en',
         'su apartado II, numeral II.3, y demas disposiciones aplicables en materia de sanidad animal,',
-        'movilizacion pecuaria y trazabilidad, se le notifica que esta Secretaria llevara a cabo una accion de',
+        'movilizacion pecuaria y trazabilidad, se le notifica que esta Secretaría llevara a cabo una accion de',
         'supervision en el establecimiento de su responsabilidad.',
     ];
     textoLegal.forEach(l => { page1.drawText(l, { x: 56, y, size: 9.5, font: fontNormal, color: black }); y -= 13; });
@@ -165,7 +165,7 @@ export const generarPdfModulo6 = async (datos) => {
     y2 -= 13;
     page2.drawText(`El personal actuante se identifico plenamente ante el responsable del establecimiento con credencial`, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
     y2 -= 13;
-    page2.drawText(`oficial numero ${datos.credencial_oficial_no || ''}, expedida por la Secretaria de Desarrollo Rural del Estado`, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
+    page2.drawText(`oficial numero ${datos.credencial_oficial_no || ''}, expedida por la Secretaría de Desarrollo Rural del Estado`, { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
     y2 -= 13;
     page2.drawText('de Nayarit, acreditando su caracter y facultades para la practica de la presente diligencia,', { x: 56, y: y2, size: 9.5, font: fontNormal, color: black });
     y2 -= 13;

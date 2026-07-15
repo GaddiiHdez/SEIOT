@@ -92,23 +92,23 @@ router.post('/subir-firmado', verificarToken, upload.single('archivo'), async (r
             return;
         }
 
-        const ext = path.extname(req.file.originalname);
-        const nombreFinal = `visita_${visita_id}_modulo${modulo}_firmado${ext}`;
-        const rutaFinal = path.join(path.dirname(req.file.path), nombreFinal);
-        await fsPromises.rename(req.file.path, rutaFinal);
-
         const existe = await pool.query(
             'SELECT id FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
             [visita_id, modulo]
         );
 
         if (existe.rows.length > 0) {
-            await fsPromises.unlink(rutaFinal).catch(() => {});
+            await fsPromises.unlink(req.file.path).catch(() => {});
             return res.status(409).json({
                 error: 'Ya existe un documento firmado para este módulo.',
                 bloqueado: true
             });
         }
+
+        const ext = path.extname(req.file.originalname);
+        const nombreFinal = `visita_${visita_id}_modulo${modulo}_firmado${ext}`;
+        const rutaFinal = path.join(path.dirname(req.file.path), nombreFinal);
+        await fsPromises.rename(req.file.path, rutaFinal);
 
         const resultado = await pool.query(
             `INSERT INTO documentos_firmados (visita_id, modulo, nombre_archivo, ruta_archivo)

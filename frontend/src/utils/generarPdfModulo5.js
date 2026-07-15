@@ -34,7 +34,7 @@ export const generarPdfModulo5 = async (datos) => {
     const agregarMembrete = (page) => {
         page.drawImage(headerImg, { x: 0, y: 662, width: 612, height: 130 });
         page.drawImage(footerImg, { x: 0, y: 0, width: 612, height: 130 });
-        page.drawText('SECRETARIA DE DESARROLLO RURAL', { x: 220, y: 62, size: 7.5, font: fontBold, color: gray });
+        page.drawText('SECRETARÍA DE DESARROLLO RURAL', { x: 220, y: 62, size: 7.5, font: fontBold, color: gray });
         page.drawText('Av. Jacarandas No. 371 Sur Colonia El Tecolote C.P. 63135 Tepic, Nayarit.', { x: 155, y: 51, size: 7.5, font: fontNormal, color: gray });
         page.drawText('311 216 22 63 | 311 216 22 74', { x: 228, y: 40, size: 7.5, font: fontNormal, color: gray });
     };
@@ -86,7 +86,7 @@ export const generarPdfModulo5 = async (datos) => {
     y -= 13;
     page1.drawText(`${dia} de ${mes} de ${anio} (5), el que suscribe`, { x: 56, y, size: 9.5, font: fontNormal, color: black });
     y -= 13;
-    page1.drawText(`${datos.nombre_supervisor || ''} (6), servidor publico adscrito a la Secretaria de`, { x: 56, y, size: 9.5, font: fontNormal, color: black });
+    page1.drawText(`${datos.nombre_supervisor || ''} (6), servidor publico adscrito a la Secretaría de`, { x: 56, y, size: 9.5, font: fontNormal, color: black });
     y -= 13;
 
     const textoLegal = [
@@ -100,9 +100,9 @@ export const generarPdfModulo5 = async (datos) => {
         'Requisitos para la Movilizacion de Ganado Bovino dentro y hacia el Estado de Nayarit, Derivado de las',
         'Campanas contra la Tuberculosis y Brucelosis Bovina; asi como en el Convenio de Coordinacion para',
         'realizar acciones de verificacion e inspeccion vinculadas al control de la movilizacion agropecuaria,',
-        'acuicola y pesquera, celebrado entre la Secretaria de Agricultura y Desarrollo Rural y el Gobierno del',
+        'acuicola y pesquera, celebrado entre la Secretaría de Agricultura y Desarrollo Rural y el Gobierno del',
         'Estado de Nayarit, particularmente en su apartado II, numeral II.3, y demas disposiciones aplicables',
-        'en materia de sanidad animal, movilizacion pecuaria y trazabilidad, se le notifica que esta Secretaria',
+        'en materia de sanidad animal, movilizacion pecuaria y trazabilidad, se le notifica que esta Secretaría',
         'llevara a cabo una accion de supervision en el establecimiento de su responsabilidad.',
     ];
 

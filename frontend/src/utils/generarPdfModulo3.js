@@ -20,7 +20,7 @@ export const generarPdfModulo3 = async (datos) => {
     const agregarMembrete = (page) => {
         page.drawImage(headerImg, { x: 0, y: 662, width: 612, height: 130 });
         page.drawImage(footerImg, { x: 0, y: 0, width: 612, height: 130 });
-        page.drawText('SECRETARIA DE DESARROLLO RURAL', { x: 220, y: 62, size: 7.5, font: fontBold, color: gray });
+        page.drawText('SECRETARÍA DE DESARROLLO RURAL', { x: 220, y: 62, size: 7.5, font: fontBold, color: gray });
         page.drawText('Av. Jacarandas No. 371 Sur Colonia El Tecolote C.P. 63135 Tepic, Nayarit.', { x: 155, y: 51, size: 7.5, font: fontNormal, color: gray });
         page.drawText('311 216 22 63 | 311 216 22 74', { x: 228, y: 40, size: 7.5, font: fontNormal, color: gray });
     };

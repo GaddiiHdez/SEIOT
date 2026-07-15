@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { STORAGE_KEYS } from '../constants/storageKeys.js';
 
 const AuthContext = createContext(null);
 
@@ -9,7 +10,7 @@ const AuthProvider = ({ children }) => {
     const [permisosListos, setPermisosListos] = useState(false);
 
     const actualizarPermisos = async () => {
-        const token = localStorage.getItem('seiot_token');
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
         if (!token) return;
 
         try {
@@ -43,63 +44,63 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-        const token = localStorage.getItem('seiot_token');
-        let usuarioInicial = null;
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                if (decoded.exp * 1000 > Date.now()) {
-                    usuarioInicial = decoded;
-                } else {
-                    localStorage.removeItem('seiot_token');
-                    localStorage.removeItem('visitaActiva');
+        useEffect(() => {
+            const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            let usuarioInicial = null;
+            if (token) {
+                try {
+                    const decoded = jwtDecode(token);
+                    if (decoded.exp * 1000 > Date.now()) {
+                        usuarioInicial = decoded;
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+                        localStorage.removeItem(STORAGE_KEYS.VISITA_ACTIVA);
+                    }
+                } catch {
+                    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+                    localStorage.removeItem(STORAGE_KEYS.VISITA_ACTIVA);
                 }
-            } catch {
-                localStorage.removeItem('seiot_token');
-                localStorage.removeItem('visitaActiva');
             }
-        }
-        if (usuarioInicial?.rol === 'vista') {
-            usuarioInicial = {
-                ...usuarioInicial,
-                permisos: { ...usuarioInicial.permisos, consultas: true }
-            };
-        }
-        setUsuario(usuarioInicial);
-        setCargando(false);
+            if (usuarioInicial?.rol === 'vista') {
+                usuarioInicial = {
+                    ...usuarioInicial,
+                    permisos: { ...usuarioInicial.permisos, consultas: true }
+                };
+            }
+            setUsuario(usuarioInicial);
+            setCargando(false);
 
-        if (usuarioInicial) {
+            if (usuarioInicial) {
+                actualizarPermisos();
+            } else {
+                setPermisosListos(true);
+            }
+        }, []);
+
+        useEffect(() => {
+            if (!usuario) return;
+            const intervalo = setInterval(() => {
+                actualizarPermisos();
+            }, 300000); // 5 minutos (300000 ms) en lugar de 10 segundos
+            return () => clearInterval(intervalo);
+        }, [usuario?.id]);
+
+        const login = (token, datosUsuario) => {
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+            setUsuario(datosUsuario);
+            setPermisosListos(false);
+            // Actualizar permisos inmediatamente después del login
             actualizarPermisos();
-        } else {
-            setPermisosListos(true);
-        }
-    }, []);
+        };
 
-    useEffect(() => {
-        if (!usuario) return;
-        const intervalo = setInterval(() => {
-            actualizarPermisos();
-        }, 300000); // 5 minutos (300000 ms) en lugar de 10 segundos
-        return () => clearInterval(intervalo);
-    }, [usuario?.id]);
-
-    const login = (token, datosUsuario) => {
-        localStorage.setItem('seiot_token', token);
-        setUsuario(datosUsuario);
-        setPermisosListos(false);
-        // Actualizar permisos inmediatamente después del login
-        actualizarPermisos();
-    };
-
-    const logout = () => {
-        localStorage.removeItem('seiot_token');
-        localStorage.removeItem('visitaActiva');
-        localStorage.removeItem('desdeConsultas');
-        setUsuario(null);
-        setPermisosListos(false);
-        window.location.replace('/login');
-    };
+        const logout = () => {
+            localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.VISITA_ACTIVA);
+            localStorage.removeItem(STORAGE_KEYS.DESDE_CONSULTAS);
+            setUsuario(null);
+            setPermisosListos(false);
+            window.location.replace('/login');
+        };
 
     const tienePermiso = (permiso) => {
         if (!usuario) return false;

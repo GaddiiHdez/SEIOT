@@ -13,7 +13,10 @@ if (process.env.DATABASE_URL) {
         connectionString: process.env.DATABASE_URL,
         ssl: {
             rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
-        }
+        },
+        max: parseInt(process.env.DB_POOL_MAX || '20'),
+        idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000'),
+        connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONN_TIMEOUT || '2000')
     });
 } else {
     // Validar variables de entorno requeridas si no hay DATABASE_URL
@@ -30,6 +33,9 @@ if (process.env.DATABASE_URL) {
         database: process.env.DB_NAME,
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
+        max: parseInt(process.env.DB_POOL_MAX || '20'),
+        idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000'),
+        connectionTimeoutMillis: parseInt(process.env.DB_POOL_CONN_TIMEOUT || '2000')
     });
 }
 

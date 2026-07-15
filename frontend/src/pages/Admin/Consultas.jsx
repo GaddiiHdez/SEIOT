@@ -58,6 +58,9 @@ const Consultas = () => {
 
     // ─── RESULTADOS ───────────────────────────────────────────────────────────
     const [resultados, setResultados] = useState([]);
+    const [totalResultados, setTotalResultados] = useState(0);
+    const [paginaActual, setPaginaActual] = useState(1);
+    const [limitePorPagina] = useState(10);
     const [buscando, setBuscando] = useState(false);
     const [exportando, setExportando] = useState(false);
     const [buscado, setBuscado] = useState(false);
@@ -79,10 +82,9 @@ const Consultas = () => {
     };
 
     // ─── CONSTRUIR PARAMS ─────────────────────────────────────────────────────
-    const construirParams = (soloFiltrados = false) => {
+    const construirParams = (soloFiltrados = false, paginar = false) => {
         const params = new URLSearchParams();
         if (psgInput.trim()) {
-            // Si contiene '/' probablemente es un folio, si no es PSG
             if (psgInput.includes('/')) {
                 params.set('folio', psgInput.trim());
             } else {
@@ -95,19 +97,30 @@ const Consultas = () => {
         if (fechaDesde) params.set('fecha_desde', fechaDesde);
         if (fechaHasta) params.set('fecha_hasta', fechaHasta);
         if (soloFiltrados) params.set('solo_filtrados', 'true');
+        if (paginar) {
+            params.set('page', paginaActual);
+            params.set('limit', limitePorPagina);
+        }
         return params;
     };
 
     // ─── BUSCAR ───────────────────────────────────────────────────────────────
-    const handleBuscar = async () => {
+    const handleBuscar = async (pageToFetch = paginaActual) => {
         setBuscando(true);
         setBuscado(true);
         try {
-            const params = construirParams();
+            const params = construirParams(false, true);
+            params.set('page', pageToFetch);
             const response = await apiFetch(`/api/psg/consultas?${params}`);
             if (response.ok) {
                 const data = await response.json();
-                setResultados(data);
+                if (data && typeof data === 'object' && 'rows' in data) {
+                    setResultados(data.rows);
+                    setTotalResultados(data.total);
+                } else {
+                    setResultados(data);
+                    setTotalResultados(data.length);
+                }
             } else {
                 alert('Error al buscar.');
             }
@@ -119,6 +132,16 @@ const Consultas = () => {
         }
     };
 
+    const iniciarBusqueda = () => {
+        setPaginaActual(1);
+        handleBuscar(1);
+    };
+
+    const cambiarPagina = (nuevaPagina) => {
+        setPaginaActual(nuevaPagina);
+        handleBuscar(nuevaPagina);
+    };
+
     // ─── LIMPIAR FILTROS ──────────────────────────────────────────────────────
     const limpiarFiltros = () => {
         setPsgInput('');
@@ -128,6 +151,8 @@ const Consultas = () => {
         setFechaDesde('');
         setFechaHasta('');
         setResultados([]);
+        setTotalResultados(0);
+        setPaginaActual(1);
         setBuscado(false);
     };
 
@@ -268,7 +293,7 @@ const Consultas = () => {
 
                     {/* BOTÓN BUSCAR */}
                     <div className="mt-6 flex justify-end">
-                        <button onClick={handleBuscar} disabled={buscando}
+                        <button onClick={iniciarBusqueda} disabled={buscando}
                             className="bg-red-800 text-white px-8 py-2 rounded shadow hover:bg-red-900 flex items-center gap-2 font-bold text-sm disabled:opacity-60">
                             <Search size={16} /> {buscando ? 'Buscando...' : 'BUSCAR'}
                         </button>
@@ -280,7 +305,7 @@ const Consultas = () => {
                     <div className="bg-white rounded-xl shadow border border-gray-200">
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
                             <p className="font-bold text-gray-700 text-sm">
-                                {buscando ? 'Buscando...' : `${resultados.length} resultado(s) encontrado(s)`}
+                                {buscando ? 'Buscando...' : `${totalResultados} resultado(s) encontrado(s)`}
                             </p>
                             <div className="flex gap-2">
                                 <button onClick={() => handleExportar(true)} disabled={exportando || resultados.length === 0}
@@ -297,57 +322,86 @@ const Consultas = () => {
                         {resultados.length === 0 && !buscando ? (
                             <div className="p-10 text-center text-gray-400 font-bold">No se encontraron visitas con esos filtros.</div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
-                                        <tr>
-                                            <th className="p-3 border-b">Folio</th>
-                                            <th className="p-3 border-b">PSG</th>
-                                            <th className="p-3 border-b">Razón Social</th>
-                                            <th className="p-3 border-b">Municipio</th>
-                                            <th className="p-3 border-b">Supervisor</th>
-                                            <th className="p-3 border-b">Capturista</th>
-                                            <th className="p-3 border-b">Fecha</th>
-                                            <th className="p-3 border-b text-center">Módulos</th>
-                                            <th className="p-3 border-b text-center">Estatus</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {resultados.map(row => (
-                                            <tr key={row.id} className="border-b hover:bg-gray-50 transition-colors">
-                                                <td className="p-3 font-mono text-xs">
-                                                    <button onClick={() => abrirVisita(row)} className="text-red-700 font-bold hover:underline hover:text-red-900 transition-colors text-left">{row.folio}</button>
-                                                </td>
-                                                <td className="p-3 font-mono text-xs">{row.psg}</td>
-                                                <td className="p-3 text-xs">{row.razon_social || '—'}</td>
-                                                <td className="p-3 text-xs">{row.municipio || '—'}</td>
-                                                <td className="p-3 text-xs">{row.supervisor}</td>
-                                                <td className="p-3 text-xs">{row.capturista_nombre || '—'}</td>
-                                                <td className="p-3 text-xs">{row.fecha_inicio ? new Date(row.fecha_inicio).toLocaleDateString('es-MX') : '—'}</td>
-                                                <td className="p-3 text-center">
-                                                    <div className="flex gap-1 justify-center">
-                                                        {[1,2,3,4,5,6].map(n => (
-                                                            <span key={n} className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${row[`modulo${n}_completado`] ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                                                                {n}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    {esFinalizado(row) ? (
-                                                        <span className="flex items-center justify-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded text-xs font-bold border border-green-200">
-                                                            <CheckCircle size={12} /> Finalizado
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center justify-center gap-1 text-yellow-700 bg-yellow-50 px-2 py-1 rounded text-xs font-bold border border-yellow-200">
-                                                            <Clock size={12} /> En proceso
-                                                        </span>
-                                                    )}
-                                                </td>
+                            <div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+                                            <tr>
+                                                <th className="p-3 border-b">Folio</th>
+                                                <th className="p-3 border-b">PSG</th>
+                                                <th className="p-3 border-b">Razón Social</th>
+                                                <th className="p-3 border-b">Municipio</th>
+                                                <th className="p-3 border-b">Supervisor</th>
+                                                <th className="p-3 border-b">Capturista</th>
+                                                <th className="p-3 border-b">Fecha</th>
+                                                <th className="p-3 border-b text-center">Módulos</th>
+                                                <th className="p-3 border-b text-center">Estatus</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {resultados.map(row => (
+                                                <tr key={row.id} className="border-b hover:bg-gray-50 transition-colors">
+                                                    <td className="p-3 font-mono text-xs">
+                                                        <button onClick={() => abrirVisita(row)} className="text-red-700 font-bold hover:underline hover:text-red-900 transition-colors text-left">{row.folio}</button>
+                                                    </td>
+                                                    <td className="p-3 font-mono text-xs">{row.psg}</td>
+                                                    <td className="p-3 text-xs">{row.razon_social || '—'}</td>
+                                                    <td className="p-3 text-xs">{row.municipio || '—'}</td>
+                                                    <td className="p-3 text-xs">{row.supervisor}</td>
+                                                    <td className="p-3 text-xs">{row.capturista_nombre || '—'}</td>
+                                                    <td className="p-3 text-xs">{row.fecha_inicio ? new Date(row.fecha_inicio).toLocaleDateString('es-MX') : '—'}</td>
+                                                    <td className="p-3 text-center">
+                                                        <div className="flex gap-1 justify-center">
+                                                            {[1,2,3,4,5,6].map(n => (
+                                                                <span key={n} className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${row[`modulo${n}_completado`] ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
+                                                                    {n}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 text-center">
+                                                        {esFinalizado(row) ? (
+                                                            <span className="flex items-center justify-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded text-xs font-bold border border-green-200">
+                                                                <CheckCircle size={12} /> Finalizado
+                                                            </span>
+                                                        ) : (
+                                                            <span className="flex items-center justify-center gap-1 text-yellow-700 bg-yellow-50 px-2 py-1 rounded text-xs font-bold border border-yellow-200">
+                                                                <Clock size={12} /> En proceso
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Controles de paginación */}
+                                {totalResultados > 0 && (
+                                    <div className="p-4 border-t border-gray-200 flex items-center justify-between flex-wrap gap-2 bg-gray-50">
+                                        <span className="text-xs text-gray-500 font-bold">
+                                            Mostrando {resultados.length} de {totalResultados} visitas
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                disabled={paginaActual === 1 || buscando}
+                                                onClick={() => cambiarPagina(paginaActual - 1)}
+                                                className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                                            >
+                                                Anterior
+                                            </button>
+                                            <span className="px-3 py-1 text-xs font-bold text-gray-700">
+                                                Página {paginaActual} de {Math.ceil(totalResultados / limitePorPagina) || 1}
+                                            </span>
+                                            <button
+                                                disabled={paginaActual >= Math.ceil(totalResultados / limitePorPagina) || buscando}
+                                                onClick={() => cambiarPagina(paginaActual + 1)}
+                                                className="px-3 py-1 bg-white border border-gray-300 rounded text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                                            >
+                                                Siguiente
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
