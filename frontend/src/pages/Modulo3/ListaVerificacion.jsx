@@ -1,31 +1,13 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, ChevronRight, ChevronLeft, CheckSquare, Home, Download, ArrowLeft, FolderOpen, Pencil, Lock} from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, CheckSquare, Home, Download, ArrowLeft, FolderOpen } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import { generarPdfModulo3 } from '../../utils/generarPdfModulo3';
-
-const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, tipo = "text", placeholder, puedeEditar = false }) => {
-    const [desbloqueado, setDesbloqueado] = React.useState(false);
-    const bloqueado = disabled && !desbloqueado;
-    const esVacio = bloqueado && (!valor || valor === 'null' || valor === 'NULL' || String(valor).trim() === '');
-    return (
-    <div className="mb-3">
-        {labelTop && <label className="block text-xs font-bold text-blue-700 mb-1 uppercase">{labelTop}</label>}
-        <div className="flex border border-gray-300 rounded overflow-hidden shadow-sm w-full">
-            <span className="bg-blue-600 text-white text-[11px] font-bold p-2 min-w-[110px] flex items-center whitespace-nowrap">{labelSide}</span>
-            <input type={tipo} className={`w-full p-2 text-sm outline-none ${bloqueado ? (esVacio ? 'bg-red-50 text-red-400 italic' : 'bg-gray-100 text-gray-700 font-bold') : 'bg-white'}`} value={esVacio ? '' : valor} onChange={onChange} disabled={bloqueado} placeholder={esVacio ? 'NO HAY DATOS' : (placeholder || (bloqueado ? 'SE PRECARGA' : 'SE CAPTURA'))} />
-            {disabled && puedeEditar && (
-                <button onClick={() => setDesbloqueado(!desbloqueado)} title={desbloqueado ? 'Bloquear' : 'Editar'} className={`px-2 flex items-center ${desbloqueado ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                    {desbloqueado ? <Lock size={14} /> : <Pencil size={14} />}
-                </button>
-            )}
-        </div>
-    </div>
-    );
-};
+import InputBloque from '../../components/InputBloque';
+import { guardarBorradorLocal, cargarBorradorLocal } from '../../utils/borradorHelpers.js';
 
 const ListaVerificacion = () => {
     const navigate = useNavigate();
@@ -44,21 +26,23 @@ const ListaVerificacion = () => {
 
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
-    const [latitud, setLatitud] = useState(contexto?.datosPsg?.latitud || "");
-    const [longitud, setLongitud] = useState(contexto?.datosPsg?.longitud || "");
-    const [cabezas, setCabezas] = useState(contexto?.datosPsg?.capacidad_maxima_bovinos || "");
+    const [latitud, setLatitud] = useState("");
+    const [longitud, setLongitud] = useState("");
+    const [cabezas, setCabezas] = useState("");
     const [horaInicio, setHoraInicio] = useState("");
     const [horaTermino, setHoraTermino] = useState("");
-    const [respuestas, setRespuestas] = useState({});
-    const [recomendaciones, setRecomendaciones] = useState({});
     const [observaciones, setObservaciones] = useState("");
-    const [conclusion, setConclusion] = useState("");
-    const [responsablePsg, setResponsablePsg] = useState(contexto?.datosPsg?.nombre_titular || "");
-    const [responsableSupervisor, setResponsableSupervisor] = useState(contexto?.datosSupervisor?.nombre || contexto?.supervisor || "");
+    const [conclusion, setConclusion] = useState(""); // CUMPLE / NO CUMPLE
+    const [responsablePsg, setResponsablePsg] = useState(contexto?.datosPsg?.representante || "");
+    const [responsableSupervisor, setResponsableSupervisor] = useState("");
     const [nombreTestigo, setNombreTestigo] = useState("");
     const [domicilioTestigo, setDomicilioTestigo] = useState("");
     const [tipoIdTestigo, setTipoIdTestigo] = useState("");
     const [numeroIdTestigo, setNumeroIdTestigo] = useState("");
+
+    // Respuestas y observaciones del checklist
+    const [respuestas, setRespuestas] = useState({});
+    const [recomendaciones, setRecomendaciones] = useState({});
 
     // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
     useEffect(() => {
@@ -74,28 +58,28 @@ const ListaVerificacion = () => {
                         const d = data.datos;
                         if (d.tipo_psg) setTipoPsg(d.tipo_psg);
                         if (d.telefono) setTelefono(d.telefono);
-                        if (d.latitud) setLatitud(d.latitud);
-                        if (d.longitud) setLongitud(d.longitud);
-                        if (d.capacidad_instalada) setCabezas(d.capacidad_instalada);
-                        if (d.hora_inicio) setHoraInicio(d.hora_inicio);
-                        if (d.hora_termino) setHoraTermino(d.hora_termino);
+                        if (d.latitud) setLatitud(String(d.latitud));
+                        if (d.longitud) setLongitud(String(d.longitud));
+                        if (d.capacidad_instalada) setCabezas(String(d.capacidad_instalada));
+                        if (d.hora_inicio) setHoraInicio(d.hora_inicio.substring(0, 5));
+                        if (d.hora_termino) setHoraTermino(d.hora_termino.substring(0, 5));
                         if (d.observaciones) setObservaciones(d.observaciones);
+                        if (d.cumple) setConclusion(d.cumple);
                         if (d.responsable_psg) setResponsablePsg(d.responsable_psg);
                         if (d.responsable_supervisor) setResponsableSupervisor(d.responsable_supervisor);
                         if (d.nombre_testigo) setNombreTestigo(d.nombre_testigo);
                         if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
                         if (d.tipo_id_testigo) setTipoIdTestigo(d.tipo_id_testigo);
                         if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
-                        // Reconstruir conclusión
-                        if (d.cumple) setConclusion('cumple');
-                        else if (d.presenta_observaciones) setConclusion('observaciones');
-                        else if (d.requiere_seguimiento) setConclusion('seguimiento');
                     }
+
                     // Cargar checklist
-                    if (data.checklist?.length > 0) {
+                    const checklistResponse = await apiFetch(`/api/modulos/modulo3/checklist/${contexto.visita_id}`);
+                    if (checklistResponse && checklistResponse.ok) {
+                        const checklistData = await checklistResponse.json();
                         const resp = {};
                         const recom = {};
-                        data.checklist.forEach(item => {
+                        checklistData.forEach(item => {
                             resp[`p${item.pregunta_id}`] = item.respuesta;
                             if (item.observacion) recom[`p${item.pregunta_id}`] = item.observacion;
                         });
@@ -115,54 +99,29 @@ const ListaVerificacion = () => {
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
-        const borrador = {
-            modulo: 3, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: { tipoPsg, telefono, latitud, longitud, cabezas, horaInicio, horaTermino,
-                      respuestas, recomendaciones, observaciones, conclusion,
-                      responsablePsg, responsableSupervisor, nombreTestigo,
-                      domicilioTestigo, tipoIdTestigo, numeroIdTestigo }
-        };
-        const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `modulo3_${contexto.folio.replace(/\//g, '-')}.smpbk`;
-        a.click();
-        URL.revokeObjectURL(url);
+        guardarBorradorLocal(3, contexto, { tipoPsg, telefono, latitud, longitud, cabezas, horaInicio, horaTermino, respuestas, recomendaciones, observaciones, conclusion, responsablePsg, responsableSupervisor, nombreTestigo, domicilioTestigo, tipoIdTestigo, numeroIdTestigo });
     };
 
     const cargarBorrador = (e) => {
-        const archivo = e.target.files[0];
-        if (!archivo) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const b = JSON.parse(ev.target.result);
-                if (b.modulo !== 3) { alert('Este borrador no es del Módulo 3.'); return; }
-                if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
-                const c = b.campos;
-                if (c.tipoPsg !== undefined) setTipoPsg(c.tipoPsg);
-                if (c.telefono !== undefined) setTelefono(c.telefono);
-                if (c.latitud !== undefined) setLatitud(c.latitud);
-                if (c.longitud !== undefined) setLongitud(c.longitud);
-                if (c.cabezas !== undefined) setCabezas(c.cabezas);
-                if (c.horaInicio !== undefined) setHoraInicio(c.horaInicio);
-                if (c.horaTermino !== undefined) setHoraTermino(c.horaTermino);
-                if (c.respuestas !== undefined) setRespuestas(c.respuestas);
-                if (c.recomendaciones !== undefined) setRecomendaciones(c.recomendaciones);
-                if (c.observaciones !== undefined) setObservaciones(c.observaciones);
-                if (c.conclusion !== undefined) setConclusion(c.conclusion);
-                if (c.responsablePsg !== undefined) setResponsablePsg(c.responsablePsg);
-                if (c.responsableSupervisor !== undefined) setResponsableSupervisor(c.responsableSupervisor);
-                if (c.nombreTestigo !== undefined) setNombreTestigo(c.nombreTestigo);
-                if (c.domicilioTestigo !== undefined) setDomicilioTestigo(c.domicilioTestigo);
-                if (c.tipoIdTestigo !== undefined) setTipoIdTestigo(c.tipoIdTestigo);
-                if (c.numeroIdTestigo !== undefined) setNumeroIdTestigo(c.numeroIdTestigo);
-                alert('✅ Borrador cargado correctamente.');
-            } catch { alert('Archivo inválido.'); }
-        };
-        reader.readAsText(archivo);
-        e.target.value = '';
+        cargarBorradorLocal(e, 3, contexto, {
+            tipoPsg: setTipoPsg,
+            telefono: setTelefono,
+            latitud: setLatitud,
+            longitud: setLongitud,
+            cabezas: setCabezas,
+            horaInicio: setHoraInicio,
+            horaTermino: setHoraTermino,
+            respuestas: setRespuestas,
+            recomendaciones: setRecomendaciones,
+            observaciones: setObservaciones,
+            conclusion: setConclusion,
+            responsablePsg: setResponsablePsg,
+            responsableSupervisor: setResponsableSupervisor,
+            nombreTestigo: setNombreTestigo,
+            domicilioTestigo: setDomicilioTestigo,
+            tipoIdTestigo: setTipoIdTestigo,
+            numeroIdTestigo: setNumeroIdTestigo
+        });
     };
 
     useEffect(() => {
@@ -173,6 +132,11 @@ const ListaVerificacion = () => {
         }
         if (!contexto) {
             alert("Primero debes iniciar una visita en el Dashboard.");
+            navigate('/dashboard');
+            return;
+        }
+        if (!contexto.avance?.modulo2) {
+            alert("⚠️ Debes completar el Módulo 2 (Orden de Supervisión) antes de acceder a la Lista de Verificación.");
             navigate('/dashboard');
         }
     }, [contexto, navigate]);

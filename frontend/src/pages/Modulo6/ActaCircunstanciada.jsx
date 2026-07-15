@@ -1,32 +1,13 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen, Pencil, Lock} from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import { generarPdfModulo6 } from '../../utils/generarPdfModulo6';
-
-const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, tipo = "text", placeholder, puedeEditar = false }) => {
-    const [desbloqueado, setDesbloqueado] = React.useState(false);
-    const bloqueado = disabled && !desbloqueado;
-    const esVacio = bloqueado && (!valor || valor === 'null' || valor === 'NULL' || String(valor).trim() === '');
-    return (
-    <div className="mb-3">
-        {labelTop && <label className="block text-xs font-bold text-red-700 mb-1 uppercase">{labelTop}</label>}
-        <div className="flex border border-gray-300 rounded overflow-hidden shadow-sm w-full">
-            <span className="bg-red-600 text-white text-[11px] font-bold p-2 min-w-[128px] flex items-center whitespace-nowrap">{labelSide}</span>
-            <input type={tipo} className={`w-full p-2 text-sm outline-none ${bloqueado ? (esVacio ? 'bg-red-50 text-red-400 italic' : 'bg-gray-100 text-gray-700 font-bold') : 'bg-white'}`} value={esVacio ? '' : valor} onChange={onChange} disabled={bloqueado} placeholder={esVacio ? 'NO HAY DATOS' : (placeholder || (bloqueado ? 'SE PRECARGA' : 'SE CAPTURA'))} />
-            {disabled && puedeEditar && (
-                <button onClick={() => setDesbloqueado(!desbloqueado)} title={desbloqueado ? 'Bloquear' : 'Editar'} className={`px-2 flex items-center ${desbloqueado ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                    {desbloqueado ? <Lock size={14} /> : <Pencil size={14} />}
-                </button>
-            )}
-        </div>
-    </div>
-    );
-};
-
+import InputBloque from '../../components/InputBloque';
+import { guardarBorradorLocal, cargarBorradorLocal } from '../../utils/borradorHelpers.js';
 
 // ── CONTROL DE PÁGINAS HABILITADAS ──────────────────────────────────────────
 // Cambiar a true cuando se necesite habilitar la página 4 (Hechos y Artículos)
@@ -46,47 +27,54 @@ const ActaCircunstanciada = () => {
         return guardado ? JSON.parse(guardado) : null;
     });
 
-    // Página 1
     const [actaNo, setActaNo] = useState("");
-    const [fecha, setFecha] = useState(contexto?.fecha || "");
+    const [fecha, setFecha] = useState("");
     const [hora, setHora] = useState("");
     const [ubicacion, setUbicacion] = useState(contexto?.datosPsg?.domicilio || "");
-
-    // Página 2
-    const [tipoId, setTipoId] = useState(contexto?.datosPsg?.tipo_identificacion || "");
-    const [numeroId, setNumeroId] = useState(contexto?.datosPsg?.numero_identificacion || "");
-    const [expide, setExpide] = useState(contexto?.datosPsg?.expedida_por || "");
+    const [tipoId, setTipoId] = useState("");
+    const [numeroId, setNumeroId] = useState("");
+    const [expide, setExpide] = useState("INE");
     const [fechaExpId, setFechaExpId] = useState("");
     const [ubicacionCompareciente, setUbicacionCompareciente] = useState(contexto?.datosPsg?.domicilio || "");
-    const [credencialNo, setCredencialNo] = useState(contexto?.datosSupervisor?.credencial_oficial || "");
+    const [credencialNo, setCredencialNo] = useState("");
 
-    // Página 3 - Testigos
+    // Testigos de asistencia
     const [nombreTestigo1, setNombreTestigo1] = useState("");
     const [domicilioTestigo1, setDomicilioTestigo1] = useState("");
     const [tipoIdTestigo1, setTipoIdTestigo1] = useState("");
     const [numeroIdTestigo1, setNumeroIdTestigo1] = useState("");
+
     const [nombreTestigo2, setNombreTestigo2] = useState("");
     const [domicilioTestigo2, setDomicilioTestigo2] = useState("");
     const [tipoIdTestigo2, setTipoIdTestigo2] = useState("");
     const [numeroIdTestigo2, setNumeroIdTestigo2] = useState("");
-    const [oficioComision, setOficioComision] = useState("");
+
+    // Datos de la comisión
+    const [oficioComision, setOficioComision] = useState(contexto?.folio || "");
     const [fechaComision, setFechaComision] = useState("");
-    const [emiteComision, setEmiteComision] = useState("");
+    const [emiteComision, setEmiteComision] = useState("SECRETARIO DE DESARROLLO RURAL");
 
-    // Página 4
+    // Hechos y artículos
     const [hechosObservaciones, setHechosObservaciones] = useState("");
-    const [articulo1, setArticulo1] = useState(""); const [de1, setDe1] = useState("");
-    const [articulo2, setArticulo2] = useState(""); const [de2, setDe2] = useState("");
-    const [articulo3, setArticulo3] = useState(""); const [de3, setDe3] = useState("");
-    const [articulo4, setArticulo4] = useState(""); const [de4, setDe4] = useState("");
-    const [manifestaciones, setManifestaciones] = useState("");
+    const [articulo1, setArticulo1] = useState("");
+    const [de1, setDe1] = useState("");
+    const [articulo2, setArticulo2] = useState("");
+    const [de2, setDe2] = useState("");
+    const [articulo3, setArticulo3] = useState("");
+    const [de3, setDe3] = useState("");
+    const [articulo4, setArticulo4] = useState("");
+    const [de4, setDe4] = useState("");
 
-    // Página 5
+    // Cierre
+    const [manifestaciones, setManifestaciones] = useState("");
     const [horaActa, setHoraActa] = useState("");
     const [fechaActa, setFechaActa] = useState("");
+
+    // Testigos de cierre (por default iguales a los de asistencia si no se editan)
     const [nombreTestigoCierre1, setNombreTestigoCierre1] = useState("");
     const [tipoIdCierre1, setTipoIdCierre1] = useState("");
     const [numeroIdCierre1, setNumeroIdCierre1] = useState("");
+
     const [nombreTestigoCierre2, setNombreTestigoCierre2] = useState("");
     const [tipoIdCierre2, setTipoIdCierre2] = useState("");
     const [numeroIdCierre2, setNumeroIdCierre2] = useState("");
@@ -98,21 +86,21 @@ const ActaCircunstanciada = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo6/${contexto.visita_id}`);
-                if (!response) return; 
+                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
                         const d = data.datos;
                         if (d.acta_no) setActaNo(d.acta_no);
-                        if (d.fecha) setFecha(new Date(d.fecha).toLocaleDateString('es-MX'));
+                        if (d.fecha) setFecha(d.fecha.split('T')[0]);
                         if (d.hora) setHora(d.hora);
                         if (d.ubicacion) setUbicacion(d.ubicacion);
-                        if (d.tipo_id_responsable) setTipoId(d.tipo_id_responsable);
-                        if (d.numero_id_responsable) setNumeroId(d.numero_id_responsable);
-                        if (d.id_expedida_por) setExpide(d.id_expedida_por);
-                        if (d.fecha_expedicion_id) setFechaExpId(d.fecha_expedicion_id.split('T')[0]);
+                        if (d.tipo_id) setTipoId(d.tipo_id);
+                        if (d.numero_id) setNumeroId(d.numero_id);
+                        if (d.expide) setExpide(d.expide);
+                        if (d.fecha_exp_id) setFechaExpId(d.fecha_exp_id.split('T')[0]);
                         if (d.ubicacion_compareciente) setUbicacionCompareciente(d.ubicacion_compareciente);
-                        if (d.credencial_oficial_no) setCredencialNo(d.credencial_oficial_no);
+                        if (d.credencial_no) setCredencialNo(d.credencial_no);
                         if (d.nombre_testigo1) setNombreTestigo1(d.nombre_testigo1);
                         if (d.domicilio_testigo1) setDomicilioTestigo1(d.domicilio_testigo1);
                         if (d.tipo_id_testigo1) setTipoIdTestigo1(d.tipo_id_testigo1);
@@ -143,13 +131,13 @@ const ActaCircunstanciada = () => {
                         if (d.tipo_id_cierre2) setTipoIdCierre2(d.tipo_id_cierre2);
                         if (d.numero_id_cierre2) setNumeroIdCierre2(d.numero_id_cierre2);
                     } else {
-                        // Jalar datos del Modulo 3 si no existe registro
+                        // Pre-cargar datos de M3
                         const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
-                        if (responseM3.ok) {
+                        if (responseM3 && responseM3.ok) {
                             const dataM3 = await responseM3.json();
                             if (dataM3.existe && dataM3.datos) {
                                 const d3 = dataM3.datos;
-                                if (d3.fecha) setFecha(new Date(d3.fecha).toLocaleDateString('es-MX'));
+                                if (d3.fecha) setFecha(d3.fecha.split('T')[0]);
                                 if (d3.hora_inicio) setHora(d3.hora_inicio);
                             }
                         }
@@ -166,67 +154,61 @@ const ActaCircunstanciada = () => {
     }, [contexto?.visita_id]);
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
-
-    // ── CARGAR DATOS DE BORRADOR ─────────────────────────────────────────────
     const guardarBorrador = () => {
-        const borrador = {
-            modulo: 6, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: {
-                actaNo, fecha, hora, ubicacion, tipoId, numeroId, expide, fechaExpId,
-                ubicacionCompareciente, credencialNo, nombreTestigo1, domicilioTestigo1,
-                tipoIdTestigo1, numeroIdTestigo1, nombreTestigo2, domicilioTestigo2,
-                tipoIdTestigo2, numeroIdTestigo2, oficioComision, fechaComision,
-                emiteComision, hechosObservaciones, articulo1, de1, articulo2, de2,
-                articulo3, de3, articulo4, de4, manifestaciones, horaActa, fechaActa,
-                nombreTestigoCierre1, tipoIdCierre1, numeroIdCierre1,
-                nombreTestigoCierre2, tipoIdCierre2, numeroIdCierre2
-            }
-        };
-        const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `modulo6_${contexto.folio.replace(/\//g, '-')}.smpbk`;
-        a.click();
-        URL.revokeObjectURL(url);
+        guardarBorradorLocal(6, contexto, {
+            actaNo, fecha, hora, ubicacion, tipoId, numeroId, expide, fechaExpId,
+            ubicacionCompareciente, credencialNo, nombreTestigo1, domicilioTestigo1,
+            tipoIdTestigo1, numeroIdTestigo1, nombreTestigo2, domicilioTestigo2,
+            tipoIdTestigo2, numeroIdTestigo2, oficioComision, fechaComision,
+            emiteComision, hechosObservaciones, articulo1, de1, articulo2, de2,
+            articulo3, de3, articulo4, de4, manifestaciones, horaActa, fechaActa,
+            nombreTestigoCierre1, tipoIdCierre1, numeroIdCierre1,
+            nombreTestigoCierre2, tipoIdCierre2, numeroIdCierre2
+        });
     };
 
     const cargarBorrador = (e) => {
-        const archivo = e.target.files[0];
-        if (!archivo) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const b = JSON.parse(ev.target.result);
-                if (b.modulo !== 6) { alert('Este borrador no es del Módulo 6.'); return; }
-                if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
-                const c = b.campos;
-                const set = (val, fn) => { if (val !== undefined) fn(val); };
-                set(c.actaNo, setActaNo); set(c.fecha, setFecha); set(c.hora, setHora);
-                set(c.ubicacion, setUbicacion); set(c.tipoId, setTipoId); set(c.numeroId, setNumeroId);
-                set(c.expide, setExpide); set(c.fechaExpId, setFechaExpId);
-                set(c.ubicacionCompareciente, setUbicacionCompareciente); set(c.credencialNo, setCredencialNo);
-                set(c.nombreTestigo1, setNombreTestigo1); set(c.domicilioTestigo1, setDomicilioTestigo1);
-                set(c.tipoIdTestigo1, setTipoIdTestigo1); set(c.numeroIdTestigo1, setNumeroIdTestigo1);
-                set(c.nombreTestigo2, setNombreTestigo2); set(c.domicilioTestigo2, setDomicilioTestigo2);
-                set(c.tipoIdTestigo2, setTipoIdTestigo2); set(c.numeroIdTestigo2, setNumeroIdTestigo2);
-                set(c.oficioComision, setOficioComision); set(c.fechaComision, setFechaComision);
-                set(c.emiteComision, setEmiteComision); set(c.hechosObservaciones, setHechosObservaciones);
-                set(c.articulo1, setArticulo1); set(c.de1, setDe1);
-                set(c.articulo2, setArticulo2); set(c.de2, setDe2);
-                set(c.articulo3, setArticulo3); set(c.de3, setDe3);
-                set(c.articulo4, setArticulo4); set(c.de4, setDe4);
-                set(c.manifestaciones, setManifestaciones);
-                set(c.horaActa, setHoraActa); set(c.fechaActa, setFechaActa);
-                set(c.nombreTestigoCierre1, setNombreTestigoCierre1);
-                set(c.tipoIdCierre1, setTipoIdCierre1); set(c.numeroIdCierre1, setNumeroIdCierre1);
-                set(c.nombreTestigoCierre2, setNombreTestigoCierre2);
-                set(c.tipoIdCierre2, setTipoIdCierre2); set(c.numeroIdCierre2, setNumeroIdCierre2);
-                alert('✅ Borrador cargado correctamente.');
-            } catch { alert('Archivo inválido.'); }
-        };
-        reader.readAsText(archivo);
-        e.target.value = '';
+        cargarBorradorLocal(e, 6, contexto, {
+            actaNo: setActaNo,
+            fecha: setFecha,
+            hora: setHora,
+            ubicacion: setUbicacion,
+            tipoId: setTipoId,
+            numeroId: setNumeroId,
+            expide: setExpide,
+            fechaExpId: setFechaExpId,
+            ubicacionCompareciente: setUbicacionCompareciente,
+            credencialNo: setCredencialNo,
+            nombreTestigo1: setNombreTestigo1,
+            domicilioTestigo1: setDomicilioTestigo1,
+            tipoIdTestigo1: setTipoIdTestigo1,
+            numeroIdTestigo1: setNumeroIdTestigo1,
+            nombreTestigo2: setNombreTestigo2,
+            domicilioTestigo2: setDomicilioTestigo2,
+            tipoIdTestigo2: setTipoIdTestigo2,
+            numeroIdTestigo2: setNumeroIdTestigo2,
+            oficioComision: setOficioComision,
+            fechaComision: setFechaComision,
+            emiteComision: setEmiteComision,
+            hechosObservaciones: setHechosObservaciones,
+            articulo1: setArticulo1,
+            de1: setDe1,
+            articulo2: setArticulo2,
+            de2: setDe2,
+            articulo3: setArticulo3,
+            de3: setDe3,
+            articulo4: setArticulo4,
+            de4: setDe4,
+            manifestaciones: setManifestaciones,
+            horaActa: setHoraActa,
+            fechaActa: setFechaActa,
+            nombreTestigoCierre1: setNombreTestigoCierre1,
+            tipoIdCierre1: setTipoIdCierre1,
+            numeroIdCierre1: setNumeroIdCierre1,
+            nombreTestigoCierre2: setNombreTestigoCierre2,
+            tipoIdCierre2: setTipoIdCierre2,
+            numeroIdCierre2: setNumeroIdCierre2
+        });
     };
 
     useEffect(() => {
@@ -237,6 +219,11 @@ const ActaCircunstanciada = () => {
         }
         if (!contexto) {
             alert("Primero debes iniciar una visita en el Dashboard.");
+            navigate('/dashboard');
+            return;
+        }
+        if (!contexto.avance?.modulo5) {
+            alert("⚠️ Debes completar el Módulo 5 (Acta de Supervisión) antes de acceder al Acta Circunstanciada.");
             navigate('/dashboard');
         }
     }, [contexto, navigate]);

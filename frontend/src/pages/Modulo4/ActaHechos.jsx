@@ -1,31 +1,13 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen, Pencil, Lock, CheckSquare } from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen, CheckSquare } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import { generarPdfModulo4 } from '../../utils/generarPdfModulo4';
-
-const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, tipo = "text", placeholder, puedeEditar = false }) => {
-    const [desbloqueado, setDesbloqueado] = React.useState(false);
-    const bloqueado = disabled && !desbloqueado;
-    const esVacio = bloqueado && (!valor || valor === 'null' || valor === 'NULL' || String(valor).trim() === '');
-    return (
-    <div className="mb-3">
-        {labelTop && <label className="block text-xs font-bold text-pink-700 mb-1 uppercase">{labelTop}</label>}
-        <div className="flex border border-gray-300 rounded overflow-hidden shadow-sm w-full">
-            <span className="bg-pink-600 text-white text-[11px] font-bold p-2 min-w-[128px] flex items-center whitespace-nowrap">{labelSide}</span>
-            <input type={tipo} className={`w-full p-2 text-sm outline-none ${bloqueado ? (esVacio ? 'bg-red-50 text-red-400 italic' : 'bg-gray-100 text-gray-700 font-bold') : 'bg-white'}`} value={esVacio ? '' : valor} onChange={onChange} disabled={bloqueado} placeholder={esVacio ? 'NO HAY DATOS' : (placeholder || (bloqueado ? 'SE PRECARGA' : 'SE CAPTURA'))} />
-            {disabled && puedeEditar && (
-                <button onClick={() => setDesbloqueado(!desbloqueado)} title={desbloqueado ? 'Bloquear' : 'Editar'} className={`px-2 flex items-center ${desbloqueado ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                    {desbloqueado ? <Lock size={14} /> : <Pencil size={14} />}
-                </button>
-            )}
-        </div>
-    </div>
-    );
-};
+import InputBloque from '../../components/InputBloque';
+import { guardarBorradorLocal, cargarBorradorLocal } from '../../utils/borradorHelpers.js';
 
 const ActaHechos = () => {
     const navigate = useNavigate();
@@ -43,7 +25,7 @@ const ActaHechos = () => {
     });
 
     const [actaNo, setActaNo] = useState("");
-    const [fecha, setFecha] = useState(contexto?.fecha || "");
+    const [fecha] = useState(contexto?.fecha ? new Date(contexto.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : "");
     const [hora, setHora] = useState("");
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
@@ -53,6 +35,8 @@ const ActaHechos = () => {
     const [hechosObservados, setHechosObservados] = useState("");
     const [noRealizo, setNoRealizo] = useState(false);
     const [manifestaciones, setManifestaciones] = useState("");
+
+    // Testigos y Responsables
     const [nombreTestigo, setNombreTestigo] = useState("");
     const [tipoIdTestigo, setTipoIdTestigo] = useState("");
     const [domicilioTestigo, setDomicilioTestigo] = useState("");
@@ -66,19 +50,18 @@ const ActaHechos = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo4/${contexto.visita_id}`);
-                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
+                if (!response) return; 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
                         const d = data.datos;
                         if (d.acta_no) setActaNo(d.acta_no);
-                        if (d.fecha) setFecha(new Date(d.fecha).toLocaleDateString('es-MX'));
                         if (d.hora) setHora(d.hora);
                         if (d.tipo_psg) setTipoPsg(d.tipo_psg);
                         if (d.telefono) setTelefono(d.telefono);
                         if (d.domicilio) setDomicilio(d.domicilio);
-                        if (d.hora_inicio) setHoraInicio(d.hora_inicio);
-                        if (d.hora_termino) setHoraTermino(d.hora_termino);
+                        if (d.hora_inicio) setHoraInicio(d.hora_inicio.substring(0, 5));
+                        if (d.hora_termino) setHoraTermino(d.hora_termino.substring(0, 5));
                         if (d.hechos_observados) setHechosObservados(d.hechos_observados);
                         if (d.no_realizo_manifestaciones !== undefined) setNoRealizo(d.no_realizo_manifestaciones);
                         if (d.manifestaciones) setManifestaciones(d.manifestaciones);
@@ -88,14 +71,12 @@ const ActaHechos = () => {
                         if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
                         if (d.nombre_testigo_cierre) setNombreTestigoCierre(d.nombre_testigo_cierre);
                     } else {
-                        // Jalar datos del Modulo 3 si no existe registro
+                        // Pre-cargar horas de la lista de verificación (M3) si existe
                         const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
-                        if (!responseM3) return; // null-check: si el token expiró, apiFetch ya redirigió
-                        if (responseM3.ok) {
+                        if (responseM3 && responseM3.ok) {
                             const dataM3 = await responseM3.json();
                             if (dataM3.existe && dataM3.datos) {
                                 const d3 = dataM3.datos;
-                                if (d3.fecha) setFecha(new Date(d3.fecha).toLocaleDateString('es-MX'));
                                 if (d3.hora_inicio) {
                                     setHoraInicio(d3.hora_inicio);
                                     setHora(d3.hora_inicio);
@@ -117,51 +98,27 @@ const ActaHechos = () => {
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
-        const borrador = {
-            modulo: 4, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: { actaNo, hora, tipoPsg, telefono, domicilio, horaInicio, horaTermino,
-                      hechosObservados, noRealizo, manifestaciones,
-                      nombreTestigo, tipoIdTestigo, domicilioTestigo, numeroIdTestigo, nombreTestigoCierre }
-        };
-        const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `modulo4_${contexto.folio.replace(/\//g, '-')}.smpbk`;
-        a.click();
-        URL.revokeObjectURL(url);
+        guardarBorradorLocal(4, contexto, { actaNo, hora, tipoPsg, telefono, domicilio, horaInicio, horaTermino, hechosObservados, noRealizo, manifestaciones, nombreTestigo, tipoIdTestigo, domicilioTestigo, numeroIdTestigo, nombreTestigoCierre });
     };
 
     const cargarBorrador = (e) => {
-        const archivo = e.target.files[0];
-        if (!archivo) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const b = JSON.parse(ev.target.result);
-                if (b.modulo !== 4) { alert('Este borrador no es del Módulo 4.'); return; }
-                if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
-                const c = b.campos;
-                if (c.actaNo !== undefined) setActaNo(c.actaNo);
-                if (c.hora !== undefined) setHora(c.hora);
-                if (c.tipoPsg !== undefined) setTipoPsg(c.tipoPsg);
-                if (c.telefono !== undefined) setTelefono(c.telefono);
-                if (c.domicilio !== undefined) setDomicilio(c.domicilio);
-                if (c.horaInicio !== undefined) setHoraInicio(c.horaInicio);
-                if (c.horaTermino !== undefined) setHoraTermino(c.horaTermino);
-                if (c.hechosObservados !== undefined) setHechosObservados(c.hechosObservados);
-                if (c.noRealizo !== undefined) setNoRealizo(c.noRealizo);
-                if (c.manifestaciones !== undefined) setManifestaciones(c.manifestaciones);
-                if (c.nombreTestigo !== undefined) setNombreTestigo(c.nombreTestigo);
-                if (c.tipoIdTestigo !== undefined) setTipoIdTestigo(c.tipoIdTestigo);
-                if (c.domicilioTestigo !== undefined) setDomicilioTestigo(c.domicilioTestigo);
-                if (c.numeroIdTestigo !== undefined) setNumeroIdTestigo(c.numeroIdTestigo);
-                if (c.nombreTestigoCierre !== undefined) setNombreTestigoCierre(c.nombreTestigoCierre);
-                alert('✅ Borrador cargado correctamente.');
-            } catch { alert('Archivo inválido.'); }
-        };
-        reader.readAsText(archivo);
-        e.target.value = '';
+        cargarBorradorLocal(e, 4, contexto, {
+            actaNo: setActaNo,
+            hora: setHora,
+            tipoPsg: setTipoPsg,
+            telefono: setTelefono,
+            domicilio: setDomicilio,
+            horaInicio: setHoraInicio,
+            horaTermino: setHoraTermino,
+            hechosObservados: setHechosObservados,
+            noRealizo: setNoRealizo,
+            manifestaciones: setManifestaciones,
+            nombreTestigo: setNombreTestigo,
+            tipoIdTestigo: setTipoIdTestigo,
+            domicilioTestigo: setDomicilioTestigo,
+            numeroIdTestigo: setNumeroIdTestigo,
+            nombreTestigoCierre: setNombreTestigoCierre
+        });
     };
 
     useEffect(() => {
@@ -172,6 +129,11 @@ const ActaHechos = () => {
         }
         if (!contexto) {
             alert("Primero debes iniciar una visita en el Dashboard.");
+            navigate('/dashboard');
+            return;
+        }
+        if (!contexto.avance?.modulo3) {
+            alert("⚠️ Debes completar el Módulo 3 (Lista de Verificación) antes de acceder al Acta de Hechos.");
             navigate('/dashboard');
         }
     }, [contexto, navigate]);

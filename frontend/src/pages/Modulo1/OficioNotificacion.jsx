@@ -1,41 +1,13 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, FileText, Home, ChevronRight, HelpCircle, Download, Upload, FolderOpen, Pencil, Lock } from 'lucide-react';
+import { Save, FileText, Home, ChevronRight, HelpCircle, Download, Upload, FolderOpen } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import { generarPdfModulo1 } from '../../utils/generarPdfModulo1';
-
-const InputBloque = ({ labelSide, valor, onChange, disabled = false, tipo = "text", placeholder, puedeEditar = false }) => {
-    const [desbloqueado, setDesbloqueado] = React.useState(false);
-    const bloqueado = disabled && !desbloqueado;
-    const esVacio = bloqueado && (!valor || valor === 'null' || valor === 'NULL' || String(valor).trim() === '');
-    return (
-    <div className="flex border border-gray-300 rounded overflow-hidden shadow-sm mb-2 w-full">
-        <span className="bg-blue-600 text-white text-[11px] font-bold p-2 min-w-[130px] md:min-w-[170px] flex items-center whitespace-nowrap">
-            {labelSide}
-        </span>
-        <input 
-            type={tipo} 
-            className={`w-full p-2 text-sm outline-none ${bloqueado ? (esVacio ? 'bg-red-50 text-red-400 italic' : 'bg-gray-100 text-gray-700 font-bold italic') : 'bg-white'}`} 
-            value={esVacio ? '' : valor} 
-            onChange={onChange}
-            disabled={bloqueado}
-            placeholder={esVacio ? 'NO HAY DATOS' : (placeholder || (bloqueado ? 'SE PRECARGA' : 'SE CAPTURA'))}
-        />
-        {disabled && puedeEditar && (
-            <button
-                onClick={() => setDesbloqueado(!desbloqueado)}
-                title={desbloqueado ? 'Bloquear campo' : 'Editar campo'}
-                className={`px-2 flex items-center transition-colors ${desbloqueado ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`}
-            >
-                {desbloqueado ? <Lock size={14} /> : <Pencil size={14} />}
-            </button>
-        )}
-    </div>
-    );
-};
+import InputBloque from '../../components/InputBloque';
+import { guardarBorradorLocal, cargarBorradorLocal } from '../../utils/borradorHelpers.js';
 
 const Notificacion = () => {
     const navigate = useNavigate();
@@ -50,7 +22,7 @@ const Notificacion = () => {
         return guardado ? JSON.parse(guardado) : null;
     });
 
-    const [nombreServidor, setNombreServidor] = useState(contexto?.supervisor || "");
+    const [nombreServidor, setNombreServidor] = useState(contexto?.datosSupervisor?.nombre || "");
     const [cargoServidor, setCargoServidor] = useState(contexto?.datosSupervisor?.cargo || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
     const [cargando, setCargando] = useState(true);
@@ -62,7 +34,7 @@ const Notificacion = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo1/${contexto.visita_id}`);
-                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
+                if (!response) return; 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -84,39 +56,15 @@ const Notificacion = () => {
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
-        const borrador = {
-            modulo: 1,
-            visita_id: contexto.visita_id,
-            folio: contexto.folio,
-            campos: { nombreServidor, cargoServidor, domicilio }
-        };
-        const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `modulo1_${contexto.folio.replace(/\//g, '-')}.smpbk`;
-        a.click();
-        URL.revokeObjectURL(url);
+        guardarBorradorLocal(1, contexto, { nombreServidor, cargoServidor, domicilio });
     };
 
     const cargarBorrador = (e) => {
-        const archivo = e.target.files[0];
-        if (!archivo) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const borrador = JSON.parse(ev.target.result);
-                if (borrador.modulo !== 1) { alert('Este borrador no es del Módulo 1.'); return; }
-                if (borrador.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
-                const { nombreServidor, cargoServidor, domicilio } = borrador.campos;
-                if (nombreServidor !== undefined) setNombreServidor(nombreServidor);
-                if (cargoServidor !== undefined) setCargoServidor(cargoServidor);
-                if (domicilio !== undefined) setDomicilio(domicilio);
-                alert('✅ Borrador cargado correctamente.');
-            } catch { alert('Archivo inválido.'); }
-        };
-        reader.readAsText(archivo);
-        e.target.value = '';
+        cargarBorradorLocal(e, 1, contexto, {
+            nombreServidor: setNombreServidor,
+            cargoServidor: setCargoServidor,
+            domicilio: setDomicilio
+        });
     };
 
     useEffect(() => {

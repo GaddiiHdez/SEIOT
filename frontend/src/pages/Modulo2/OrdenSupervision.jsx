@@ -1,32 +1,13 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, FileText, Home, ChevronRight, HelpCircle, Download, FolderOpen, Pencil, Lock} from 'lucide-react';
+import { Save, FileText, Home, ChevronRight, HelpCircle, Download, FolderOpen } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import { generarPdfModulo2 } from '../../utils/generarPdfModulo2';
-
-const InputBloque = ({ labelSide, labelTop, valor, onChange, disabled = false, tipo = "text", placeholder, puedeEditar = false }) => {
-    const [desbloqueado, setDesbloqueado] = React.useState(false);
-    const bloqueado = disabled && !desbloqueado;
-    const esVacio = bloqueado && (!valor || valor === 'null' || valor === 'NULL' || String(valor).trim() === '');
-    return (
-    <div className="mb-3">
-        {labelTop && <label className="block text-xs font-bold text-blue-700 mb-1 uppercase">{labelTop}</label>}
-        <div className="flex border border-gray-300 rounded overflow-hidden shadow-sm w-full">
-            <span className="bg-blue-600 text-white text-[11px] font-bold p-2 min-w-[180px] flex items-center whitespace-nowrap">{labelSide}</span>
-            <input type={tipo} className={`w-full p-2 text-sm outline-none ${bloqueado ? (esVacio ? 'bg-red-50 text-red-400 italic' : 'bg-gray-100 text-gray-700 font-bold') : 'bg-white'}`} value={esVacio ? '' : valor} onChange={onChange} disabled={bloqueado} placeholder={esVacio ? 'NO HAY DATOS' : (placeholder || (bloqueado ? 'SE PRECARGA' : 'SE CAPTURA'))} />
-            {disabled && puedeEditar && (
-                <button onClick={() => setDesbloqueado(!desbloqueado)} title={desbloqueado ? 'Bloquear' : 'Editar'} className={`px-2 flex items-center ${desbloqueado ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                    {desbloqueado ? <Lock size={14} /> : <Pencil size={14} />}
-                </button>
-            )}
-        </div>
-    </div>
-    );
-};
-
+import InputBloque from '../../components/InputBloque';
+import { guardarBorradorLocal, cargarBorradorLocal } from '../../utils/borradorHelpers.js';
 
 const OrdenSupervision = () => {
     const navigate = useNavigate();
@@ -43,15 +24,17 @@ const OrdenSupervision = () => {
 
     const [oficioNo] = useState(contexto?.folio || "");
     const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-    const [calidadSujeto, setCalidadSujeto] = useState(contexto?.datosSupervisor?.tipo_supervisor || "");
-    const [nombrePC, setNombrePC] = useState(contexto?.datosSupervisor?.nombre || contexto?.supervisor || "");
+    const [calidadSujeto, setCalidadSujeto] = useState("Responsable del Establecimiento");
+    const [nombrePC, setNombrePC] = useState(contexto?.datosSupervisor?.nombre || "");
     const [cargoPC, setCargoPC] = useState(contexto?.datosSupervisor?.cargo || "");
-    const [adscripcion, setAdscripcion] = useState(contexto?.datosSupervisor?.adscripcion || "");
+    const [adscripcion, setAdscripcion] = useState(contexto?.datosSupervisor?.adscripcion || "SECRETARIA DE DESARROLLO RURAL");
     const [tipoIdentificacion, setTipoIdentificacion] = useState(contexto?.datosSupervisor?.tipo_identificacion || "");
     const [folioIdentificacion, setFolioIdentificacion] = useState(contexto?.datosSupervisor?.folio_identificacion || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
     const [nombreOrdena, setNombreOrdena] = useState("");
     const [cargando, setCargando] = useState(true);
+
+    const { folio, datosPsg } = contexto || {};
 
     // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
     useEffect(() => {
@@ -60,7 +43,7 @@ const OrdenSupervision = () => {
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo2/${contexto.visita_id}`);
-                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
+                if (!response) return; 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
@@ -88,40 +71,21 @@ const OrdenSupervision = () => {
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
-        const borrador = {
-            modulo: 2, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: { fecha, calidadSujeto, domicilio, nombreOrdena, tipoIdentificacion, folioIdentificacion }
-        };
-        const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `modulo2_${contexto.folio.replace(/\//g, '-')}.smpbk`;
-        a.click();
-        URL.revokeObjectURL(url);
+        guardarBorradorLocal(2, contexto, { fecha, calidadSujeto, domicilio, nombreOrdena, tipoIdentificacion, folioIdentificacion, nombrePC, cargoPC, adscripcion });
     };
 
     const cargarBorrador = (e) => {
-        const archivo = e.target.files[0];
-        if (!archivo) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const b = JSON.parse(ev.target.result);
-                if (b.modulo !== 2) { alert('Este borrador no es del Módulo 2.'); return; }
-                if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
-                const c = b.campos;
-                if (c.fecha !== undefined) setFecha(c.fecha);
-                if (c.calidadSujeto !== undefined) setCalidadSujeto(c.calidadSujeto);
-                if (c.domicilio !== undefined) setDomicilio(c.domicilio);
-                if (c.nombreOrdena !== undefined) setNombreOrdena(c.nombreOrdena);
-                if (c.tipoIdentificacion !== undefined) setTipoIdentificacion(c.tipoIdentificacion);
-                if (c.folioIdentificacion !== undefined) setFolioIdentificacion(c.folioIdentificacion);
-                alert('✅ Borrador cargado correctamente.');
-            } catch { alert('Archivo inválido.'); }
-        };
-        reader.readAsText(archivo);
-        e.target.value = '';
+        cargarBorradorLocal(e, 2, contexto, {
+            fecha: setFecha,
+            calidadSujeto: setCalidadSujeto,
+            domicilio: setDomicilio,
+            nombreOrdena: setNombreOrdena,
+            tipoIdentificacion: setTipoIdentificacion,
+            folioIdentificacion: setFolioIdentificacion,
+            nombrePC: setNombrePC,
+            cargoPC: setCargoPC,
+            adscripcion: setAdscripcion
+        });
     };
 
     useEffect(() => {
@@ -132,6 +96,11 @@ const OrdenSupervision = () => {
         }
         if (!contexto) {
             alert("Primero debes iniciar una visita en el Dashboard.");
+            navigate('/dashboard');
+            return;
+        }
+        if (!contexto.avance?.modulo1) {
+            alert("⚠️ Debes completar el Módulo 1 (Oficio de Notificación) antes de acceder a la Orden de Supervisión.");
             navigate('/dashboard');
         }
     }, [contexto, navigate]);
@@ -179,7 +148,7 @@ const OrdenSupervision = () => {
         </div>
     );
 
-    const { folio, datosPsg } = contexto;
+
 
     return (
         <div className="min-h-screen bg-gray-100 p-4 md:p-6 font-sans text-gray-800">

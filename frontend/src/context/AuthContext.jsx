@@ -80,7 +80,7 @@ const AuthProvider = ({ children }) => {
         if (!usuario) return;
         const intervalo = setInterval(() => {
             actualizarPermisos();
-        }, 10000);
+        }, 300000); // 5 minutos (300000 ms) en lugar de 10 segundos
         return () => clearInterval(intervalo);
     }, [usuario?.id]);
 

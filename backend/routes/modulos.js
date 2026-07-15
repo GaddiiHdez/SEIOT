@@ -395,15 +395,24 @@ router.post('/modulo3', verificarToken, async (req, res) => {
             [visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitudVal, longitudVal, capacidadVal, nombre_supervisor, fechaVal, horaInicioVal, horaTerminoVal, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo]
         );
 
-        for (const [key, respuesta] of Object.entries(respuestas)) {
-            const pregunta_id = parseInt(key.replace('p', ''));
-            const observacion = recomendaciones?.[key] || '';
+        const entries = Object.entries(respuestas);
+        if (entries.length > 0) {
+            const preguntaIds = [];
+            const respuestaVals = [];
+            const observacionVals = [];
+            
+            for (const [key, respuesta] of entries) {
+                preguntaIds.push(parseInt(key.replace('p', '')));
+                respuestaVals.push(respuesta);
+                observacionVals.push(recomendaciones?.[key] || '');
+            }
+            
             await client.query(
                 `INSERT INTO modulo3_checklist (visita_id, pregunta_id, respuesta, observacion)
-                VALUES ($1, $2, $3, $4)
-                ON CONFLICT (visita_id, pregunta_id) 
-                DO UPDATE SET respuesta = $3, observacion = $4, modificado_en = NOW()`,
-                [visita_id, pregunta_id, respuesta, observacion]
+                 SELECT $1, * FROM unnest($2::int[], $3::text[], $4::text[])
+                 ON CONFLICT (visita_id, pregunta_id) 
+                 DO UPDATE SET respuesta = EXCLUDED.respuesta, observacion = EXCLUDED.observacion, modificado_en = NOW()`,
+                [visita_id, preguntaIds, respuestaVals, observacionVals]
             );
         }
 

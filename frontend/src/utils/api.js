@@ -92,4 +92,56 @@ export const apiFetch = async (endpoint, options = {}) => {
     }
 };
 
+export const processOfflineSyncQueue = async () => {
+    let queue = [];
+    try {
+        queue = JSON.parse(localStorage.getItem('seiot_sync_queue') || '[]');
+    } catch {
+        queue = [];
+    }
+
+    if (queue.length === 0) return;
+
+    console.log(`🔄 Procesando cola de sincronización offline: ${queue.length} elementos.`);
+    
+    const newQueue = [];
+    for (const item of queue) {
+        try {
+            console.log(`Sincronizando: ${item.endpoint}`);
+            const res = await apiFetch(item.endpoint, {
+                ...item.options,
+                isSyncing: true // Evitar recursión
+            });
+            if (!res || !res.ok) {
+                newQueue.push(item);
+            }
+        } catch (err) {
+            console.error(`Fallo al sincronizar ${item.endpoint}:`, err);
+            newQueue.push(item);
+        }
+    }
+
+    if (newQueue.length === 0) {
+        localStorage.removeItem('seiot_sync_queue');
+        console.log('✅ Cola de sincronización vaciada y sincronizada con éxito.');
+        alert('🌐 ¡Conexión restablecida!\nTodos los datos pendientes han sido sincronizados con el servidor.');
+    } else {
+        localStorage.setItem('seiot_sync_queue', JSON.stringify(newQueue));
+    }
+};
+
+// Registrar listeners de conexión automáticamente al importar el helper
+if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => {
+        processOfflineSyncQueue().catch(err => console.error('Error procesando sync queue:', err));
+    });
+    
+    if (navigator.onLine) {
+        // Ejecutar con leve delay para no interferir con el renderizado inicial
+        setTimeout(() => {
+            processOfflineSyncQueue().catch(err => console.error('Error en sync inicial:', err));
+        }, 3000);
+    }
+}
+
 export { API_URL };

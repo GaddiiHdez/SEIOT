@@ -1,32 +1,13 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen, Pencil, Lock} from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, FileText, Home, Download, FolderOpen } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoGobierno from '../../assets/logo-gobierno.jpg';
 import { generarPdfModulo5 } from '../../utils/generarPdfModulo5';
-
-const InputBloqueFix = ({ labelSide, labelTop, valor, onChange, disabled = false, tipo = "text", placeholder, puedeEditar = false }) => {
-    const [desbloqueado, setDesbloqueado] = React.useState(false);
-    const bloqueado = disabled && !desbloqueado;
-    const esVacio = bloqueado && (!valor || valor === 'null' || valor === 'NULL' || String(valor).trim() === '');
-    return (
-    <div className="mb-3">
-        {labelTop && <label className="block text-xs font-bold text-indigo-700 mb-1 uppercase">{labelTop}</label>}
-        <div className="flex border border-gray-300 rounded overflow-hidden shadow-sm w-full">
-            <span className="bg-indigo-600 text-white text-[11px] font-bold p-2 min-w-[128px] flex items-center whitespace-nowrap">{labelSide}</span>
-            <input type={tipo} className={`w-full p-2 text-sm outline-none ${bloqueado ? (esVacio ? 'bg-red-50 text-red-400 italic' : 'bg-gray-100 text-gray-700 font-bold') : 'bg-white'}`} value={esVacio ? '' : valor} onChange={onChange} disabled={bloqueado} placeholder={esVacio ? 'NO HAY DATOS' : (placeholder || (bloqueado ? 'SE PRECARGA' : 'SE CAPTURA'))} />
-            {disabled && puedeEditar && (
-                <button onClick={() => setDesbloqueado(!desbloqueado)} title={desbloqueado ? 'Bloquear' : 'Editar'} className={`px-2 flex items-center ${desbloqueado ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                    {desbloqueado ? <Lock size={14} /> : <Pencil size={14} />}
-                </button>
-            )}
-        </div>
-    </div>
-    );
-};
-
+import InputBloque from '../../components/InputBloque';
+import { guardarBorradorLocal, cargarBorradorLocal } from '../../utils/borradorHelpers.js';
 
 const ActaSupervision = () => {
     const navigate = useNavigate();
@@ -43,57 +24,49 @@ const ActaSupervision = () => {
         return guardado ? JSON.parse(guardado) : null;
     });
 
-    // Página 1
     const [actaNo, setActaNo] = useState("");
-    const [fecha, setFecha] = useState(contexto?.fecha || "");
+    const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
     const [hora, setHora] = useState("");
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
-
-    // Página 2
     const [horaInicio, setHoraInicio] = useState("");
     const [horaTermino, setHoraTermino] = useState("");
-    const [actaHechos, setActaHechos] = useState(false);
+    const [actaHechos, setActaHechos] = useState("");
     const [otrosDocumentos, setOtrosDocumentos] = useState("");
-    const [conclusion, setConclusion] = useState("");
-
-    // Página 3
+    const [conclusion, setConclusion] = useState(""); 
     const [observacionesDetectadas, setObservacionesDetectadas] = useState("");
     const [medidasPreventivas, setMedidasPreventivas] = useState("");
     const [noRealizo, setNoRealizo] = useState(false);
     const [manifestaciones, setManifestaciones] = useState("");
 
-    // Página 4
     const [nombreTestigo, setNombreTestigo] = useState("");
     const [domicilioTestigo, setDomicilioTestigo] = useState("");
     const [tipoIdTestigo, setTipoIdTestigo] = useState("");
     const [numeroIdTestigo, setNumeroIdTestigo] = useState("");
 
-    // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
-
-    // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
     useEffect(() => {
         if (!contexto?.visita_id) { setCargando(false); return; }
 
         const cargarDatos = async () => {
             try {
                 const response = await apiFetch(`/api/modulos/modulo5/${contexto.visita_id}`);
-                if (!response) return; // null-check: si el token expiró, apiFetch ya redirigió
+                if (!response) return;
                 if (response.ok) {
                     const data = await response.json();
                     if (data.existe && data.datos) {
                         const d = data.datos;
                         if (d.acta_no) setActaNo(d.acta_no);
-                        if (d.fecha) setFecha(new Date(d.fecha).toLocaleDateString('es-MX'));
+                        if (d.fecha) setFecha(d.fecha.split('T')[0]);
                         if (d.hora) setHora(d.hora);
                         if (d.tipo_psg) setTipoPsg(d.tipo_psg);
                         if (d.domicilio) setDomicilio(d.domicilio);
                         if (d.telefono) setTelefono(d.telefono);
-                        if (d.hora_inicio) setHoraInicio(d.hora_inicio);
-                        if (d.hora_termino) setHoraTermino(d.hora_termino);
-                        if (d.acta_hechos !== undefined) setActaHechos(d.acta_hechos);
+                        if (d.hora_inicio) setHoraInicio(d.hora_inicio.substring(0, 5));
+                        if (d.hora_termino) setHoraTermino(d.hora_termino.substring(0, 5));
+                        if (d.acta_hechos) setActaHechos(d.acta_hechos);
                         if (d.otros_documentos) setOtrosDocumentos(d.otros_documentos);
+                        if (d.conclusion) setConclusion(d.conclusion);
                         if (d.observaciones_detectadas) setObservacionesDetectadas(d.observaciones_detectadas);
                         if (d.medidas_preventivas) setMedidasPreventivas(d.medidas_preventivas);
                         if (d.no_realizo_manifestaciones !== undefined) setNoRealizo(d.no_realizo_manifestaciones);
@@ -102,18 +75,20 @@ const ActaSupervision = () => {
                         if (d.domicilio_testigo) setDomicilioTestigo(d.domicilio_testigo);
                         if (d.tipo_id_testigo) setTipoIdTestigo(d.tipo_id_testigo);
                         if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
-                        // Reconstruir conclusión
-                        if (d.cumple) setConclusion('cumple');
-                        else if (d.presenta_observaciones) setConclusion('observaciones');
-                        else if (d.requiere_seguimiento) setConclusion('seguimiento');
                     } else {
-                        // Jalar datos del Modulo 3 si no existe registro
+                        const responseM4 = await apiFetch(`/api/modulos/modulo4/${contexto.visita_id}`);
+                        if (responseM4 && responseM4.ok) {
+                            const dataM4 = await responseM4.json();
+                            if (dataM4.existe && dataM4.datos) {
+                                const d4 = dataM4.datos;
+                                if (d4.acta_no) setActaHechos(d4.acta_no);
+                            }
+                        }
                         const responseM3 = await apiFetch(`/api/modulos/modulo3/${contexto.visita_id}`);
-                        if (responseM3.ok) {
+                        if (responseM3 && responseM3.ok) {
                             const dataM3 = await responseM3.json();
                             if (dataM3.existe && dataM3.datos) {
                                 const d3 = dataM3.datos;
-                                if (d3.fecha) setFecha(new Date(d3.fecha).toLocaleDateString('es-MX'));
                                 if (d3.hora_inicio) {
                                     setHoraInicio(d3.hora_inicio);
                                     setHora(d3.hora_inicio);
@@ -133,60 +108,32 @@ const ActaSupervision = () => {
         cargarDatos();
     }, [contexto?.visita_id]);
 
-    // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
-
-    // ── CARGAR DATOS DE BORRADOR ─────────────────────────────────────────────
     const guardarBorrador = () => {
-        const borrador = {
-            modulo: 5, visita_id: contexto.visita_id, folio: contexto.folio,
-            campos: { actaNo, fecha, hora, tipoPsg, domicilio, telefono, horaInicio, horaTermino,
-                      actaHechos, otrosDocumentos, conclusion, observacionesDetectadas,
-                      medidasPreventivas, noRealizo, manifestaciones, nombreTestigo,
-                      domicilioTestigo, tipoIdTestigo, numeroIdTestigo }
-        };
-        const blob = new Blob([JSON.stringify(borrador)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `modulo5_${contexto.folio.replace(/\//g, '-')}.smpbk`;
-        a.click();
-        URL.revokeObjectURL(url);
+        guardarBorradorLocal(5, contexto, { actaNo, fecha, hora, tipoPsg, domicilio, telefono, horaInicio, horaTermino, actaHechos, otrosDocumentos, conclusion, observacionesDetectadas, medidasPreventivas, noRealizo, manifestaciones, nombreTestigo, domicilioTestigo, tipoIdTestigo, numeroIdTestigo });
     };
 
     const cargarBorrador = (e) => {
-        const archivo = e.target.files[0];
-        if (!archivo) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const b = JSON.parse(ev.target.result);
-                if (b.modulo !== 5) { alert('Este borrador no es del Módulo 5.'); return; }
-                if (b.visita_id !== contexto.visita_id) { alert('Este borrador es de otra visita.'); return; }
-                const c = b.campos;
-                if (c.actaNo !== undefined) setActaNo(c.actaNo);
-                if (c.fecha !== undefined) setFecha(c.fecha);
-                if (c.hora !== undefined) setHora(c.hora);
-                if (c.tipoPsg !== undefined) setTipoPsg(c.tipoPsg);
-                if (c.domicilio !== undefined) setDomicilio(c.domicilio);
-                if (c.telefono !== undefined) setTelefono(c.telefono);
-                if (c.horaInicio !== undefined) setHoraInicio(c.horaInicio);
-                if (c.horaTermino !== undefined) setHoraTermino(c.horaTermino);
-                if (c.actaHechos !== undefined) setActaHechos(c.actaHechos);
-                if (c.otrosDocumentos !== undefined) setOtrosDocumentos(c.otrosDocumentos);
-                if (c.conclusion !== undefined) setConclusion(c.conclusion);
-                if (c.observacionesDetectadas !== undefined) setObservacionesDetectadas(c.observacionesDetectadas);
-                if (c.medidasPreventivas !== undefined) setMedidasPreventivas(c.medidasPreventivas);
-                if (c.noRealizo !== undefined) setNoRealizo(c.noRealizo);
-                if (c.manifestaciones !== undefined) setManifestaciones(c.manifestaciones);
-                if (c.nombreTestigo !== undefined) setNombreTestigo(c.nombreTestigo);
-                if (c.domicilioTestigo !== undefined) setDomicilioTestigo(c.domicilioTestigo);
-                if (c.tipoIdTestigo !== undefined) setTipoIdTestigo(c.tipoIdTestigo);
-                if (c.numeroIdTestigo !== undefined) setNumeroIdTestigo(c.numeroIdTestigo);
-                alert('✅ Borrador cargado correctamente.');
-            } catch { alert('Archivo inválido.'); }
-        };
-        reader.readAsText(archivo);
-        e.target.value = '';
+        cargarBorradorLocal(e, 5, contexto, {
+            actaNo: setActaNo,
+            fecha: setFecha,
+            hora: setHora,
+            tipoPsg: setTipoPsg,
+            domicilio: setDomicilio,
+            telefono: setTelefono,
+            horaInicio: setHoraInicio,
+            horaTermino: setHoraTermino,
+            actaHechos: setActaHechos,
+            otrosDocumentos: setOtrosDocumentos,
+            conclusion: setConclusion,
+            observacionesDetectadas: setObservacionesDetectadas,
+            medidasPreventivas: setMedidasPreventivas,
+            noRealizo: setNoRealizo,
+            manifestaciones: setManifestaciones,
+            nombreTestigo: setNombreTestigo,
+            domicilioTestigo: setDomicilioTestigo,
+            tipoIdTestigo: setTipoIdTestigo,
+            numeroIdTestigo: setNumeroIdTestigo
+        });
     };
 
     useEffect(() => {
@@ -197,6 +144,11 @@ const ActaSupervision = () => {
         }
         if (!contexto) {
             alert("Primero debes iniciar una visita en el Dashboard.");
+            navigate('/dashboard');
+            return;
+        }
+        if (!contexto.avance?.modulo4) {
+            alert("⚠️ Debes completar el Módulo 4 (Acta de Hechos) antes de acceder al Acta de Supervisión.");
             navigate('/dashboard');
         }
     }, [contexto, navigate]);
