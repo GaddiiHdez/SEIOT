@@ -188,10 +188,6 @@ const ListaVerificacion = () => {
     };
 
     const handleGuardar = async () => {
-        if (!telefono.trim() || !latitud.trim() || !longitud.trim() || !cabezas.trim() || !horaInicio || !horaTermino || !conclusion || !responsablePsg.trim() || !responsableSupervisor.trim()) {
-            alert("⚠️ Por favor completa todos los campos obligatorios del Módulo 3 antes de continuar (Teléfono, Coordenadas, Capacidad, Horario de Diligencia, Conclusión y Responsables).");
-            return;
-        }
         try {
             const response = await apiFetch('/api/modulos/modulo3', {
                 method: 'POST',
