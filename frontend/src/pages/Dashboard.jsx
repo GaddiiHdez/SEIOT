@@ -88,17 +88,41 @@ const Dashboard = () => {
   }, []);
 
 
+  const formatPsg = (rawVal) => {
+    const cleaned = rawVal.replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase();
+    let formatted = '';
+    if (cleaned.length > 0) {
+      formatted += cleaned.slice(0, 2);
+    }
+    if (cleaned.length > 2) {
+      formatted += '-' + cleaned.slice(2, 5);
+    }
+    if (cleaned.length > 5) {
+      formatted += '-' + cleaned.slice(5, 9);
+    }
+    if (cleaned.length > 9) {
+      formatted += '-' + cleaned.slice(9, 12);
+    }
+    return formatted;
+  };
+
   const handlePsgChange = async (e) => {
-    const valor = e.target.value.toUpperCase();
-    setPsgInput(valor);
-    if (valor.length < 10) { setDatosPsg(null); return; }
+    const formatted = formatPsg(e.target.value);
+    setPsgInput(formatted);
+    if (formatted.length < 15) { setDatosPsg(null); return; }
     try {
-      const response = await apiFetch(`/api/psg/buscar/${valor.trim()}`);
+      const response = await apiFetch(`/api/psg/buscar/${formatted.trim()}`);
       if (response.ok) {
         const datos = await response.json();
         setDatosPsg({ psg: datos.psg, nombre_titular: datos.razon_social, representante: datos.representante, localidad: datos.localidad, municipio: datos.municipio, domicilio: datos.domicilio, estado: datos.estado || 'NAYARIT', tipo_psg: datos.tipo_psg, telefono: datos.telefono, latitud: datos.latitud, longitud: datos.longitud, capacidad_maxima_bovinos: datos.capacidad_maxima_bovinos, tipo_identificacion: datos.tipo_identificacion || '', numero_identificacion: datos.numero_identificacion || '', expedida_por: datos.expedida_por || '' });
-      } else { setDatosPsg(null); }
-    } catch (error) { setDatosPsg(null); }
+      } else { 
+        setDatosPsg(null); 
+        alert("⚠️ La clave PSG ingresada no existe o no se encuentra registrada en la base de datos.");
+      }
+    } catch (error) { 
+      setDatosPsg(null); 
+      alert("⚠️ La clave PSG ingresada no existe o no se encuentra registrada en la base de datos.");
+    }
   };
 
   const handleSupervisorChange = (e) => {

@@ -122,7 +122,7 @@ export const AlertProvider = ({ children }) => {
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     {/* Backdrop con desenfoque de cristal */}
                     <div 
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ease-out" 
+                        className="fixed inset-0 bg-black/30 transition-opacity duration-300 ease-out" 
                         onClick={closeAlert}
                     />
 
