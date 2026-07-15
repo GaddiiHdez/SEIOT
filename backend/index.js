@@ -31,7 +31,7 @@ app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
         const isAllowed = allowedOrigins.includes(origin) || 
-                          /^https:\/\/seiot-frontend(-[a-z0-9-]+)?\.vercel\.app$/.test(origin) ||
+                          /^https:\/\/seiot(-[a-z0-9-]+)?\.vercel\.app$/.test(origin) ||
                           /^http:\/\/localhost:\d+$/.test(origin);
         if (isAllowed) {
             callback(null, true);
