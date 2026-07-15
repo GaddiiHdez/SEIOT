@@ -467,6 +467,33 @@ const Dashboard = () => {
   const modulosCompletados = esFinalizada ? 6 : Object.values(avance).filter(Boolean).length;
   const porcentajeAvance = esFinalizada ? 100 : Math.round((modulosCompletados / 6) * 100);
 
+  const getTextoAvance = (av, esFin, complCount, pct) => {
+    if (esFin) {
+      const keys = ['modulo1', 'modulo2', 'modulo3', 'modulo4', 'modulo5', 'modulo6'];
+      let last = 0;
+      keys.forEach((key, idx) => {
+        if (av[key]) last = idx + 1;
+      });
+      return `Concluido en etapa ${last} (100%)`;
+    }
+    return `${complCount} de 6 etapas (${pct}%)`;
+  };
+
+  const getTextoAvanceCompacto = (vis) => {
+    const isFin = vis.estado_visita === 'finalizado';
+    const av = vis.avance || {};
+    if (isFin) {
+      const keys = ['modulo1', 'modulo2', 'modulo3', 'modulo4', 'modulo5', 'modulo6'];
+      let last = 0;
+      keys.forEach((key, idx) => {
+        if (av[key]) last = idx + 1;
+      });
+      return `Etapa ${last} (Concluido)`;
+    }
+    const count = Object.values(av).filter(Boolean).length;
+    return `${count} / 6 etapas`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Navbar 
@@ -570,7 +597,7 @@ const Dashboard = () => {
               <div className="border-t border-yellow-200/60 pt-4">
                 <div className="flex justify-between items-center text-xs font-bold text-gray-600 mb-1.5">
                   <span className="uppercase text-[10px] tracking-wide">Avance general de la supervisión:</span>
-                  <span className="text-red-700 font-mono">{modulosCompletados} de 6 etapas ({porcentajeAvance}%)</span>
+                  <span className="text-red-700 font-mono">{getTextoAvance(avance, esFinalizada, modulosCompletados, porcentajeAvance)}</span>
                 </div>
                 <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden shadow-inner">
                   <div 
@@ -678,7 +705,7 @@ const Dashboard = () => {
                     </div>
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
                       <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500">
-                        {complCount} / 6 etapas
+                        {getTextoAvanceCompacto(vis)}
                       </span>
                       <span className="text-[10px] text-blue-500 font-bold group-hover:underline flex items-center gap-0.5">
                         Abrir →
