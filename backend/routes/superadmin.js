@@ -98,13 +98,16 @@ router.post('/backup', verificarToken, async (req, res) => {
         };
 
         for (const tabla of tablas) {
-            let queryText = `SELECT * FROM ${tabla}`;
+            const queryResult = await pool.query(`SELECT * FROM ${tabla}`);
             if (tabla === 'usuarios') {
                 // Excluimos password_hash para proteger los datos
-                queryText = 'SELECT id, nombre, usuario, rol, es_admin, activo, superadmin, permisos, creado_en FROM usuarios';
+                backup[tabla] = queryResult.rows.map(row => {
+                    const { password_hash, ...rest } = row;
+                    return rest;
+                });
+            } else {
+                backup[tabla] = queryResult.rows;
             }
-            const queryResult = await pool.query(queryText);
-            backup[tabla] = queryResult.rows;
         }
 
         res.json(backup);
