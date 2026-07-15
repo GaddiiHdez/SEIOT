@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AlertProvider } from './context/AlertContext';
+import { apiFetch } from './utils/api.js';
 import RutaProtegida from './components/RutaProtegida';
 
 import Login from './pages/Login';
@@ -15,10 +16,63 @@ import ActaCircunstanciada from './pages/Modulo6/ActaCircunstanciada';
 import AdminUsuarios from './pages/Admin/AdminUsuarios';
 import Consultas from './pages/Admin/Consultas';
 
+const SyncManager = () => {
+  useEffect(() => {
+    const realizarSincronizacion = async () => {
+      const queueRaw = localStorage.getItem('seiot_sync_queue');
+      if (!queueRaw) return;
+      let queue = [];
+      try {
+        queue = JSON.parse(queueRaw);
+      } catch {
+        return;
+      }
+      if (queue.length === 0) return;
+
+      let exitos = 0;
+      const nuevaCola = [];
+
+      for (const item of queue) {
+        try {
+          const res = await apiFetch(item.endpoint, item.options);
+          if (res && res.ok) {
+            exitos++;
+          } else {
+            nuevaCola.push(item);
+          }
+        } catch {
+          nuevaCola.push(item);
+        }
+      }
+
+      localStorage.setItem('seiot_sync_queue', JSON.stringify(nuevaCola));
+
+      if (exitos > 0) {
+        window.alert(`✅ ¡Conexión a Internet recuperada!\nSe sincronizaron con éxito ${exitos} formulario(s) pendiente(s) en el servidor.`);
+      }
+    };
+
+    const handleOnline = () => {
+      setTimeout(realizarSincronizacion, 1000);
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    if (navigator.onLine) {
+      realizarSincronizacion();
+    }
+
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  return null;
+};
+
 function App() {
   return (
     <AuthProvider>
       <AlertProvider>
+        <SyncManager />
         <BrowserRouter>
           <Routes>
             {/* Ruta pública */}
