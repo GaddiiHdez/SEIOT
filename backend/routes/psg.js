@@ -26,7 +26,7 @@ router.get('/buscar/:psg', verificarToken, async (req, res) => {
 router.get('/supervisores', verificarToken, async (req, res) => {
     try {
         const resultado = await pool.query(
-            "SELECT * FROM excel_supervisores WHERE id = 18 OR nombre = 'MVZ. Octavio Herrera Ulloa' ORDER BY nombre"
+            "SELECT * FROM excel_supervisores WHERE nombre = 'MVZ. Octavio Herrera Ulloa' ORDER BY nombre"
         );
         res.json(resultado.rows);
     } catch (error) {
