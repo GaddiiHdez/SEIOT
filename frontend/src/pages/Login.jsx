@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, User, Lock } from 'lucide-react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 const Login = () => {
@@ -48,72 +48,80 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-red-950 to-zinc-950 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="bg-white rounded-t-2xl p-4 flex items-center justify-center shadow-xl overflow-hidden">
-                    <img src={logoGobierno} alt="Logo Gobierno" className="h-16 object-contain max-w-full" />
+                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100/10 flex flex-col">
+                    {/* Logo */}
+                    <div className="bg-slate-50/80 p-5 flex items-center justify-center border-b border-slate-100 overflow-hidden">
+                        <img src={logoGobierno} alt="Logo Gobierno" className="h-16 object-contain max-w-full" />
+                    </div>
+
+                    {/* Formulario */}
+                    <div className="p-8">
+                        <h1 className="text-center text-slate-800 font-extrabold text-2xl mb-1 tracking-tight">SEIOT</h1>
+                        <p className="text-center text-slate-400 font-semibold text-[10px] mb-8 uppercase tracking-widest">Sistema de Supervisión Pecuaria</p>
+
+                        <form onSubmit={handleLogin} className="space-y-5">
+                            <div>
+                                <label htmlFor="login-usuario" className="block text-[10px] font-extrabold text-slate-500 mb-1.5 uppercase tracking-wider">Usuario</label>
+                                <div className="relative">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        id="login-usuario"
+                                        type="text"
+                                        value={usuario}
+                                        onChange={(e) => setUsuario(e.target.value)}
+                                        className="w-full bg-slate-50/60 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:bg-white focus:border-red-800 focus:ring-4 focus:ring-red-900/10 transition-all font-medium text-slate-800 placeholder:text-slate-400"
+                                        placeholder="Ingresa tu usuario"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label htmlFor="login-password" className="block text-[10px] font-extrabold text-slate-500 mb-1.5 uppercase tracking-wider">Contraseña</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input
+                                        id="login-password"
+                                        type={mostrarPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full bg-slate-50/60 border border-slate-200 rounded-xl pl-10 pr-10 py-3 text-sm outline-none focus:bg-white focus:border-red-800 focus:ring-4 focus:ring-red-900/10 transition-all font-medium text-slate-800 placeholder:text-slate-400"
+                                        placeholder="Ingresa tu contraseña"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setMostrarPassword(!mostrarPassword)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center"
+                                    >
+                                        {mostrarPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-50/80 border border-red-200 text-red-700 text-xs p-3.5 rounded-xl font-bold">
+                                    {error}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={cargando}
+                                className="w-full bg-gradient-to-r from-red-900 to-red-800 text-white py-3.5 rounded-xl font-bold text-xs hover:from-red-950 hover:to-red-900 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] shadow-md shadow-red-950/20 hover:shadow-lg"
+                            >
+                                {cargando ? 'Iniciando sesión...' : <><LogIn size={14} /> INICIAR SESIÓN</>}
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
-                {/* Formulario */}
-                <div className="bg-white rounded-b-2xl shadow-xl p-8">
-                    <h1 className="text-center text-gray-800 font-bold text-xl mb-1">SEIOT</h1>
-                    <p className="text-center text-gray-500 text-xs mb-6 uppercase tracking-widest">Sistema de Supervisión Pecuaria</p>
-
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                            <label htmlFor="login-usuario" className="block text-xs font-bold text-gray-600 mb-1 uppercase">Usuario</label>
-                            <input
-                                id="login-usuario"
-                                type="text"
-                                value={usuario}
-                                onChange={(e) => setUsuario(e.target.value)}
-                                className="w-full border border-gray-300 rounded p-3 text-sm outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
-                                placeholder="Ingresa tu usuario"
-                                required
-                                autoFocus
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="login-password" className="block text-xs font-bold text-gray-600 mb-1 uppercase">Contraseña</label>
-                            <div className="relative">
-                                <input
-                                    id="login-password"
-                                    type={mostrarPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full border border-gray-300 rounded p-3 text-sm outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 pr-10"
-                                    placeholder="Ingresa tu contraseña"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setMostrarPassword(!mostrarPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                >
-                                    {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {error && (
-                            <div className="bg-red-50 border border-red-300 text-red-700 text-sm p-3 rounded font-bold">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={cargando}
-                            className="w-full bg-red-800 text-white py-3 rounded font-bold text-sm hover:bg-red-900 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-                        >
-                            {cargando ? 'Iniciando sesión...' : <><LogIn size={18} /> INICIAR SESIÓN</>}
-                        </button>
-                    </form>
-                </div>
-
-                <p className="text-center text-white/50 text-xs mt-4">SEIOT © {new Date().getFullYear()} — Secretaría de Desarrollo Rural</p>
+                <p className="text-center text-slate-500/80 text-[10px] font-bold mt-6 uppercase tracking-widest">
+                    SEIOT © {new Date().getFullYear()} — Secretaría de Desarrollo Rural
+                </p>
             </div>
         </div>
     );
