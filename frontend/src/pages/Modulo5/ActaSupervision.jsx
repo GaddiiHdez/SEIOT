@@ -25,14 +25,20 @@ const ActaSupervision = () => {
     });
 
     const [actaNo, setActaNo] = useState("");
-    const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+    const [fecha, setFecha] = useState(() => {
+        if (contexto?.fecha && contexto.fecha.includes('/')) {
+            const partes = contexto.fecha.split('/');
+            return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+        }
+        return new Date().toISOString().split('T')[0];
+    });
     const [hora, setHora] = useState("");
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
     const [horaInicio, setHoraInicio] = useState("");
     const [horaTermino, setHoraTermino] = useState("");
-    const [actaHechos, setActaHechos] = useState("");
+    const [actaHechos, setActaHechos] = useState(false);
     const [otrosDocumentos, setOtrosDocumentos] = useState("");
     const [conclusion, setConclusion] = useState(""); 
     const [observacionesDetectadas, setObservacionesDetectadas] = useState("");
