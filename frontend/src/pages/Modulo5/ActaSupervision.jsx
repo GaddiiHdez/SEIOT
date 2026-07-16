@@ -248,33 +248,33 @@ const ActaSupervision = () => {
                     <div className="animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                             <div>
-                                <InputBloqueFix labelTop="(1) No. de Acta :" labelSide="Acta No.:" valor={actaNo} onChange={(e) => setActaNo(e.target.value)} />
-                                <InputBloqueFix labelTop="(2) Expediente :" labelSide="Expediente No.:" valor={folio} disabled={true} puedeEditar={puedeEditar} />
-                                <InputBloqueFix labelTop="(3) Localidad :" labelSide="Localidad :" valor={datosPsg.localidad} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(1) No. de Acta :" labelSide="Acta No.:" valor={actaNo} onChange={(e) => setActaNo(e.target.value)} />
+                                <InputBloque labelTop="(2) Expediente :" labelSide="Expediente No.:" valor={folio} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(3) Localidad :" labelSide="Localidad :" valor={datosPsg.localidad} disabled={true} puedeEditar={puedeEditar} />
                             </div>
                             <div>
-                                <InputBloqueFix labelTop="(4) Municipio :" labelSide="Municipio :" valor={datosPsg.municipio} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(4) Municipio :" labelSide="Municipio :" valor={datosPsg.municipio} disabled={true} puedeEditar={puedeEditar} />
                                 <div className="border-l-4 border-pink-600 pl-4 py-1 bg-pink-50/30 rounded-r mb-3">
                                     <label className="block text-[11px] font-bold text-pink-800 mb-1 uppercase">Fecha y Hora :</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <InputBloqueFix labelSide="Fecha :" valor={fecha} disabled={true} puedeEditar={puedeEditar} />
-                                        <InputBloqueFix labelSide="Hora :" tipo="time" valor={hora} onChange={(e) => setHora(e.target.value)} />
+                                        <InputBloque labelSide="Fecha :" valor={fecha} disabled={true} puedeEditar={puedeEditar} />
+                                        <InputBloque labelSide="Hora :" tipo="time" valor={hora} onChange={(e) => setHora(e.target.value)} />
                                     </div>
                                 </div>
-                                <InputBloqueFix labelTop="(6) Servidor Público :" labelSide="Nombre:" valor={contexto?.datosSupervisor?.nombre || supervisor} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(6) Servidor Público :" labelSide="Nombre:" valor={contexto?.datosSupervisor?.nombre || supervisor} disabled={true} puedeEditar={puedeEditar} />
                             </div>
                         </div>
 
                         <h3 className="text-indigo-600 font-bold text-center text-lg mt-6 mb-4 uppercase">I. DATOS DEL SUJETO SUPERVISADO</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                             <div>
-                                <InputBloqueFix labelTop="(7) Nombre del PSG :" labelSide="Nombre PSG :" valor={datosPsg.nombre_titular} disabled={true} puedeEditar={puedeEditar} />
-                                <InputBloqueFix labelTop="(8) Tipo de PSG :" labelSide="Tipo PSG :" valor={tipoPsg} onChange={(e) => setTipoPsg(e.target.value)} disabled={true} puedeEditar={puedeEditar} />
-                                <InputBloqueFix labelTop="(9) Nombre del Titular o Representante :" labelSide="Nombre :" valor={datosPsg.representante || ""} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(7) Nombre del PSG :" labelSide="Nombre PSG :" valor={datosPsg.nombre_titular} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(8) Tipo de PSG :" labelSide="Tipo PSG :" valor={tipoPsg} onChange={(e) => setTipoPsg(e.target.value)} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(9) Nombre del Titular o Representante :" labelSide="Nombre :" valor={datosPsg.representante || ""} disabled={true} puedeEditar={puedeEditar} />
                             </div>
                             <div>
-                                <InputBloqueFix labelTop="(10) Domicilio del Establecimiento :" labelSide="Domicilio :" valor={domicilio} onChange={(e) => setDomicilio(e.target.value)} disabled={true} puedeEditar={puedeEditar} />
-                                <InputBloqueFix labelTop="(11) Teléfono :" labelSide="Teléfono:" valor={telefono} onChange={(e) => setTelefono(e.target.value)} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(10) Domicilio del Establecimiento :" labelSide="Domicilio :" valor={domicilio} onChange={(e) => setDomicilio(e.target.value)} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(11) Teléfono :" labelSide="Teléfono:" valor={telefono} onChange={(e) => setTelefono(e.target.value)} disabled={true} puedeEditar={puedeEditar} />
                             </div>
                         </div>
                     </div>
@@ -286,12 +286,12 @@ const ActaSupervision = () => {
                         <h3 className="text-indigo-600 font-bold text-center text-lg uppercase">II. DATOS DE LA SUPERVISIÓN</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
                             <div>
-                                <InputBloqueFix labelTop="(12) Fecha de Supervisión :" labelSide="Fecha :" valor={fecha} disabled={true} puedeEditar={puedeEditar} />
-                                <InputBloqueFix labelTop="(13) Hora de Inicio :" labelSide="Hora de Inicio :" tipo="time" valor={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
+                                <InputBloque labelTop="(12) Fecha de Supervisión :" labelSide="Fecha :" valor={fecha} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(13) Hora de Inicio :" labelSide="Hora de Inicio :" tipo="time" valor={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
                             </div>
                             <div>
-                                <InputBloqueFix labelTop="(14) Hora de Término :" labelSide="Hora Término :" tipo="time" valor={horaTermino} onChange={(e) => setHoraTermino(e.target.value)} />
-                                <InputBloqueFix labelTop="(15) Personal supervisor :" labelSide="Nombre:" valor={contexto?.datosSupervisor?.nombre || supervisor} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(14) Hora de Término :" labelSide="Hora Término :" tipo="time" valor={horaTermino} onChange={(e) => setHoraTermino(e.target.value)} />
+                                <InputBloque labelTop="(15) Personal supervisor :" labelSide="Nombre:" valor={contexto?.datosSupervisor?.nombre || supervisor} disabled={true} puedeEditar={puedeEditar} />
                             </div>
                         </div>
 
@@ -301,7 +301,7 @@ const ActaSupervision = () => {
                                 <span className="bg-indigo-600 text-white text-xs font-bold p-2 rounded">(16) Acta de Hechos :</span>
                                 <input type="checkbox" checked={actaHechos} onChange={(e) => setActaHechos(e.target.checked)} className="w-5 h-5 cursor-pointer" />
                             </div>
-                            <InputBloqueFix labelTop="(17) Otros documentos :" labelSide="Especificar :" valor={otrosDocumentos} onChange={(e) => setOtrosDocumentos(e.target.value)} />
+                            <InputBloque labelTop="(17) Otros documentos :" labelSide="Especificar :" valor={otrosDocumentos} onChange={(e) => setOtrosDocumentos(e.target.value)} />
                         </div>
 
                         <h3 className="text-indigo-600 font-bold text-center text-lg uppercase mt-4">IV. RESULTADO DE LA SUPERVISIÓN</h3>
@@ -362,14 +362,14 @@ const ActaSupervision = () => {
                         <h3 className="text-indigo-600 font-bold text-center text-lg uppercase">VI. CIERRE DEL ACTA</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
                             <div>
-                                <InputBloqueFix labelTop="(22) Nombre del Supervisor:" labelSide="Nombre del Supervisor:" valor={contexto?.datosSupervisor?.nombre || supervisor} disabled={true} puedeEditar={puedeEditar} />
-                                <InputBloqueFix labelTop="(23) Nombre del Responsable del PSG :" labelSide="Nombre PSG:" valor={datosPsg.nombre_titular} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(22) Nombre del Supervisor:" labelSide="Nombre del Supervisor:" valor={contexto?.datosSupervisor?.nombre || supervisor} disabled={true} puedeEditar={puedeEditar} />
+                                <InputBloque labelTop="(23) Nombre del Responsable del PSG :" labelSide="Nombre PSG:" valor={datosPsg.nombre_titular} disabled={true} puedeEditar={puedeEditar} />
                             </div>
                             <div>
-                                <InputBloqueFix labelTop="(24) Nombre del Testigo :" labelSide="Nombre del Testigo :" valor={nombreTestigo} onChange={(e) => setNombreTestigo(e.target.value)} />
-                                <InputBloqueFix labelTop="Domicilio del Testigo :" labelSide="Domicilio del Testigo :" valor={domicilioTestigo} onChange={(e) => setDomicilioTestigo(e.target.value)} />
-                                <InputBloqueFix labelTop="Tipo de Identificación del Testigo :" labelSide="Tipo de Identificación :" valor={tipoIdTestigo} onChange={(e) => setTipoIdTestigo(e.target.value)} />
-                                <InputBloqueFix labelTop="Número de Identificación del Testigo:" labelSide="Número de Identificación :" valor={numeroIdTestigo} onChange={(e) => setNumeroIdTestigo(e.target.value)} />
+                                <InputBloque labelTop="(24) Nombre del Testigo :" labelSide="Nombre del Testigo :" valor={nombreTestigo} onChange={(e) => setNombreTestigo(e.target.value)} />
+                                <InputBloque labelTop="Domicilio del Testigo :" labelSide="Domicilio del Testigo :" valor={domicilioTestigo} onChange={(e) => setDomicilioTestigo(e.target.value)} />
+                                <InputBloque labelTop="Tipo de Identificación del Testigo :" labelSide="Tipo de Identificación :" valor={tipoIdTestigo} onChange={(e) => setTipoIdTestigo(e.target.value)} />
+                                <InputBloque labelTop="Número de Identificación del Testigo:" labelSide="Número de Identificación :" valor={numeroIdTestigo} onChange={(e) => setNumeroIdTestigo(e.target.value)} />
                             </div>
                         </div>
                     </div>

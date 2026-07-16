@@ -1,3 +1,6 @@
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { LOGO_HEADER, LOGO_FOOTER } from './imagenesMembretes';
+
 // Función auxiliar para dividir texto largo en líneas para el PDF
 const wrapText = (text, maxChars = 85) => {
     if (!text) return [];
