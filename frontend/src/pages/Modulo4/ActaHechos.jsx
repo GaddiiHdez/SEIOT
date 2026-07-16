@@ -25,7 +25,17 @@ const ActaHechos = () => {
     });
 
     const [actaNo, setActaNo] = useState("");
-    const [fecha] = useState(contexto?.fecha ? new Date(contexto.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : "");
+    const [fecha] = useState(() => {
+        if (!contexto?.fecha) return "";
+        const partes = contexto.fecha.split('/');
+        if (partes.length === 3) {
+            const dateObj = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+            if (!isNaN(dateObj.getTime())) {
+                return dateObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+        }
+        return contexto.fecha;
+    });
     const [hora, setHora] = useState("");
     const [tipoPsg, setTipoPsg] = useState(contexto?.datosPsg?.tipo_psg || "");
     const [telefono, setTelefono] = useState(contexto?.datosPsg?.telefono || "");
@@ -148,7 +158,7 @@ const ActaHechos = () => {
                 body: JSON.stringify({
                     visita_id: contexto.visita_id,
                     acta_no: actaNo,
-                    fecha: fecha,
+                    fecha: contexto?.fecha || "",
                     hora,
                     hora_inicio: horaInicio,
                     hora_termino: horaTermino,
@@ -212,7 +222,7 @@ const ActaHechos = () => {
                 body: JSON.stringify({
                     visita_id: contexto.visita_id,
                     acta_no: actaNo,
-                    fecha: fecha,
+                    fecha: contexto?.fecha || "",
                     hora,
                     hora_inicio: horaInicio,
                     hora_termino: horaTermino,
