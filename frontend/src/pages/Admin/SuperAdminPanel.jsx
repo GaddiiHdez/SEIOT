@@ -434,7 +434,7 @@ const SuperAdminPanel = () => {
                                     </div>
                                     
                                     <p className="text-slate-350 text-xs leading-relaxed mb-6">
-                                        Descarga copias de seguridad integrales en formato <strong>.ZIP</strong> (incluyen la base de datos completa y todos los archivos PDF firmados). Al cargar un paquete <strong>.ZIP</strong>, el sistema recupera automáticamente tanto los registros como los documentos físicos.
+                                        Descarga copias de seguridad de nivel empresarial en paquete <strong>.ZIP</strong> (incluyen el <strong>Dump SQL Nativo</strong> de PostgreSQL, la carpeta completa de PDFs y el <strong>Manifiesto de Integridad SHA-256</strong>). Al restaurar, se valida criptográficamente que el respaldo no esté corrupto ni alterado.
                                     </p>
 
                                     <div className="space-y-4 mb-6">
