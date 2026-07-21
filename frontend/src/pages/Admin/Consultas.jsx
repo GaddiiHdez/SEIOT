@@ -485,28 +485,6 @@ const Consultas = () => {
 
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 
-                {/* ENCABEZADO */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 text-red-700">
-                            <Search size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-lg font-extrabold text-slate-800 uppercase tracking-tight">Panel de Consultas</h1>
-                            <p className="text-xs text-slate-500 font-semibold mt-0.5">Filtra, visualiza y exporta expedientes de supervisión.</p>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2 self-start sm:self-auto">
-                        <button
-                            onClick={() => navigate('/dashboard')}
-                            className="px-4 py-2 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-250 font-bold text-xs flex items-center gap-1.5 transition-all"
-                        >
-                            <ArrowLeft size={14} /> Dashboard
-                        </button>
-                    </div>
-                </div>
-
                 {/* FORMULARIO DE FILTROS (SUBCOMPONENT) */}
                 <FiltrosConsultas
                     psgInput={psgInput}

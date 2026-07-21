@@ -1,5 +1,6 @@
 import React from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, X, Loader2, ArrowLeft } from 'lucide-react';
 
 const Chip = ({ label, activo, onClick }) => (
     <button
@@ -27,13 +28,24 @@ const FiltrosConsultas = ({
     buscando, iniciarBusqueda, limpiarFiltros, toggleItem,
     MUNICIPIOS, ESTATUS_OPTS, MODULOS_OPTS
 }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-150 mb-6">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Configuración de búsqueda</span>
-                <button onClick={limpiarFiltros} className="text-xs text-slate-400 hover:text-red-750 font-bold flex items-center gap-1 transition-colors">
-                    <X size={13} /> Limpiar todo
-                </button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-150 mb-6 gap-3">
+                <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wide">Filtros de Búsqueda</h2>
+                
+                <div className="flex items-center gap-3">
+                    <button onClick={limpiarFiltros} className="text-xs text-slate-400 hover:text-red-750 font-bold flex items-center gap-1 transition-colors">
+                        <X size={13} /> Limpiar todo
+                    </button>
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="px-3.5 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-200 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                        <ArrowLeft size={14} /> Dashboard
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-6">
