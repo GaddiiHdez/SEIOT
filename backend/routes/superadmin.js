@@ -1,4 +1,5 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
 import pool from '../db.js';
 import fs from 'fs';
 const fsPromises = fs.promises;
@@ -108,15 +109,7 @@ router.post('/backup', verificarToken, async (req, res) => {
 
         for (const tabla of tablas) {
             const queryResult = await pool.query(`SELECT * FROM ${tabla}`);
-            if (tabla === 'usuarios') {
-                // Excluimos password_hash para proteger los datos
-                backup[tabla] = queryResult.rows.map(row => {
-                    const { password_hash, ...rest } = row;
-                    return rest;
-                });
-            } else {
-                backup[tabla] = queryResult.rows;
-            }
+            backup[tabla] = queryResult.rows;
         }
 
         await registrarAuditLog(pool, {
@@ -181,12 +174,20 @@ router.post('/restore', verificarToken, async (req, res) => {
             RESTART IDENTITY CASCADE
         `);
 
+        // Hash por defecto para respaldos antiguos que no contenían password_hash (ej: 'seiot123')
+        const defaultHash = await bcrypt.hash('seiot123', 10);
+
         // 2. Restaurar tablas en orden jerárquico
         for (const tabla of tablasOrdenadas) {
             const rows = backupData[tabla];
             if (!rows || rows.length === 0) continue;
 
-            for (const row of rows) {
+            for (let row of rows) {
+                // Si la tabla es usuarios y falta el campo password_hash, asignar fallback por defecto
+                if (tabla === 'usuarios' && !row.password_hash) {
+                    row = { ...row, password_hash: defaultHash };
+                }
+
                 const keys = Object.keys(row);
                 const values = Object.values(row);
                 const placeholders = keys.map((_, idx) => `$${idx + 1}`).join(', ');
