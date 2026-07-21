@@ -13,6 +13,9 @@ build/
 # PDFs subidos por usuarios - datos privados
 backend/uploads/
 
+# Scripts administrativos sensibles de desarrollo local
+backend/scripts/
+
 # Logs
 *.log
 npm-debug.log*
