@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
 import { verificarToken } from './auth.js';
+import { registrarAuditLog } from '../utils/auditoria.js';
 
 const router = express.Router();
 
@@ -111,8 +112,23 @@ router.post('/visitas', verificarToken, async (req, res) => {
             [folio, psg, supervisor, capturista_id]
         );
 
+        const nuevaVisita = resultado.rows[0];
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'CREAR_VISITA',
+            tablaAfectada: 'visitas',
+            registroId: String(nuevaVisita.id),
+            detalles: {
+                folio: nuevaVisita.folio,
+                psg: nuevaVisita.psg,
+                supervisor: nuevaVisita.supervisor
+            }
+        });
+
         await client.query('COMMIT');
-        res.json(resultado.rows[0]);
+        res.json(nuevaVisita);
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error creando visita:', error);
@@ -449,7 +465,22 @@ router.post('/visitas/finalizar/:visita_id', verificarToken, async (req, res) =>
             return res.status(404).json({ error: 'Visita no encontrada.' });
         }
 
-        res.json({ mensaje: 'Visita finalizada correctamente.', visita: resultado.rows[0] });
+        const visitaFinalizada = resultado.rows[0];
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'FINALIZAR_VISITA',
+            tablaAfectada: 'visitas',
+            registroId: String(visitaFinalizada.id),
+            detalles: {
+                folio: visitaFinalizada.folio,
+                psg: visitaFinalizada.psg,
+                supervisor: visitaFinalizada.supervisor
+            }
+        });
+
+        res.json({ mensaje: 'Visita finalizada correctamente.', visita: visitaFinalizada });
     } catch (error) {
         console.error('Error al finalizar visita:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });

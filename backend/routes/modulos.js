@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import { verificarToken } from './auth.js';
+import { registrarAuditLog } from '../utils/auditoria.js';
 
 const router = express.Router();
 
@@ -50,7 +51,7 @@ const upload = multer({
 // ─── HELPER: Verificar acceso a visita ────────────────────────────────────────
 async function verificarAccesoVisita(req, res, visita_id, client = pool) {
     const visitaCheck = await client.query(
-        'SELECT id, capturista_id FROM visitas WHERE id = $1',
+        'SELECT id, capturista_id, folio FROM visitas WHERE id = $1',
         [visita_id]
     );
     if (visitaCheck.rows.length === 0) {
@@ -116,6 +117,20 @@ router.post('/subir-firmado', verificarToken, upload.single('archivo'), async (r
             [visita_id, modulo, nombreFinal, rutaFinal]
         );
 
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'SUBIR_PDF_FIRMADO',
+            tablaAfectada: 'documentos_firmados',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: moduloNum,
+                folio: visita.folio,
+                nombre_archivo: nombreFinal
+            }
+        });
+
         res.json({
             mensaje: 'Documento firmado subido correctamente.',
             documento: resultado.rows[0]
@@ -163,6 +178,19 @@ router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) =>
             'DELETE FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
             [visita_id, modulo]
         );
+
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'ELIMINAR_PDF_FIRMADO',
+            tablaAfectada: 'documentos_firmados',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: parseInt(modulo),
+                folio: visita.folio
+            }
+        });
 
         res.json({ mensaje: 'Documento eliminado correctamente.' });
 
@@ -235,6 +263,19 @@ router.post('/modulo1', verificarToken, async (req, res) => {
             [visita_id]
         );
 
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GUARDAR_MODULO',
+            tablaAfectada: 'modulo1_oficio_notificacion',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: 1,
+                folio: visita.folio
+            }
+        });
+
         await client.query('COMMIT');
         res.json(resultado.rows[0]);
 
@@ -306,6 +347,19 @@ router.post('/modulo2', verificarToken, async (req, res) => {
             'UPDATE visitas SET modulo2_completado = true WHERE id = $1',
             [visita_id]
         );
+
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GUARDAR_MODULO',
+            tablaAfectada: 'modulo2_orden_supervision',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: 2,
+                folio: visita.folio
+            }
+        });
 
         await client.query('COMMIT');
         res.json(resultado.rows[0]);
@@ -421,6 +475,19 @@ router.post('/modulo3', verificarToken, async (req, res) => {
             [visita_id]
         );
 
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GUARDAR_MODULO',
+            tablaAfectada: 'modulo3_lista_verificacion',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: 3,
+                folio: visita.folio
+            }
+        });
+
         await client.query('COMMIT');
         res.json({ mensaje: 'Módulo 3 guardado correctamente' });
 
@@ -505,6 +572,19 @@ router.post('/modulo4', verificarToken, async (req, res) => {
             'UPDATE visitas SET modulo4_completado = true WHERE id = $1',
             [visita_id]
         );
+
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GUARDAR_MODULO',
+            tablaAfectada: 'modulo4_acta_hechos',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: 4,
+                folio: visita.folio
+            }
+        });
 
         await client.query('COMMIT');
         res.json(resultado.rows[0]);
@@ -595,6 +675,19 @@ router.post('/modulo5', verificarToken, async (req, res) => {
             'UPDATE visitas SET modulo5_completado = true WHERE id = $1',
             [visita_id]
         );
+
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GUARDAR_MODULO',
+            tablaAfectada: 'modulo5_acta_supervision',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: 5,
+                folio: visita.folio
+            }
+        });
 
         await client.query('COMMIT');
         res.json(resultado.rows[0]);
@@ -707,6 +800,19 @@ router.post('/modulo6', verificarToken, async (req, res) => {
             'UPDATE visitas SET modulo6_completado = true WHERE id = $1',
             [visita_id]
         );
+
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GUARDAR_MODULO',
+            tablaAfectada: 'modulo6_acta_circunstanciada',
+            registroId: String(visita_id),
+            detalles: {
+                modulo: 6,
+                folio: visita.folio
+            }
+        });
 
         await client.query('COMMIT');
         res.json(resultado.rows[0]);

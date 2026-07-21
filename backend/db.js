@@ -62,11 +62,36 @@ const initConfigTable = async () => {
     }
 };
 
+const initAuditLogsTable = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS public.auditoria_logs (
+                id SERIAL PRIMARY KEY,
+                usuario_id INT REFERENCES public.usuarios(id) ON DELETE SET NULL,
+                usuario_nombre VARCHAR(100),
+                usuario_username VARCHAR(100),
+                accion VARCHAR(50) NOT NULL,
+                tabla_afectada VARCHAR(50),
+                registro_id VARCHAR(100),
+                detalles JSONB,
+                creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            )
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_auditoria_logs_creado_en ON public.auditoria_logs (creado_en DESC)
+        `);
+        console.log('✅ Tabla auditoria_logs inicializada');
+    } catch (err) {
+        console.error('❌ Error al inicializar auditoria_logs:', err);
+    }
+};
+
 pool.connect()
     .then(async client => {
         console.log('✅ Conectado a PostgreSQL');
         client.release();
         await initConfigTable();
+        await initAuditLogsTable();
     })
     .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
 

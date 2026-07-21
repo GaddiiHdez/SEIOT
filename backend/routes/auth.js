@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../db.js';
 import fs from 'fs';
 import path from 'path';
+import { registrarAuditLog } from '../utils/auditoria.js';
 
 const router = express.Router();
 
@@ -183,6 +184,16 @@ router.post('/login', async (req, res) => {
             { expiresIn: '8h' }
         );
 
+        await registrarAuditLog({
+            usuarioId: user.id,
+            usuarioNombre: user.nombre,
+            usuarioUsername: user.usuario,
+            accion: 'INICIO_SESION',
+            tablaAfectada: 'usuarios',
+            registroId: String(user.id),
+            detalles: { ip, userAgent: req.headers['user-agent'] }
+        });
+
         res.json({
             token,
             usuario: {
@@ -238,7 +249,22 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
             [nombre, usuario, password_hash, es_admin, rol, modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4, ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas]
         );
 
-        res.json({ mensaje: 'Usuario creado correctamente', usuario: resultado.rows[0] });
+        const nuevoUser = resultado.rows[0];
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'CREAR_USUARIO',
+            tablaAfectada: 'usuarios',
+            registroId: String(nuevoUser.id),
+            detalles: {
+                nombre_creado: nuevoUser.nombre,
+                usuario_creado: nuevoUser.usuario,
+                rol: nuevoUser.rol
+            }
+        });
+
+        res.json({ mensaje: 'Usuario creado correctamente', usuario: nuevoUser });
     } catch (error) {
         console.error('Error crear usuario:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
@@ -277,6 +303,24 @@ router.put('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => 
             [nombre, activo, rol, es_admin, modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4, ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas, usuarioId]
         );
 
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'MODIFICAR_USUARIO',
+            tablaAfectada: 'usuarios',
+            registroId: String(usuarioId),
+            detalles: {
+                nombre_editado: nombre,
+                rol_editado: rol,
+                activo: activo,
+                permisos: {
+                    modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4,
+                    ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas
+                }
+            }
+        });
+
         invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: 'Usuario actualizado correctamente' });
     } catch (error) {
@@ -299,6 +343,18 @@ router.put('/usuarios/:id/password', verificarToken, async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
         await pool.query('UPDATE usuarios SET password_hash=$1, modificado_en=NOW() WHERE id=$2', [password_hash, usuarioId]);
 
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'CAMBIO_CONTRASEÑA',
+            tablaAfectada: 'usuarios',
+            registroId: String(usuarioId),
+            detalles: {
+                cambiado_por_admin: req.usuario.es_admin && req.usuario.id !== usuarioId
+            }
+        });
+
         invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: 'Contraseña actualizada correctamente' });
     } catch (error) {
@@ -317,6 +373,23 @@ router.delete('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) 
             return res.status(403).json({ error: 'No se puede desactivar al superadmin.' });
         }
         await pool.query('UPDATE usuarios SET activo=false, modificado_en=NOW() WHERE id=$1', [usuarioId]);
+        
+        const uRes = await pool.query('SELECT nombre, usuario FROM usuarios WHERE id = $1', [usuarioId]);
+        const uData = uRes.rows[0];
+
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'DESACTIVAR_USUARIO',
+            tablaAfectada: 'usuarios',
+            registroId: String(usuarioId),
+            detalles: {
+                nombre_desactivado: uData?.nombre,
+                usuario_desactivado: uData?.usuario
+            }
+        });
+
         invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: 'Usuario desactivado correctamente' });
     } catch (error) {
@@ -345,6 +418,23 @@ router.patch('/usuarios/:id/status', verificarToken, verificarAdmin, async (req,
         }
 
         await pool.query('UPDATE usuarios SET activo=$1, modificado_en=NOW() WHERE id=$2', [activo, usuarioId]);
+        
+        const uRes = await pool.query('SELECT nombre, usuario FROM usuarios WHERE id = $1', [usuarioId]);
+        const uData = uRes.rows[0];
+
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: activo ? 'ACTIVAR_USUARIO' : 'DESACTIVAR_USUARIO',
+            tablaAfectada: 'usuarios',
+            registroId: String(usuarioId),
+            detalles: {
+                nombre_afectado: uData?.nombre,
+                usuario_afectado: uData?.usuario
+            }
+        });
+
         invalidarCacheUsuario(usuarioId);
         res.json({ mensaje: `Usuario ${activo ? 'activado' : 'desactivado'} correctamente` });
     } catch (error) {

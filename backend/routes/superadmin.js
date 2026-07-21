@@ -4,6 +4,7 @@ import fs from 'fs';
 const fsPromises = fs.promises;
 import path from 'path';
 import { verificarToken } from './auth.js';
+import { registrarAuditLog } from '../utils/auditoria.js';
 
 const router = express.Router();
 
@@ -36,6 +37,14 @@ router.post('/reset', verificarToken, async (req, res) => {
             RESTART IDENTITY CASCADE
         `);
         await client.query('COMMIT');
+
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'REINICIAR_SISTEMA',
+            detalles: { motivo: 'Reinicio general a ceros solicitado por el SuperAdmin' }
+        });
 
         // 2. Eliminar archivos PDF físicamente de forma asíncrona
         const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
@@ -109,6 +118,13 @@ router.post('/backup', verificarToken, async (req, res) => {
                 backup[tabla] = queryResult.rows;
             }
         }
+
+        await registrarAuditLog(pool, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'GENERAR_RESPALDO'
+        });
 
         res.json(backup);
     } catch (error) {
@@ -193,6 +209,14 @@ router.post('/restore', verificarToken, async (req, res) => {
         }
 
         await client.query('COMMIT');
+
+        await registrarAuditLog(client, {
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'RESTAURAR_SISTEMA'
+        });
+
         res.json({ mensaje: 'Respaldo de base de datos restaurado correctamente.' });
     } catch (error) {
         await client.query('ROLLBACK');
@@ -238,10 +262,112 @@ router.put('/config-folios', verificarToken, async (req, res) => {
              WHERE clave = 'general'`,
             [nomenclatura.trim(), consecutivo_actual, longitud_consecutivo]
         );
+
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'CONFIGURAR_FOLIOS',
+            tablaAfectada: 'configuracion_folios',
+            registroId: 'general',
+            detalles: {
+                nomenclatura,
+                consecutivo_actual,
+                longitud_consecutivo
+            }
+        });
         
         res.json({ mensaje: 'Configuración de folios actualizada correctamente.' });
     } catch (error) {
         console.error('Error guardando config-folios:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// Obtener bitácora de auditoría (solo SuperAdmin)
+router.get('/auditoria', verificarToken, async (req, res) => {
+    try {
+        if (!req.usuario?.superadmin) {
+            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para ver la bitácora.' });
+        }
+
+        const { limit = 100, offset = 0, usuario_id, accion, fecha_inicio, fecha_fin } = req.query;
+        
+        let queryStr = `
+            SELECT a.*, u.nombre as real_usuario_nombre, u.usuario as real_usuario_username 
+            FROM auditoria_logs a
+            LEFT JOIN usuarios u ON a.usuario_id = u.id
+            WHERE 1=1
+        `;
+        const params = [];
+        let paramIndex = 1;
+
+        if (usuario_id) {
+            queryStr += ` AND a.usuario_id = $${paramIndex}`;
+            params.push(parseInt(usuario_id));
+            paramIndex++;
+        }
+
+        if (accion) {
+            queryStr += ` AND a.accion = $${paramIndex}`;
+            params.push(accion);
+            paramIndex++;
+        }
+
+        if (fecha_inicio) {
+            queryStr += ` AND a.creado_en >= $${paramIndex}`;
+            params.push(fecha_inicio);
+            paramIndex++;
+        }
+
+        if (fecha_fin) {
+            queryStr += ` AND a.creado_en <= $${paramIndex}`;
+            params.push(fecha_fin);
+            paramIndex++;
+        }
+
+        queryStr += ` ORDER BY a.creado_en DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+        params.push(parseInt(limit), parseInt(offset));
+
+        const resultado = await pool.query(queryStr, params);
+        
+        // También obtener el total para paginación
+        let countQueryStr = `SELECT COUNT(*) FROM auditoria_logs a WHERE 1=1`;
+        const countParams = [];
+        let countParamIndex = 1;
+
+        if (usuario_id) {
+            countQueryStr += ` AND a.usuario_id = $${countParamIndex}`;
+            countParams.push(parseInt(usuario_id));
+            countParamIndex++;
+        }
+
+        if (accion) {
+            countQueryStr += ` AND a.accion = $${countParamIndex}`;
+            countParams.push(accion);
+            countParamIndex++;
+        }
+
+        if (fecha_inicio) {
+            countQueryStr += ` AND a.creado_en >= $${countParamIndex}`;
+            countParams.push(fecha_inicio);
+            countParamIndex++;
+        }
+
+        if (fecha_fin) {
+            countQueryStr += ` AND a.creado_en <= $${countParamIndex}`;
+            countParams.push(fecha_fin);
+            countParamIndex++;
+        }
+
+        const countResult = await pool.query(countQueryStr, countParams);
+
+        res.json({
+            logs: resultado.rows,
+            total: parseInt(countResult.rows[0].count)
+        });
+    } catch (error) {
+        console.error('Error al consultar bitácora de auditoría:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
