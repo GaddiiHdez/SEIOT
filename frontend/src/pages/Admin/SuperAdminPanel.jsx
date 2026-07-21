@@ -16,10 +16,6 @@ const SuperAdminPanel = () => {
     // Pestañas
     const [tabActiva, setTabActiva] = useState('mantenimiento'); // 'mantenimiento' o 'auditoria'
     
-    // Estados para Reset de Base de Datos
-    const [claveReset, setClaveReset] = useState('');
-    const [loadingReset, setLoadingReset] = useState(false);
-    
     // Estados para Backup y Restore
     const [claveBackup, setClaveBackup] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
@@ -254,38 +250,6 @@ const SuperAdminPanel = () => {
         }
     };
 
-    // Reiniciar base de datos a ceros
-    const handleResetDatabase = async () => {
-        if (!claveReset.trim()) {
-            alert('⚠️ La clave para reiniciar el sistema es requerida.');
-            return;
-        }
-        if (!confirm('🚨 ADVERTENCIA CRÍTICA:\n\nEsta acción es irreversible y borrará permanentemente todas las visitas, formularios de los módulos y archivos PDF firmados del servidor.\n\n¿Estás seguro de que deseas continuar?')) return;
-
-        setLoadingReset(true);
-        setResultado(null);
-        try {
-            const res = await apiFetch('/api/superadmin/reset', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ confirmacion: claveReset.trim() })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.removeItem('visitaActiva');
-                localStorage.removeItem('seiot_visitas_recientes');
-                setResultado({ tipo: 'success', mensaje: data.mensaje });
-                setClaveReset('');
-            } else {
-                setResultado({ tipo: 'error', mensaje: data.error });
-            }
-        } catch {
-            setResultado({ tipo: 'error', mensaje: 'Error de red al conectar con el servidor.' });
-        } finally {
-            setLoadingReset(false);
-        }
-    };
-
     // Helpers Bitácora
     const obtenerBadgeAccion = (accion) => {
         switch (accion) {
@@ -420,147 +384,88 @@ const SuperAdminPanel = () => {
                 {/* PESTAÑA 1: MANTENIMIENTO */}
                 {tabActiva === 'mantenimiento' && (
                     <div className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            
-                            {/* COLUMNA 1: RESPALDOS Y RESTAURACIÓN */}
-                            <div className="bg-slate-850 border border-slate-700/50 p-6 rounded-3xl shadow-xl flex flex-col justify-between">
+                        {/* SECCIÓN 1: RESPALDOS Y RESTAURACIÓN */}
+                        <div className="bg-slate-850 border border-slate-700/50 p-6 md:p-8 rounded-3xl shadow-xl">
+                            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-700/50">
+                                <RefreshCw className="text-blue-400" size={24} />
                                 <div>
-                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-700/50">
-                                        <RefreshCw className="text-blue-400" size={24} />
-                                        <div>
-                                            <h2 className="font-extrabold text-sm uppercase tracking-wider text-slate-200">Respaldos y Restauración</h2>
-                                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Administra la base de datos de SEIOT.</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <p className="text-slate-350 text-xs leading-relaxed mb-6">
-                                        Descarga copias de seguridad de nivel empresarial en paquete <strong>.ZIP</strong> (incluyen el <strong>Dump SQL Nativo</strong> de PostgreSQL, la carpeta completa de PDFs y el <strong>Manifiesto de Integridad SHA-256</strong>). Al restaurar, se valida criptográficamente que el respaldo no esté corrupto ni alterado.
-                                    </p>
-
-                                    <div className="space-y-4 mb-6">
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Clave de Seguridad (Respaldo)</label>
-                                            <div className="relative">
-                                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                                                <input
-                                                    type="password"
-                                                    value={claveBackup}
-                                                    onChange={(e) => setClaveBackup(e.target.value)}
-                                                    placeholder="Clave para respaldos..."
-                                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono outline-none focus:border-blue-500 text-blue-300 uppercase transition-all"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-2 border-t border-slate-700/30">
-                                            <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Archivo de Restauración (.ZIP o .JSON)</label>
-                                            <input
-                                                id="backup-file-input"
-                                                type="file"
-                                                accept=".zip,.json"
-                                                onChange={(e) => setSelectedFile(e.target.files[0])}
-                                                className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-extrabold file:bg-slate-700/80 file:text-white hover:file:bg-slate-700 file:cursor-pointer bg-slate-950 border border-slate-700/60 p-2 rounded-xl"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                                    <button
-                                        onClick={handleDownloadBackup}
-                                        disabled={!claveBackup.trim() || loadingBackup}
-                                        className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
-                                            claveBackup.trim() 
-                                                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-950/40' 
-                                                : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        {loadingBackup ? (
-                                            <>
-                                                <Loader2 className="animate-spin" size={14} /> GENERANDO...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Download size={14} /> DESCARGAR RESPALDO
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <button
-                                        onClick={handleRestoreDatabase}
-                                        disabled={!claveBackup.trim() || !selectedFile || loadingRestore}
-                                        className={`font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
-                                            (claveBackup.trim() && selectedFile) 
-                                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-950/40' 
-                                                : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        {loadingRestore ? (
-                                            <>
-                                                <Loader2 className="animate-spin" size={14} /> RESTAURANDO...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Upload size={14} /> RESTAURAR SISTEMA
-                                            </>
-                                        )}
-                                    </button>
+                                    <h2 className="font-extrabold text-sm uppercase tracking-wider text-slate-200">Respaldos y Restauración de Sistema</h2>
+                                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Administración integral de datos y documentos firmados de SEIOT.</p>
                                 </div>
                             </div>
                             
-                            {/* COLUMNA 2: RESETEO GENERAL (ACCIÓN DESTRUCTIVA) */}
-                            <div className="bg-slate-850 border border-slate-700/50 p-6 rounded-3xl shadow-xl flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-700/50">
-                                        <Trash2 className="text-red-500" size={24} />
-                                        <div>
-                                            <h2 className="font-extrabold text-sm uppercase tracking-wider text-slate-200">Reinicio de Fábrica</h2>
-                                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Acción administrativa irreversible.</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <p className="text-slate-350 text-xs leading-relaxed mb-6">
-                                        Borra permanentemente todas las visitas registradas, formularios de módulos de supervisión e historial de navegación. Conserva intactos el catálogo de productores (PSG) y supervisores activos.
-                                    </p>
+                            <p className="text-slate-350 text-xs leading-relaxed mb-6">
+                                Descarga copias de seguridad de nivel empresarial en paquete <strong>.ZIP</strong> (incluyen el <strong>Dump SQL Nativo</strong> de PostgreSQL, la carpeta completa de PDFs y el <strong>Manifiesto de Integridad SHA-256</strong>). Al restaurar, se valida criptográficamente que el respaldo no esté corrupto ni alterado.
+                            </p>
 
-                                    <div className="space-y-4 mb-6">
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Clave de Seguridad (Reinicio)</label>
-                                            <div className="relative">
-                                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                                                <input
-                                                    type="password"
-                                                    value={claveReset}
-                                                    onChange={(e) => setClaveReset(e.target.value)}
-                                                    placeholder="Clave para reinicio..."
-                                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono outline-none focus:border-red-500 text-red-300 uppercase transition-all"
-                                                />
-                                            </div>
-                                        </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Clave de Seguridad (Respaldo)</label>
+                                    <div className="relative">
+                                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                        <input
+                                            type="password"
+                                            value={claveBackup}
+                                            onChange={(e) => setClaveBackup(e.target.value)}
+                                            placeholder="Clave para respaldos..."
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono outline-none focus:border-blue-500 text-blue-300 uppercase transition-all"
+                                        />
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Archivo de Restauración (.ZIP o .JSON)</label>
+                                    <input
+                                        id="backup-file-input"
+                                        type="file"
+                                        accept=".zip,.json"
+                                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                                        className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-extrabold file:bg-slate-700/80 file:text-white hover:file:bg-slate-700 file:cursor-pointer bg-slate-950 border border-slate-700/60 p-2 rounded-xl"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <button
-                                    onClick={handleResetDatabase}
-                                    disabled={!claveReset.trim() || loadingReset}
-                                    className={`w-full font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 mt-8 ${
-                                        claveReset.trim() 
-                                            ? 'bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white shadow-md shadow-red-950/40' 
+                                    onClick={handleDownloadBackup}
+                                    disabled={!claveBackup.trim() || loadingBackup}
+                                    className={`font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
+                                        claveBackup.trim() 
+                                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-950/40' 
                                             : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
                                     }`}
                                 >
-                                    {loadingReset ? (
+                                    {loadingBackup ? (
                                         <>
-                                            <Loader2 className="animate-spin" size={14} /> PROCESANDO LIMPIEZA...
+                                            <Loader2 className="animate-spin" size={14} /> GENERANDO DUMP SQL NATIVO...
                                         </>
                                     ) : (
                                         <>
-                                            <AlertTriangle size={14} /> REINICIAR SISTEMA A CEROS
+                                            <Download size={14} /> DESCARGAR RESPALDO COMPLETO (.ZIP)
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={handleRestoreDatabase}
+                                    disabled={!claveBackup.trim() || !selectedFile || loadingRestore}
+                                    className={`font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
+                                        (claveBackup.trim() && selectedFile) 
+                                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-950/40' 
+                                            : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {loadingRestore ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={14} /> RESTAURANDO CON VERIFICACIÓN SHA-256...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload size={14} /> RESTAURAR SISTEMA
                                         </>
                                     )}
                                 </button>
                             </div>
-
                         </div>
 
                         {/* SECCIÓN: NOMENCLATURA Y GESTIÓN DE FOLIOS */}

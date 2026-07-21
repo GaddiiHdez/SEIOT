@@ -135,68 +135,7 @@ async function generarSqlDump() {
     return sql;
 }
 
-// ─── SUPERADMIN: REINICIAR BASE DE DATOS Y PDFS ──────────────────────────────
-router.post('/reset', verificarToken, async (req, res) => {
-    const client = await pool.connect();
-    try {
-        if (!req.usuario?.superadmin) {
-            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
-        }
 
-        const { confirmacion } = req.body;
-        if (confirmacion !== 'RESET-DATOS-SEIOT') {
-            return res.status(400).json({ error: 'Clave de confirmación incorrecta.' });
-        }
-
-        await client.query('BEGIN');
-
-        // Truncar todas las tablas excepto catálogos
-        await client.query(`
-            TRUNCATE TABLE 
-                public.documentos_firmados, 
-                public.modulo1_oficio_notificacion, 
-                public.modulo2_orden_supervision, 
-                public.modulo3_checklist, 
-                public.modulo3_lista_verificacion, 
-                public.modulo4_acta_hechos, 
-                public.modulo5_acta_supervision, 
-                public.modulo6_acta_circunstanciada, 
-                public.visitas 
-            RESTART IDENTITY CASCADE
-        `);
-
-        // Eliminar archivos físicos subidos de manera asíncrona
-        const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
-        try {
-            const files = await fsPromises.readdir(uploadsDir);
-            await Promise.all(files.map(async (file) => {
-                const filePath = path.join(uploadsDir, file);
-                const stat = await fsPromises.stat(filePath);
-                if (stat.isFile()) await fsPromises.unlink(filePath);
-            }));
-        } catch (e) {
-            // El directorio no existe o está vacío
-        }
-
-        await client.query('COMMIT');
-
-        await registrarAuditLog(client, {
-            usuarioId: req.usuario.id,
-            usuarioNombre: req.usuario.nombre,
-            usuarioUsername: req.usuario.usuario,
-            accion: 'REINICIO_FABRICA'
-        });
-
-        res.json({ mensaje: 'Sistema reiniciado a ceros correctamente. Todos los datos de visitas y PDFs fueron eliminados.' });
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error en reset:', error);
-        res.status(500).json({ error: 'Error al intentar reiniciar el sistema.' });
-    } finally {
-        client.release();
-    }
-});
 
 // ─── SUPERADMIN: DESCARGAR RESPALDO DUMP NATIVO + MANIFIESTO SHA-256 ──────────
 router.post('/backup', verificarToken, async (req, res) => {
