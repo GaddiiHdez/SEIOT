@@ -52,6 +52,8 @@ const Dashboard = () => {
   const [supervisores, setSupervisores] = useState([]);
   const [supervisorSeleccionado, setSupervisorSeleccionado] = useState(visitaGuardada ? visitaGuardada.datosSupervisor : null);
   const [visitasRecientes, setVisitasRecientes] = useState([]);
+  const [sugerenciasPsg, setSugerenciasPsg] = useState([]);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
   useEffect(() => {
     try {
@@ -177,6 +179,30 @@ const Dashboard = () => {
   const handlePsgChange = async (e) => {
     const formatted = formatPsg(e.target.value);
     setPsgInput(formatted);
+
+    // Sugerencias: buscar si hay algo escrito pero todavía no es la clave completa
+    if (formatted.length > 0 && formatted.length < 15) {
+      try {
+        const response = await apiFetch(`/api/psg/sugerencias?q=${encodeURIComponent(formatted)}`);
+        if (response && response.ok) {
+          const data = await response.json();
+          setSugerenciasPsg(data);
+          setMostrarSugerencias(data.length > 0);
+        } else {
+          setSugerenciasPsg([]);
+          setMostrarSugerencias(false);
+        }
+      } catch {
+        setSugerenciasPsg([]);
+        setMostrarSugerencias(false);
+      }
+      return; // No buscar el PSG completo todavía
+    }
+
+    // Limpiar sugerencias cuando se borra o cuando la clave ya está completa
+    setSugerenciasPsg([]);
+    setMostrarSugerencias(false);
+
     if (formatted.length < 15) { setDatosPsg(null); return; }
     try {
       const response = await apiFetch(`/api/psg/buscar/${formatted.trim()}`);
@@ -571,6 +597,9 @@ const Dashboard = () => {
           handleSupervisorChange={handleSupervisorChange}
           supervisores={supervisores}
           seleccionarPsgCompleto={seleccionarPsgCompleto}
+          sugerenciasPsg={sugerenciasPsg}
+          mostrarSugerencias={mostrarSugerencias}
+          setMostrarSugerencias={setMostrarSugerencias}
         />
 
         {/* --- ZONA 2: GESTIÓN DE VISITA --- */}
