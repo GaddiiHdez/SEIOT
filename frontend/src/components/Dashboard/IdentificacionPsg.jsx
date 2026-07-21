@@ -36,10 +36,10 @@ const IdentificacionPsg = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-6 transition-all animate-fade-in relative overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-6 transition-all animate-fade-in relative">
       
       {/* BARRA SUPERIOR DE ACENTO */}
-      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-700 via-red-800 to-red-900" />
+      <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl bg-gradient-to-r from-red-700 via-red-800 to-red-900" />
 
       {/* ENCABEZADO DE SECCIÓN */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-150">
