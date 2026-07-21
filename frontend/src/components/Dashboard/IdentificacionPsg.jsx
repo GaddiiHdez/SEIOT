@@ -99,7 +99,7 @@ const IdentificacionPsg = ({
 
           {/* Menú Desplegable de Sugerencias / Autocompletado */}
           {mostrarDropdown && !folioActivo && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden max-h-72 overflow-y-auto divide-y divide-slate-100 font-sans animate-fade-in">
+            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-2xl border border-slate-200 z-[9999] overflow-hidden max-h-72 overflow-y-auto divide-y divide-slate-100 font-sans animate-fade-in">
               <div className="bg-slate-50 px-3.5 py-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
                 <span>Coincidencias encontradas ({sugerencias.length})</span>
                 <Search size={12} />
