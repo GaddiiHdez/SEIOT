@@ -202,7 +202,8 @@ const Notificacion = () => {
                             labelSide="Nombre" 
                             valor={nombreServidor} 
                             onChange={(e) => setNombreServidor(e.target.value)}
-                            disabled={true} puedeEditar={puedeEditar}
+                            disabled={false}
+                            placeholder="Escribe el nombre del servidor público..."
                         />
                     </div>
 
@@ -212,7 +213,8 @@ const Notificacion = () => {
                             labelSide="Cargo" 
                             valor={cargoServidor} 
                             onChange={(e) => setCargoServidor(e.target.value)}
-                            disabled={true} puedeEditar={puedeEditar}
+                            disabled={false}
+                            placeholder="Escribe el cargo del servidor público..."
                         />
                     </div>
                 </div>
