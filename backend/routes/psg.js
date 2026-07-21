@@ -230,7 +230,7 @@ router.get('/consultas', verificarToken, async (req, res) => {
 
         const puedeVerOtros = req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
 
-        let { psg, folio, municipios, estatus, modulos_completados, fecha_desde, fecha_hasta, page, limit } = req.query;
+        let { psg, folio, municipios, estatus, modulos_completados, fecha_desde, fecha_hasta, page, limit, supervisor, capturista_id } = req.query;
 
         let condiciones = [];
         let params = [];
@@ -250,8 +250,20 @@ router.get('/consultas', verificarToken, async (req, res) => {
         }
 
         if (psg) {
-            condiciones.push(`v.psg ILIKE $${i}`);
+            condiciones.push(`(v.psg ILIKE $${i} OR p.razon_social ILIKE $${i} OR p.representante ILIKE $${i})`);
             params.push(`%${psg}%`);
+            i++;
+        }
+
+        if (supervisor) {
+            condiciones.push(`v.supervisor = $${i}`);
+            params.push(supervisor);
+            i++;
+        }
+
+        if (capturista_id) {
+            condiciones.push(`v.capturista_id = $${i}`);
+            params.push(parseInt(capturista_id));
             i++;
         }
 
@@ -344,7 +356,7 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
 
         const puedeVerOtros = req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
 
-        const { psg, municipios, estatus, modulos_completados, fecha_desde, fecha_hasta, solo_filtrados } = req.query;
+        const { psg, municipios, estatus, modulos_completados, fecha_desde, fecha_hasta, solo_filtrados, supervisor, capturista_id } = req.query;
 
         let condiciones = [];
         let params = [];
@@ -359,7 +371,21 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
 
         // Si es exportar resultados, aplicar los mismos filtros
         if (solo_filtrados === 'true') {
-            if (psg) { condiciones.push(`v.psg ILIKE $${i}`); params.push(`%${psg}%`); i++; }
+            if (psg) {
+                condiciones.push(`(v.psg ILIKE $${i} OR p.razon_social ILIKE $${i} OR p.representante ILIKE $${i})`);
+                params.push(`%${psg}%`);
+                i++;
+            }
+            if (supervisor) {
+                condiciones.push(`v.supervisor = $${i}`);
+                params.push(supervisor);
+                i++;
+            }
+            if (capturista_id) {
+                condiciones.push(`v.capturista_id = $${i}`);
+                params.push(parseInt(capturista_id));
+                i++;
+            }
             if (municipios) {
                 const lista = municipios.split(',').map(m => m.trim()).filter(Boolean);
                 if (lista.length > 0) { condiciones.push(`p.municipio = ANY($${i})`); params.push(lista); i++; }
