@@ -38,12 +38,6 @@ router.get('/sugerencias', verificarToken, async (req, res) => {
             `SELECT * FROM excel_psg 
              WHERE psg ILIKE $1 
                 OR REPLACE(psg, '-', '') ILIKE $2
-                OR razon_social ILIKE $1 
-                OR REPLACE(razon_social, '-', '') ILIKE $2
-                OR representante ILIKE $1 
-                OR REPLACE(representante, '-', '') ILIKE $2
-                OR municipio ILIKE $1
-                OR REPLACE(municipio, '-', '') ILIKE $2
              ORDER BY psg ASC LIMIT 10`,
             [busquedaRaw, busquedaClean]
         );

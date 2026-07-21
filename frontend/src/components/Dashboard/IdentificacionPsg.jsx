@@ -70,19 +70,12 @@ const IdentificacionPsg = ({
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border-t-4 border-blue-600 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-        <h2 className="text-gray-700 font-bold">1. IDENTIFICACIÓN DEL PSG</h2>
-        {!folioActivo && (
-          <span className="text-[11px] font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200 self-start sm:self-auto flex items-center gap-1.5 shadow-sm">
-            💡 Escribe para autocompletar la clave o nombre
-          </span>
-        )}
-      </div>
+      <h2 className="text-gray-700 font-bold mb-4">1. IDENTIFICACIÓN DEL PSG</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div className="relative" ref={containerRef}>
           <label htmlFor="psg-input" className="block text-xs font-bold text-gray-500 mb-1 uppercase">
-            Ingrese Clave PSG o Nombre:
+            Ingrese Clave PSG:
           </label>
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg border-2 border-blue-100 focus-within:border-blue-500 transition-colors shadow-sm relative">
             <MapPin size={20} className="text-blue-600 shrink-0" />
@@ -92,7 +85,7 @@ const IdentificacionPsg = ({
               value={psgInput}
               onChange={handlePsgChange}
               onFocus={() => { if (sugerencias.length > 0 && !folioActivo) setMostrarDropdown(true); }}
-              placeholder="Ej: 18-017-0002-P02 o Nombre..."
+              placeholder="Ej: 18-017-0002-P02"
               disabled={!!folioActivo}
               className={`bg-transparent font-bold text-gray-800 w-full outline-none text-lg uppercase ${
                 folioActivo ? 'cursor-not-allowed opacity-70' : ''
