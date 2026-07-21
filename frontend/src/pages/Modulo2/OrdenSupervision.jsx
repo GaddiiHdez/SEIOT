@@ -235,17 +235,13 @@ const OrdenSupervision = () => {
 
                     <div>
                         <h4 className="text-blue-800 font-bold mb-1 uppercase text-xs">10. Nombre de quien ordena:</h4>
-                        <select
-                            value={nombreOrdena}
+                        <InputBloque 
+                            labelSide="Nombre u Ordena" 
+                            valor={nombreOrdena} 
                             onChange={(e) => setNombreOrdena(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded text-sm font-bold text-gray-700 outline-none focus:border-blue-500"
-                        >
-                            <option value="" disabled>-- Selecciona --</option>
-                            <option value="SEDER">SEDER</option>
-                            <option value="SADER">SADER</option>
-                            <option value="SENASICA">SENASICA</option>
-                            <option value="COMITE PEC">COMITÉ PEC</option>
-                        </select>
+                            disabled={false}
+                            placeholder="Escribe el nombre o dependencia de quien ordena..."
+                        />
                     </div>
 
                 </div>
