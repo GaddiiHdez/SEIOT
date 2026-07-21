@@ -253,9 +253,6 @@ const OrdenSupervision = () => {
 
             <div className="max-w-4xl mx-auto mt-6 flex flex-wrap justify-between items-center bg-white p-4 rounded-b-xl shadow-md border border-gray-200 gap-4 mb-10">
                 <div className="flex gap-2">
-                    <button className="bg-orange-500 text-white px-4 py-2 rounded shadow hover:bg-orange-600 flex items-center gap-2 text-xs font-bold transition-all active:scale-95">
-                        <HelpCircle size={16} /> GUÍA
-                    </button>
                     {puedeDescargar && !soloVista && <button 
                         onClick={() => generarPdfModulo2({ 
                             oficio_no: folio, 
