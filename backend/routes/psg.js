@@ -21,6 +21,8 @@ router.get('/buscar/:psg', verificarToken, async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
+});
+
 // Autocompletar / Sugerencias de PSG
 router.get('/sugerencias', verificarToken, async (req, res) => {
     try {
