@@ -118,7 +118,7 @@ const IdentificacionPsg = ({
         {(!esVista || folioActivo) && (
           <div>
             <label htmlFor="supervisor-select" className="block text-xs font-bold text-gray-500 mb-1 uppercase">
-              Supervisor:
+              Oficial:
             </label>
             {folioActivo ? (
               <div className="flex items-center gap-2 p-2.5 bg-gray-100 rounded-lg border border-gray-200">
@@ -134,7 +134,7 @@ const IdentificacionPsg = ({
                 defaultValue=""
                 className="w-full p-2.5 border-2 border-blue-100 rounded-lg text-sm font-bold text-gray-700 outline-none focus:border-blue-500 transition-colors"
               >
-                <option value="" disabled>-- Selecciona un supervisor --</option>
+                <option value="" disabled>-- Seleccione Oficial --</option>
                 {supervisores.map(s => (
                   <option key={s.id} value={s.id}>{s.nombre}</option>
                 ))}

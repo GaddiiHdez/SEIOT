@@ -51,11 +51,13 @@ router.get('/sugerencias', verificarToken, async (req, res) => {
     }
 });
 
-// Obtener todos los supervisores activos (filtrado temporal para producción)
+// Obtener todos los oficiales activos
 router.get('/supervisores', verificarToken, async (req, res) => {
     try {
         const resultado = await pool.query(
-            "SELECT * FROM excel_supervisores WHERE nombre = 'MVZ. Octavio Herrera Ulloa' ORDER BY nombre"
+            `SELECT * FROM excel_supervisores 
+             WHERE nombre IN ('Jacob Méndez Ortega', 'MVZ. Octavio Herrera Ulloa', 'MVZ. Carlos Antonio Lara González', 'MVZ. Juan José López Rivera') 
+             ORDER BY nombre`
         );
         res.json(resultado.rows);
     } catch (error) {

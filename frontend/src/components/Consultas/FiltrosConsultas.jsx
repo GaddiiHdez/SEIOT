@@ -85,15 +85,15 @@ const FiltrosConsultas = ({
                         </div>
                     </div>
 
-                    {/* SELECT: SUPERVISOR */}
+                    {/* SELECT: OFICIAL */}
                     <div>
-                        <label className="block text-[10px] font-extrabold text-slate-500 mb-1.5 uppercase tracking-wider">Supervisor Asignado</label>
+                        <label className="block text-[10px] font-extrabold text-slate-500 mb-1.5 uppercase tracking-wider">Oficial Asignado</label>
                         <select
                             value={filtroSupervisor}
                             onChange={(e) => setFiltroSupervisor(e.target.value)}
                             className="w-full border-2 border-slate-100 focus:border-red-700 bg-slate-50/50 rounded-xl px-3 py-2.5 text-xs font-bold outline-none transition-colors text-slate-750"
                         >
-                            <option value="">-- Todos --</option>
+                            <option value="">-- Todos los Oficiales --</option>
                             {supervisores.map(s => (
                                 <option key={s.id} value={s.nombre}>{s.nombre}</option>
                             ))}

@@ -263,7 +263,7 @@ const Dashboard = () => {
 
 
   const handleNuevaVisita = async () => {
-    if (!supervisorSeleccionado) { alert("Por favor selecciona un supervisor."); return; }
+    if (!supervisorSeleccionado) { alert("Por favor selecciona un oficial."); return; }
     try {
       const response = await apiFetch('/api/psg/visitas', {
         method: 'POST',
