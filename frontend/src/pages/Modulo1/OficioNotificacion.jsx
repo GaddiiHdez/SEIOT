@@ -22,8 +22,8 @@ const Notificacion = () => {
         return guardado ? JSON.parse(guardado) : null;
     });
 
-    const [nombreServidor, setNombreServidor] = useState(contexto?.datosSupervisor?.nombre || "");
-    const [cargoServidor, setCargoServidor] = useState(contexto?.datosSupervisor?.cargo || "");
+    const [nombreServidor, setNombreServidor] = useState("");
+    const [cargoServidor, setCargoServidor] = useState("");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
     const [cargando, setCargando] = useState(true);
 
