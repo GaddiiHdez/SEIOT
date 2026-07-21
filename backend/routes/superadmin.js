@@ -1,5 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
+import AdmZip from 'adm-zip';
+import multer from 'multer';
 import pool from '../db.js';
 import fs from 'fs';
 const fsPromises = fs.promises;
@@ -8,6 +10,7 @@ import { verificarToken } from './auth.js';
 import { registrarAuditLog } from '../utils/auditoria.js';
 
 const router = express.Router();
+const uploadRestore = multer({ storage: multer.memoryStorage(), limits: { fileSize: 150 * 1024 * 1024 } });
 
 // ─── SUPERADMIN: REINICIAR BASE DE DATOS Y PDFS ──────────────────────────────
 router.post('/reset', verificarToken, async (req, res) => {
@@ -22,59 +25,57 @@ router.post('/reset', verificarToken, async (req, res) => {
             return res.status(400).json({ error: 'Clave de confirmación incorrecta.' });
         }
 
-        // 1. Truncar tablas relacionales
         await client.query('BEGIN');
+
+        // Truncar todas las tablas excepto catálogos
         await client.query(`
             TRUNCATE TABLE 
-            	public.documentos_firmados, 
-            	public.modulo1_oficio_notificacion, 
-            	public.modulo2_orden_supervision, 
-            	public.modulo3_checklist, 
-            	public.modulo3_lista_verificacion, 
-            	public.modulo4_acta_hechos, 
-            	public.modulo5_acta_supervision, 
-            	public.modulo6_acta_circunstanciada, 
-            	public.visitas 
+                public.documentos_firmados, 
+                public.modulo1_oficio_notificacion, 
+                public.modulo2_orden_supervision, 
+                public.modulo3_checklist, 
+                public.modulo3_lista_verificacion, 
+                public.modulo4_acta_hechos, 
+                public.modulo5_acta_supervision, 
+                public.modulo6_acta_circunstanciada, 
+                public.visitas 
             RESTART IDENTITY CASCADE
         `);
+
+        // Eliminar archivos físicos subidos de manera asíncrona
+        const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
+        try {
+            const files = await fsPromises.readdir(uploadsDir);
+            await Promise.all(files.map(async (file) => {
+                const filePath = path.join(uploadsDir, file);
+                const stat = await fsPromises.stat(filePath);
+                if (stat.isFile()) await fsPromises.unlink(filePath);
+            }));
+        } catch (e) {
+            // El directorio no existe o está vacío
+        }
+
         await client.query('COMMIT');
 
         await registrarAuditLog(client, {
             usuarioId: req.usuario.id,
             usuarioNombre: req.usuario.nombre,
             usuarioUsername: req.usuario.usuario,
-            accion: 'REINICIAR_SISTEMA',
-            detalles: { motivo: 'Reinicio general a ceros solicitado por el SuperAdmin' }
+            accion: 'REINICIO_FABRICA'
         });
 
-        // 2. Eliminar archivos PDF físicamente de forma asíncrona
-        const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
-        if (fs.existsSync(uploadsDir)) {
-            const files = await fsPromises.readdir(uploadsDir);
-            await Promise.all(files.map(async (file) => {
-                const filePath = path.join(uploadsDir, file);
-                const stat = await fsPromises.stat(filePath);
-                if (stat.isFile()) {
-                    await fsPromises.unlink(filePath);
-                }
-            }));
-        }
+        res.json({ mensaje: 'Sistema reiniciado a ceros correctamente. Todos los datos de visitas y PDFs fueron eliminados.' });
 
-        res.json({ mensaje: 'Base de datos y archivos PDF limpiados correctamente. El sistema está en ceros.' });
     } catch (error) {
-        try {
-            await client.query('ROLLBACK');
-        } catch (rollbackErr) {
-            console.error('Error al hacer rollback en reset:', rollbackErr);
-        }
-        console.error('Error reset base de datos:', error);
-        res.status(500).json({ error: 'Error interno al intentar restablecer la base de datos.' });
+        await client.query('ROLLBACK');
+        console.error('Error en reset:', error);
+        res.status(500).json({ error: 'Error al intentar reiniciar el sistema.' });
     } finally {
         client.release();
     }
 });
 
-// ─── SUPERADMIN: EXPORTAR RESPALDO DE BASE DE DATOS ──────────────────────────
+// ─── SUPERADMIN: DESCARGAR RESPALDO COMPLETO (BASE DE DATOS + PDFS EN .ZIP) ────
 router.post('/backup', verificarToken, async (req, res) => {
     try {
         if (!req.usuario?.superadmin) {
@@ -99,9 +100,9 @@ router.post('/backup', verificarToken, async (req, res) => {
             'documentos_firmados'
         ];
 
-        const backup = {
+        const backupData = {
             metadata: {
-                version: '1.0',
+                version: '2.0',
                 fecha: new Date().toISOString(),
                 generado_por: req.usuario.usuario
             }
@@ -109,8 +110,29 @@ router.post('/backup', verificarToken, async (req, res) => {
 
         for (const tabla of tablas) {
             const queryResult = await pool.query(`SELECT * FROM ${tabla}`);
-            backup[tabla] = queryResult.rows;
+            backupData[tabla] = queryResult.rows;
         }
+
+        // Crear paquete ZIP con datos y archivos PDF
+        const zip = new AdmZip();
+        zip.addFile('database_backup.json', Buffer.from(JSON.stringify(backupData, null, 2), 'utf8'));
+
+        // Empaquetar PDF firmados si existen físicamente en uploads/documentos_firmados
+        const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
+        if (fs.existsSync(uploadsDir)) {
+            const pdfFiles = await fsPromises.readdir(uploadsDir);
+            for (const file of pdfFiles) {
+                const filePath = path.join(uploadsDir, file);
+                const stat = await fsPromises.stat(filePath);
+                if (stat.isFile()) {
+                    const content = await fsPromises.readFile(filePath);
+                    zip.addFile(`documentos_firmados/${file}`, content);
+                }
+            }
+        }
+
+        const zipBuffer = zip.toBuffer();
+        const fecha = new Date().toISOString().split('T')[0];
 
         await registrarAuditLog(pool, {
             usuarioId: req.usuario.id,
@@ -119,24 +141,64 @@ router.post('/backup', verificarToken, async (req, res) => {
             accion: 'GENERAR_RESPALDO'
         });
 
-        res.json(backup);
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="respaldo_seiot_${fecha}.zip"`);
+        res.send(zipBuffer);
+
     } catch (error) {
-        console.error('Error al generar respaldo:', error);
+        console.error('Error al generar respaldo ZIP:', error);
         res.status(500).json({ error: 'Error interno al intentar generar el respaldo.' });
     }
 });
 
-// ─── SUPERADMIN: RESTAURAR RESPALDO DE BASE DE DATOS ─────────────────────────
-router.post('/restore', verificarToken, async (req, res) => {
+// ─── SUPERADMIN: RESTAURAR RESPALDO COMPLETO (ZIP O JSON) ─────────────────────
+router.post('/restore', verificarToken, uploadRestore.single('archivo'), async (req, res) => {
     const client = await pool.connect();
     try {
         if (!req.usuario?.superadmin) {
             return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
         }
 
-        const { confirmacion, backupData } = req.body;
+        const confirmacion = req.body?.confirmacion || req.body;
         if (confirmacion !== 'RESPALDO-DATOS-SEIOT') {
             return res.status(400).json({ error: 'Clave de confirmación incorrecta.' });
+        }
+
+        let backupData = null;
+
+        if (req.file) {
+            const filenameLower = req.file.originalname.toLowerCase();
+            if (filenameLower.endsWith('.zip') || req.file.mimetype.includes('zip')) {
+                const zip = new AdmZip(req.file.buffer);
+                const zipEntries = zip.getEntries();
+
+                // 1. Extraer JSON de la base de datos
+                const jsonEntry = zipEntries.find(e => e.entryName === 'database_backup.json' || e.entryName.endsWith('.json'));
+                if (!jsonEntry) {
+                    return res.status(400).json({ error: 'El archivo ZIP no contiene un respaldo JSON de base de datos válido.' });
+                }
+
+                backupData = JSON.parse(jsonEntry.getData().toString('utf8'));
+
+                // 2. Extraer archivos PDF firmados a la carpeta física uploads/documentos_firmados
+                const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
+                await fsPromises.mkdir(uploadsDir, { recursive: true });
+
+                for (const entry of zipEntries) {
+                    if (!entry.isDirectory && (entry.entryName.startsWith('documentos_firmados/') || entry.entryName.endsWith('.pdf'))) {
+                        const baseName = path.basename(entry.entryName);
+                        if (baseName) {
+                            const destPath = path.join(uploadsDir, baseName);
+                            await fsPromises.writeFile(destPath, entry.getData());
+                        }
+                    }
+                }
+            } else {
+                // Respaldo de solo JSON
+                backupData = JSON.parse(req.file.buffer.toString('utf8'));
+            }
+        } else if (req.body.backupData) {
+            backupData = typeof req.body.backupData === 'string' ? JSON.parse(req.body.backupData) : req.body.backupData;
         }
 
         if (!backupData || typeof backupData !== 'object' || !backupData.metadata) {
@@ -183,7 +245,6 @@ router.post('/restore', verificarToken, async (req, res) => {
             if (!rows || rows.length === 0) continue;
 
             for (let row of rows) {
-                // Si la tabla es usuarios y falta el campo password_hash, asignar fallback por defecto
                 if (tabla === 'usuarios' && !row.password_hash) {
                     row = { ...row, password_hash: defaultHash };
                 }
@@ -218,7 +279,8 @@ router.post('/restore', verificarToken, async (req, res) => {
             accion: 'RESTAURAR_SISTEMA'
         });
 
-        res.json({ mensaje: 'Respaldo de base de datos restaurado correctamente.' });
+        res.json({ mensaje: 'Respaldo de sistema (base de datos y documentos PDF firmados) restaurado correctamente.' });
+
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error al restaurar respaldo:', error);
@@ -240,136 +302,98 @@ router.get('/config-folios', verificarToken, async (req, res) => {
         }
         res.json(resultado.rows[0]);
     } catch (error) {
-        console.error('Error obteniendo config-folios:', error);
+        console.error('Error al obtener config de folios:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-// Guardar la configuración de folios
+// Actualizar la configuración de folios
 router.put('/config-folios', verificarToken, async (req, res) => {
     try {
-        if (!req.usuario?.superadmin) {
-            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para realizar esta acción.' });
+        if (!req.usuario?.es_admin && !req.usuario?.superadmin) {
+            return res.status(403).json({ error: 'No autorizado.' });
         }
+
         const { nomenclatura, consecutivo_actual, longitud_consecutivo } = req.body;
-        
-        if (!nomenclatura || typeof consecutivo_actual !== 'number' || typeof longitud_consecutivo !== 'number') {
-            return res.status(400).json({ error: 'Datos de configuración incompletos o inválidos.' });
+        if (!nomenclatura || consecutivo_actual === undefined || !longitud_consecutivo) {
+            return res.status(400).json({ error: 'Todos los campos son requeridos.' });
         }
-        
-        await pool.query(
+
+        const resultado = await pool.query(
             `UPDATE configuracion_folios 
-             SET nomenclatura = $1, consecutivo_actual = $2, longitud_consecutivo = $3 
-             WHERE clave = 'general'`,
-            [nomenclatura.trim(), consecutivo_actual, longitud_consecutivo]
+             SET nomenclatura = $1, consecutivo_actual = $2, longitud_consecutivo = $3, actualizado_en = NOW()
+             WHERE clave = 'general'
+             RETURNING *`,
+            [nomenclatura, consecutivo_actual, longitud_consecutivo]
         );
 
-        await registrarAuditLog({
+        await registrarAuditLog(pool, {
             usuarioId: req.usuario.id,
             usuarioNombre: req.usuario.nombre,
             usuarioUsername: req.usuario.usuario,
-            accion: 'CONFIGURAR_FOLIOS',
-            tablaAfectada: 'configuracion_folios',
-            registroId: 'general',
-            detalles: {
-                nomenclatura,
-                consecutivo_actual,
-                longitud_consecutivo
-            }
+            accion: 'ACTUALIZAR_CONFIG_FOLIOS'
         });
-        
-        res.json({ mensaje: 'Configuración de folios actualizada correctamente.' });
+
+        res.json({ mensaje: 'Configuración de folios actualizada correctamente.', config: resultado.rows[0] });
     } catch (error) {
-        console.error('Error guardando config-folios:', error);
+        console.error('Error al actualizar config de folios:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-// Obtener bitácora de auditoría (solo SuperAdmin)
+// GET /api/superadmin/auditoria - Consultar historial de eventos con filtros y paginación
 router.get('/auditoria', verificarToken, async (req, res) => {
     try {
-        if (!req.usuario?.superadmin) {
-            return res.status(403).json({ error: 'Solo el SuperAdmin está autorizado para ver la bitácora.' });
+        if (!req.usuario?.superadmin && !req.usuario?.es_admin) {
+            return res.status(403).json({ error: 'Solo administradores pueden consultar el historial de auditoría.' });
         }
 
-        const { limit = 100, offset = 0, usuario_id, accion, fecha_inicio, fecha_fin } = req.query;
-        
-        let queryStr = `
-            SELECT a.*, u.nombre as real_usuario_nombre, u.usuario as real_usuario_username 
-            FROM auditoria_logs a
-            LEFT JOIN usuarios u ON a.usuario_id = u.id
-            WHERE 1=1
-        `;
-        const params = [];
-        let paramIndex = 1;
+        const { limit = 50, offset = 0, usuario_id, accion, fecha_inicio, fecha_fin } = req.query;
+
+        let conditions = [];
+        let params = [];
+        let paramIdx = 1;
 
         if (usuario_id) {
-            queryStr += ` AND a.usuario_id = $${paramIndex}`;
-            params.push(parseInt(usuario_id));
-            paramIndex++;
+            conditions.push(`usuario_id = $${paramIdx++}`);
+            params.push(usuario_id);
         }
-
         if (accion) {
-            queryStr += ` AND a.accion = $${paramIndex}`;
+            conditions.push(`accion = $${paramIdx++}`);
             params.push(accion);
-            paramIndex++;
         }
-
         if (fecha_inicio) {
-            queryStr += ` AND a.creado_en >= $${paramIndex}`;
+            conditions.push(`creado_en >= $${paramIdx++}`);
             params.push(fecha_inicio);
-            paramIndex++;
         }
-
         if (fecha_fin) {
-            queryStr += ` AND a.creado_en <= $${paramIndex}`;
+            conditions.push(`creado_en <= $${paramIdx++}::timestamp + interval '1 day'`);
             params.push(fecha_fin);
-            paramIndex++;
         }
 
-        queryStr += ` ORDER BY a.creado_en DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-        params.push(parseInt(limit), parseInt(offset));
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-        const resultado = await pool.query(queryStr, params);
-        
-        // También obtener el total para paginación
-        let countQueryStr = `SELECT COUNT(*) FROM auditoria_logs a WHERE 1=1`;
-        const countParams = [];
-        let countParamIndex = 1;
+        const countResult = await pool.query(
+            `SELECT COUNT(*) FROM audit_logs ${whereClause}`,
+            params
+        );
+        const total = parseInt(countResult.rows[0].count);
 
-        if (usuario_id) {
-            countQueryStr += ` AND a.usuario_id = $${countParamIndex}`;
-            countParams.push(parseInt(usuario_id));
-            countParamIndex++;
-        }
-
-        if (accion) {
-            countQueryStr += ` AND a.accion = $${countParamIndex}`;
-            countParams.push(accion);
-            countParamIndex++;
-        }
-
-        if (fecha_inicio) {
-            countQueryStr += ` AND a.creado_en >= $${countParamIndex}`;
-            countParams.push(fecha_inicio);
-            countParamIndex++;
-        }
-
-        if (fecha_fin) {
-            countQueryStr += ` AND a.creado_en <= $${countParamIndex}`;
-            countParams.push(fecha_fin);
-            countParamIndex++;
-        }
-
-        const countResult = await pool.query(countQueryStr, countParams);
+        const logsResult = await pool.query(
+            `SELECT * FROM audit_logs ${whereClause} ORDER BY creado_en DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+            [...params, parseInt(limit), parseInt(offset)]
+        );
 
         res.json({
-            logs: resultado.rows,
-            total: parseInt(countResult.rows[0].count)
+            total,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            logs: logsResult.rows
         });
+
     } catch (error) {
-        console.error('Error al consultar bitácora de auditoría:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        console.error('Error al consultar audit_logs:', error);
+        res.status(500).json({ error: 'Error al consultar historial de auditoría.' });
     }
 });
 

@@ -159,7 +159,7 @@ const SuperAdminPanel = () => {
             .replace(/{CONSECUTIVO}/g, consecutivoStr);
     };
 
-    // Descargar Respaldo
+    // Descargar Respaldo (.ZIP completo)
     const handleDownloadBackup = async () => {
         if (!claveBackup.trim()) {
             alert('⚠️ La clave para respaldos es requerida.');
@@ -168,24 +168,29 @@ const SuperAdminPanel = () => {
         setLoadingBackup(true);
         setResultado(null);
         try {
-            const res = await apiFetch('/api/superadmin/backup', {
+            const token = localStorage.getItem('seiot_token');
+            const res = await fetch('/api/superadmin/backup', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ confirmacion: claveBackup.trim() })
             });
 
             if (res.ok) {
-                const data = await res.json();
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                const downloadAnchor = document.createElement('a');
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
                 const fecha = new Date().toISOString().split('T')[0];
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", `respaldo_seiot_${fecha}.json`);
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
+                a.href = url;
+                a.download = `respaldo_seiot_${fecha}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
 
-                setResultado({ tipo: 'success', mensaje: 'Respaldo generado y descargado correctamente.' });
+                setResultado({ tipo: 'success', mensaje: '¡Respaldo integral (.ZIP) generado y descargado con éxito! Incluye la base de datos y todos los PDFs firmados.' });
                 setClaveBackup('');
             } else {
                 const errorData = await res.json();
@@ -198,55 +203,55 @@ const SuperAdminPanel = () => {
         }
     };
 
-    // Restaurar Respaldo
-    const handleRestoreDatabase = () => {
+    // Restaurar Respaldo (.ZIP o .JSON)
+    const handleRestoreDatabase = async () => {
         if (!claveBackup.trim()) {
             alert('⚠️ La clave para respaldos es requerida.');
             return;
         }
         if (!selectedFile) {
-            alert('⚠️ Selecciona un archivo JSON de respaldo para continuar.');
+            alert('⚠️ Selecciona un archivo de respaldo (.ZIP o .JSON) para continuar.');
             return;
         }
-        if (!confirm('🚨 ATENCIÓN CRÍTICA:\n\nAl restaurar este respaldo, se eliminarán todos los registros actuales de la base de datos de manera definitiva y se sobrescribirán con el contenido del archivo.\n\n¿Estás seguro de que deseas proceder?')) {
+        if (!confirm('🚨 ATENCIÓN CRÍTICA:\n\nAl restaurar este respaldo, se eliminarán todos los registros actuales de la base de datos de manera definitiva y se sobrescribirán con el contenido del archivo de respaldo (incluyendo la recuperación de archivos PDF si el respaldo es .ZIP).\n\n¿Estás seguro de que deseas proceder?')) {
             return;
         }
 
         setLoadingRestore(true);
         setResultado(null);
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const backupData = JSON.parse(e.target.result);
-                const res = await apiFetch('/api/superadmin/restore', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        confirmacion: claveBackup.trim(),
-                        backupData
-                    })
-                });
+        try {
+            const formData = new FormData();
+            formData.append('confirmacion', claveBackup.trim());
+            formData.append('archivo', selectedFile);
 
-                const data = await res.json();
-                if (res.ok) {
-                    localStorage.removeItem('visitaActiva');
-                    localStorage.removeItem('seiot_visitas_recientes');
-                    setResultado({ tipo: 'success', mensaje: 'Sistema restaurado con éxito. ' + data.mensaje });
-                    setClaveBackup('');
-                    setSelectedFile(null);
-                    const fileInput = document.getElementById('backup-file-input');
-                    if (fileInput) fileInput.value = '';
-                } else {
-                    setResultado({ tipo: 'error', mensaje: data.error });
-                }
-            } catch {
-                setResultado({ tipo: 'error', mensaje: 'El archivo seleccionado no es un formato JSON válido.' });
-            } finally {
-                setLoadingRestore(false);
+            const token = localStorage.getItem('seiot_token');
+            const res = await fetch('/api/superadmin/restore', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.removeItem('visitaActiva');
+                localStorage.removeItem('seiot_visitas_recientes');
+                setResultado({ tipo: 'success', mensaje: 'Sistema restaurado con éxito. ' + data.mensaje });
+                setClaveBackup('');
+                setSelectedFile(null);
+                const fileInput = document.getElementById('backup-file-input');
+                if (fileInput) fileInput.value = '';
+            } else {
+                setResultado({ tipo: 'error', mensaje: data.error || 'Error al restaurar el respaldo.' });
             }
-        };
-        reader.readAsText(selectedFile);
+        } catch (err) {
+            console.error('Error al restaurar:', err);
+            setResultado({ tipo: 'error', mensaje: 'Error de conexión al intentar restaurar el respaldo.' });
+        } finally {
+            setLoadingRestore(false);
+        }
     };
 
     // Reiniciar base de datos a ceros
@@ -429,7 +434,7 @@ const SuperAdminPanel = () => {
                                     </div>
                                     
                                     <p className="text-slate-350 text-xs leading-relaxed mb-6">
-                                        Descarga copias de seguridad de todas las visitas, formularios, documentos firmados y cuentas de usuario. También puedes cargar un archivo de respaldo previo para restaurar el estado del sistema.
+                                        Descarga copias de seguridad integrales en formato <strong>.ZIP</strong> (incluyen la base de datos completa y todos los archivos PDF firmados). Al cargar un paquete <strong>.ZIP</strong>, el sistema recupera automáticamente tanto los registros como los documentos físicos.
                                     </p>
 
                                     <div className="space-y-4 mb-6">
@@ -448,11 +453,11 @@ const SuperAdminPanel = () => {
                                         </div>
 
                                         <div className="pt-2 border-t border-slate-700/30">
-                                            <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Archivo de Restauración (.JSON)</label>
+                                            <label className="block text-[10px] font-extrabold text-slate-400 mb-1.5 uppercase tracking-wider">Archivo de Restauración (.ZIP o .JSON)</label>
                                             <input
                                                 id="backup-file-input"
                                                 type="file"
-                                                accept=".json"
+                                                accept=".zip,.json"
                                                 onChange={(e) => setSelectedFile(e.target.files[0])}
                                                 className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-extrabold file:bg-slate-700/80 file:text-white hover:file:bg-slate-700 file:cursor-pointer bg-slate-950 border border-slate-700/60 p-2 rounded-xl"
                                             />
