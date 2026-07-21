@@ -21,7 +21,34 @@ router.get('/buscar/:psg', verificarToken, async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
+// Autocompletar / Sugerencias de PSG
+router.get('/sugerencias', verificarToken, async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || q.trim().length < 1) {
+            return res.json([]);
+        }
+
+        const rawQuery = q.trim();
+        const cleanQuery = rawQuery.replace(/[^A-Za-z0-9]/g, '');
+
+        const resultado = await pool.query(
+            `SELECT * FROM excel_psg 
+             WHERE psg ILIKE $1 
+                OR REPLACE(psg, '-', '') ILIKE $2
+                OR razon_social ILIKE $1 
+                OR representante ILIKE $1
+                OR municipio ILIKE $1
+             ORDER BY psg ASC LIMIT 10`,
+            [`%${rawQuery}%`, `%${cleanQuery}%`]
+        );
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error('Error al buscar sugerencias de PSG:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
 });
+
 // Obtener todos los supervisores activos (filtrado temporal para producción)
 router.get('/supervisores', verificarToken, async (req, res) => {
     try {

@@ -199,6 +199,28 @@ const Dashboard = () => {
     setSupervisorSeleccionado(encontrado || null);
   };
 
+  const seleccionarPsgCompleto = (datos) => {
+    if (!datos) return;
+    setPsgInput(datos.psg);
+    setDatosPsg({
+      psg: datos.psg,
+      nombre_titular: datos.razon_social,
+      representante: datos.representante,
+      localidad: datos.localidad,
+      municipio: datos.municipio,
+      domicilio: datos.domicilio,
+      estado: datos.estado || 'NAYARIT',
+      tipo_psg: datos.tipo_psg,
+      telefono: datos.telefono,
+      latitud: datos.latitud,
+      longitud: datos.longitud,
+      capacidad_maxima_bovinos: datos.capacidad_maxima_bovinos,
+      tipo_identificacion: datos.tipo_identificacion || '',
+      numero_identificacion: datos.numero_identificacion || '',
+      expedida_por: datos.expedida_por || ''
+    });
+  };
+
   const guardarContextoGlobal = (folio, psgData, visitaId, datosSup) => {
     const contexto = {
       folio, psg: psgData.psg, datosPsg: psgData,
@@ -548,6 +570,7 @@ const Dashboard = () => {
           supervisorSeleccionado={supervisorSeleccionado}
           handleSupervisorChange={handleSupervisorChange}
           supervisores={supervisores}
+          seleccionarPsgCompleto={seleccionarPsgCompleto}
         />
 
         {/* --- ZONA 2: GESTIÓN DE VISITA --- */}
