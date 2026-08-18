@@ -25,6 +25,11 @@ const Notificacion = () => {
     const [nombreServidor, setNombreServidor] = useState("");
     const [cargoServidor, setCargoServidor] = useState("");
     const [domicilio, setDomicilio] = useState(contexto?.datosPsg?.domicilio || "");
+    const [fechaEmision, setFechaEmision] = useState(() => new Date().toISOString().split('T')[0]);
+    const [horaEmision, setHoraEmision] = useState(() => {
+        const ahora = new Date();
+        return `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+    });
     const [cargando, setCargando] = useState(true);
 
     // ── CARGAR DATOS GUARDADOS EN BD ─────────────────────────────────────────
@@ -42,6 +47,12 @@ const Notificacion = () => {
                         if (d.nombre_servidor) setNombreServidor(d.nombre_servidor);
                         if (d.cargo_servidor) setCargoServidor(d.cargo_servidor);
                         if (d.domicilio) setDomicilio(d.domicilio);
+                        if (d.fecha_emision) {
+                            setFechaEmision(d.fecha_emision.includes('T') ? d.fecha_emision.split('T')[0] : d.fecha_emision);
+                        }
+                        if (d.hora_emision) {
+                            setHoraEmision(d.hora_emision.substring(0, 5));
+                        }
                     }
                 }
             } catch (error) {
@@ -56,14 +67,16 @@ const Notificacion = () => {
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
-        guardarBorradorLocal(1, contexto, { nombreServidor, cargoServidor, domicilio });
+        guardarBorradorLocal(1, contexto, { nombreServidor, cargoServidor, domicilio, fechaEmision, horaEmision });
     };
 
     const cargarBorrador = (e) => {
         cargarBorradorLocal(e, 1, contexto, {
             nombreServidor: setNombreServidor,
             cargoServidor: setCargoServidor,
-            domicilio: setDomicilio
+            domicilio: setDomicilio,
+            fechaEmision: setFechaEmision,
+            horaEmision: setHoraEmision
         });
     };
 
@@ -87,13 +100,7 @@ const Notificacion = () => {
     );
 
     const { folio, datosPsg } = contexto;
-
     const oficioNoAutomatico = folio;
-    const fechaTextoAutomatica = new Date().toLocaleDateString('es-MX', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
 
     const handleGuardar = async () => {
         try {
@@ -102,7 +109,8 @@ const Notificacion = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     visita_id: contexto.visita_id,
-                    fecha_emision: new Date().toISOString().split('T')[0],
+                    fecha_emision: fechaEmision,
+                    hora_emision: horaEmision,
                     localidad: datosPsg.localidad,
                     municipio: datosPsg.municipio,
                     estado: 'NAYARIT',
@@ -177,12 +185,25 @@ const Notificacion = () => {
                     </div>
 
                     <div>
-                        <h4 className="text-blue-800 font-bold mb-2 uppercase text-xs">2. Lugar y Fecha (Automático)</h4>
+                        <h4 className="text-blue-800 font-bold mb-2 uppercase text-xs">2. Lugar y Fecha</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
                             <InputBloque labelSide="Localidad" valor={datosPsg.localidad} disabled={true} />
                             <InputBloque labelSide="Municipio" valor={datosPsg.municipio} disabled={true} />
                             <InputBloque labelSide="Estado" valor="NAYARIT" disabled={true} />
-                            <InputBloque labelSide="Fecha Emisión" valor={fechaTextoAutomatica} disabled={true} />
+                            <InputBloque 
+                                labelSide="Fecha Emisión" 
+                                tipo="date" 
+                                valor={fechaEmision} 
+                                onChange={(e) => setFechaEmision(e.target.value)} 
+                                disabled={false} 
+                            />
+                            <InputBloque 
+                                labelSide="Hora Emisión" 
+                                tipo="time" 
+                                valor={horaEmision} 
+                                onChange={(e) => setHoraEmision(e.target.value)} 
+                                disabled={false} 
+                            />
                         </div>
                     </div>
 
@@ -226,7 +247,8 @@ const Notificacion = () => {
                     {puedeDescargar && !soloVista && <button 
                         onClick={() => generarPdfModulo1({
                             oficio_no: folio,
-                            fecha_emision: new Date().toISOString(),
+                            fecha_emision: fechaEmision,
+                            hora_emision: horaEmision,
                             nombre_psg: datosPsg.nombre_titular,
                             domicilio: domicilio,
                             nombre_servidor: nombreServidor,

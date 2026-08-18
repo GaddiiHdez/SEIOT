@@ -86,12 +86,24 @@ const initAuditLogsTable = async () => {
     }
 };
 
+const initModulo1Columns = async () => {
+    try {
+        await pool.query(`
+            ALTER TABLE public.modulo1_oficio_notificacion 
+            ADD COLUMN IF NOT EXISTS hora_emision time;
+        `);
+    } catch (err) {
+        console.error('❌ Error al agregar hora_emision a modulo1_oficio_notificacion:', err);
+    }
+};
+
 pool.connect()
     .then(async client => {
         console.log('✅ Conectado a PostgreSQL');
         client.release();
         await initConfigTable();
         await initAuditLogsTable();
+        await initModulo1Columns();
     })
     .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
 

@@ -20,11 +20,23 @@ export const generarPdfModulo1 = async (datos) => {
     const gray = rgb(0.38, 0.38, 0.38);
 
     // Parsear fecha
-    const fecha = datos.fecha_emision ? new Date(datos.fecha_emision) : new Date();
-    const dia = fecha.getDate().toString();
+    let fechaObj;
+    if (datos.fecha_emision) {
+        const partes = String(datos.fecha_emision).split(/[-\\/T ]/);
+        if (partes[0].length === 4) {
+            fechaObj = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+        } else {
+            fechaObj = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+        }
+    } else {
+        fechaObj = new Date();
+    }
+
+    const dia = fechaObj.getDate().toString();
     const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const mes = meses[fecha.getMonth()];
-    const anio = fecha.getFullYear().toString();
+    const mes = meses[fechaObj.getMonth()];
+    const anio = fechaObj.getFullYear().toString();
+    const horaTexto = datos.hora_emision ? `, ${datos.hora_emision} hrs.` : '.';
 
     // ENCABEZADO
     page.drawImage(headerImg, { x: 0, y: 662, width: 612, height: 130 });
@@ -58,9 +70,9 @@ export const generarPdfModulo1 = async (datos) => {
         x: 348, y: 608, size: 10, font: fontNormal, color: black
     });
 
-    // Fecha
-    page.drawText(`Tepic, Nayarit, a ${dia} de ${mes} de ${anio}.`, {
-        x: 300, y: 593, size: 10, font: fontNormal, color: black
+    // Fecha y hora
+    page.drawText(`Tepic, Nayarit, a ${dia} de ${mes} de ${anio}${horaTexto}`, {
+        x: 280, y: 593, size: 9.5, font: fontNormal, color: black
     });
 
     // DATOS DEL PSG

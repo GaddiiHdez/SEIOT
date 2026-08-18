@@ -235,28 +235,53 @@ router.post('/modulo1', verificarToken, async (req, res) => {
         client = await pool.connect();
         await client.query('BEGIN');
 
-        const { visita_id, fecha_emision, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor } = req.body;
+        const { visita_id, fecha_emision, hora_emision, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor } = req.body;
 
         const visita = await verificarAccesoVisita(req, res, visita_id, client);
         if (!visita) { await client.query('ROLLBACK'); return; }
 
-        const resultado = await client.query(
-            `INSERT INTO modulo1_oficio_notificacion 
-            (visita_id, fecha_emision, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-            ON CONFLICT (visita_id)
-            DO UPDATE SET
-                fecha_emision = EXCLUDED.fecha_emision,
-                localidad = EXCLUDED.localidad,
-                municipio = EXCLUDED.municipio,
-                estado = EXCLUDED.estado,
-                nombre_psg = EXCLUDED.nombre_psg,
-                domicilio = EXCLUDED.domicilio,
-                nombre_servidor = EXCLUDED.nombre_servidor,
-                cargo_servidor = EXCLUDED.cargo_servidor
-            RETURNING *`,
-            [visita_id, fecha_emision, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor]
-        );
+        const fechaVal = formatDateForDb(fecha_emision);
+        const horaVal = hora_emision ? String(hora_emision).substring(0, 5) : null;
+
+        let resultado;
+        try {
+            resultado = await client.query(
+                `INSERT INTO modulo1_oficio_notificacion 
+                (visita_id, fecha_emision, hora_emision, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                ON CONFLICT (visita_id)
+                DO UPDATE SET
+                    fecha_emision = EXCLUDED.fecha_emision,
+                    hora_emision = EXCLUDED.hora_emision,
+                    localidad = EXCLUDED.localidad,
+                    municipio = EXCLUDED.municipio,
+                    estado = EXCLUDED.estado,
+                    nombre_psg = EXCLUDED.nombre_psg,
+                    domicilio = EXCLUDED.domicilio,
+                    nombre_servidor = EXCLUDED.nombre_servidor,
+                    cargo_servidor = EXCLUDED.cargo_servidor
+                RETURNING *`,
+                [visita_id, fechaVal, horaVal, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor]
+            );
+        } catch (colErr) {
+            resultado = await client.query(
+                `INSERT INTO modulo1_oficio_notificacion 
+                (visita_id, fecha_emision, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                ON CONFLICT (visita_id)
+                DO UPDATE SET
+                    fecha_emision = EXCLUDED.fecha_emision,
+                    localidad = EXCLUDED.localidad,
+                    municipio = EXCLUDED.municipio,
+                    estado = EXCLUDED.estado,
+                    nombre_psg = EXCLUDED.nombre_psg,
+                    domicilio = EXCLUDED.domicilio,
+                    nombre_servidor = EXCLUDED.nombre_servidor,
+                    cargo_servidor = EXCLUDED.cargo_servidor
+                RETURNING *`,
+                [visita_id, fechaVal, localidad, municipio, estado, nombre_psg, domicilio, nombre_servidor, cargo_servidor]
+            );
+        }
 
         await client.query(
             'UPDATE visitas SET modulo1_completado = true WHERE id = $1',
