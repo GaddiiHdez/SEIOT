@@ -422,7 +422,7 @@ router.put('/config-folios', verificarToken, async (req, res) => {
 router.get('/auditoria', verificarToken, async (req, res) => {
     try {
         if (!req.usuario?.superadmin && !req.usuario?.es_admin) {
-            return res.status(453).json({ error: 'Solo administradores pueden consultar el historial de auditoría.' });
+            return res.status(403).json({ error: 'Solo administradores pueden consultar el historial de auditoría.' });
         }
 
         const { limit = 50, offset = 0, usuario_id, accion, fecha_inicio, fecha_fin } = req.query;
@@ -451,13 +451,13 @@ router.get('/auditoria', verificarToken, async (req, res) => {
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
         const countResult = await pool.query(
-            `SELECT COUNT(*) FROM audit_logs ${whereClause}`,
+            `SELECT COUNT(*) FROM public.auditoria_logs ${whereClause}`,
             params
         );
-        const total = parseInt(countResult.rows[0].count);
+        const total = parseInt(countResult.rows[0]?.count || '0');
 
         const logsResult = await pool.query(
-            `SELECT * FROM audit_logs ${whereClause} ORDER BY creado_en DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+            `SELECT * FROM public.auditoria_logs ${whereClause} ORDER BY creado_en DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
             [...params, parseInt(limit), parseInt(offset)]
         );
 
@@ -469,7 +469,7 @@ router.get('/auditoria', verificarToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al consultar audit_logs:', error);
+        console.error('Error al consultar auditoria_logs:', error);
         res.status(500).json({ error: 'Error al consultar historial de auditoría.' });
     }
 });

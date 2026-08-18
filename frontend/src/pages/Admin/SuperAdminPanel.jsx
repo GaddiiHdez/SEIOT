@@ -95,13 +95,18 @@ const SuperAdminPanel = () => {
             if (filtroFechaFin) url += `&fecha_fin=${filtroFechaFin}`;
 
             const res = await apiFetch(url);
-            if (res.ok) {
+            if (res && res.ok) {
                 const data = await res.json();
-                setLogs(data.logs);
-                setTotalLogs(data.total);
+                setLogs(Array.isArray(data.logs) ? data.logs : []);
+                setTotalLogs(data.total || 0);
+            } else {
+                setLogs([]);
+                setTotalLogs(0);
             }
         } catch (err) {
             console.error('Error al cargar logs:', err);
+            setLogs([]);
+            setTotalLogs(0);
         } finally {
             setLoadingLogs(false);
         }
