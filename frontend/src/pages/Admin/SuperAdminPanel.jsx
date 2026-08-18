@@ -334,7 +334,7 @@ const SuperAdminPanel = () => {
         <div className="min-h-screen bg-slate-900 text-slate-100 font-sans pb-16">
             <Navbar />
 
-            <div className="max-w-5xl mx-auto p-6 md:p-12">
+            <div className="max-w-6xl xl:max-w-7xl mx-auto p-4 md:p-8 lg:p-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-3">
                         <div className="bg-red-500/10 p-3 rounded-2xl border border-red-500/20 text-red-500 shadow-lg shadow-red-950/20">
@@ -665,15 +665,15 @@ const SuperAdminPanel = () => {
                                     <p className="text-[10px] text-slate-600 mt-1 max-w-sm">Intenta cambiando los criterios de búsqueda o remueve los filtros activos.</p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full border-collapse text-left text-slate-300 font-sans text-xs">
+                                <div className="overflow-x-auto w-full">
+                                    <table className="w-full min-w-[720px] border-collapse text-left text-slate-300 font-sans text-xs">
                                         <thead className="bg-slate-950/80 text-[10px] font-extrabold uppercase text-slate-400 border-b border-slate-850 tracking-wider">
                                             <tr>
-                                                <th className="p-4 pl-6">Fecha / Hora</th>
-                                                <th className="p-4">Usuario</th>
-                                                <th className="p-4">Acción</th>
-                                                <th className="p-4">Descripción</th>
-                                                <th className="p-4 text-center pr-6">Detalles</th>
+                                                <th className="py-4 px-3 pl-6 w-44">Fecha / Hora</th>
+                                                <th className="py-4 px-3 w-36">Usuario</th>
+                                                <th className="py-4 px-3 w-36">Acción</th>
+                                                <th className="py-4 px-3">Descripción</th>
+                                                <th className="py-4 px-4 pr-6 text-center w-20">Detalles</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-800/60 bg-transparent">
@@ -683,9 +683,9 @@ const SuperAdminPanel = () => {
                                                 
                                                 return (
                                                     <tr key={log.id} className="hover:bg-slate-800/25 transition-colors">
-                                                        <td className="p-4 pl-6 whitespace-nowrap font-mono text-[10px] text-slate-400">
+                                                        <td className="py-3 px-3 pl-6 whitespace-nowrap font-mono text-[10px] text-slate-400">
                                                             <div className="flex items-center gap-1.5">
-                                                                <Clock size={12} className="text-slate-500" />
+                                                                <Clock size={12} className="text-slate-500 shrink-0" />
                                                                 {new Date(log.creado_en).toLocaleString('es-MX', {
                                                                     day: '2-digit',
                                                                     month: '2-digit',
@@ -697,24 +697,24 @@ const SuperAdminPanel = () => {
                                                                 })}
                                                             </div>
                                                         </td>
-                                                        <td className="p-4 whitespace-nowrap font-semibold">
+                                                        <td className="py-3 px-3 whitespace-nowrap font-semibold">
                                                             <div className="flex flex-col">
                                                                 <span className="text-slate-200">{uNombre}</span>
                                                                 <span className="text-[10px] text-slate-500 font-mono">@{uUser}</span>
                                                             </div>
                                                         </td>
-                                                        <td className="p-4 whitespace-nowrap">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${obtenerBadgeAccion(log.accion)}`}>
+                                                        <td className="py-3 px-3 whitespace-nowrap">
+                                                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${obtenerBadgeAccion(log.accion)}`}>
                                                                 {formatearAccion(log.accion)}
                                                             </span>
                                                         </td>
-                                                        <td className="p-4 leading-relaxed max-w-sm truncate text-slate-350">
+                                                        <td className="py-3 px-3 leading-relaxed text-slate-350 break-words">
                                                             {obtenerDescripcionAmigable(log)}
                                                         </td>
-                                                        <td className="p-4 text-center pr-6 whitespace-nowrap">
+                                                        <td className="py-3 px-4 pr-6 text-center whitespace-nowrap">
                                                             <button
                                                                 onClick={() => setLogSeleccionado(log)}
-                                                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-blue-450 border border-slate-750 transition-all active:scale-95"
+                                                                className="inline-flex items-center justify-center p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-blue-400 border border-slate-700 transition-all active:scale-95 shadow-sm"
                                                                 title="Ver metadatos JSON completos"
                                                             >
                                                                 <Eye size={14} />
