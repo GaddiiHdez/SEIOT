@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { STORAGE_KEYS } from '../constants/storageKeys.js';
+import { apiFetch } from '../utils/api.js';
 
 const AuthContext = createContext(null);
 
@@ -14,29 +15,25 @@ const AuthProvider = ({ children }) => {
         if (!token) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/perfil`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (response.status === 401) {
-                logout();
-                return;
-            }
+            const response = await apiFetch('/api/auth/perfil');
+            if (!response) return;
 
             if (response.ok) {
                 const data = await response.json();
-                setUsuario(prev => prev ? {
-                    ...prev,
-                    nombre: data.nombre,
-                    usuario: data.usuario,
-                    es_admin: data.es_admin,
-                    superadmin: data.superadmin || false,
-                    rol: data.rol,
+                setUsuario(prev => ({
+                    ...(prev || {}),
+                    id: data.id ?? prev?.id,
+                    nombre: data.nombre || prev?.nombre,
+                    usuario: data.usuario || prev?.usuario,
+                    es_admin: data.es_admin ?? prev?.es_admin,
+                    superadmin: data.superadmin ?? prev?.superadmin ?? false,
+                    rol: data.rol || prev?.rol,
                     permisos: {
-                        ...data.permisos,
-                        consultas: data.rol === 'vista' ? true : data.permisos.consultas
+                        ...(prev?.permisos || {}),
+                        ...(data.permisos || {}),
+                        consultas: data.rol === 'vista' ? true : (data.permisos?.consultas ?? prev?.permisos?.consultas)
                     }
-                } : null);
+                }));
                 setPermisosListos(true);
             }
         } catch {

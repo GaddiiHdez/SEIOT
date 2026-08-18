@@ -281,7 +281,6 @@ const SuperAdminPanel = () => {
     };
 
     const obtenerDescripcionAmigable = (log) => {
-        const uNombre = log.real_usuario_nombre || log.usuario_nombre || log.real_usuario_username || log.usuario_username || 'Sistema';
         const d = log.detalles || {};
         
         switch (log.accion) {
@@ -395,7 +394,7 @@ const SuperAdminPanel = () => {
                             </div>
                             
                             <p className="text-slate-350 text-xs leading-relaxed mb-6">
-                                Descarga copias de seguridad de nivel empresarial en paquete <strong>.ZIP</strong> (incluyen el <strong>Dump SQL Nativo</strong> de PostgreSQL, la carpeta completa de PDFs y el <strong>Manifiesto de Integridad SHA-256</strong>). Al restaurar, se valida criptográficamente que el respaldo no esté corrupto ni alterado.
+                                Descarga copias de seguridad en paquete <strong>.ZIP</strong> (incluyen el <strong>Dump SQL Nativo</strong> de PostgreSQL, la carpeta completa de PDFs y el <strong>Manifiesto de Integridad SHA-256</strong>). Al restaurar, se valida criptográficamente que el respaldo no esté corrupto ni alterado.
                             </p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

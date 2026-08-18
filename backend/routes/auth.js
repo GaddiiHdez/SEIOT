@@ -179,7 +179,15 @@ router.post('/login', async (req, res) => {
         const permisos = construirPermisos(user);
 
         const token = jwt.sign(
-            { id: user.id },
+            {
+                id: user.id,
+                nombre: user.nombre,
+                usuario: user.usuario,
+                es_admin: user.es_admin,
+                superadmin: user.superadmin || false,
+                rol: user.rol,
+                permisos
+            },
             JWT_SECRET,
             { expiresIn: '8h' }
         );
