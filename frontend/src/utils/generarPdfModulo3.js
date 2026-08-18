@@ -117,11 +117,22 @@ export const generarPdfModulo3 = async (datos) => {
                 y -= rowH;
             }
 
-            const respuesta = datos.respuestas ? datos.respuestas[`p${p.id}`] : '';
-            const rec = datos.recomendaciones ? (datos.recomendaciones[`p${p.id}`] || '') : '';
-            const si = respuesta === 'SI' ? '[X]' : '[ ]';
-            const no = respuesta === 'NO' ? '[X]' : '[ ]';
-            const na = respuesta === 'NA' ? '[X]' : '[ ]';
+            let respuesta = '';
+            if (datos.respuestas) {
+                respuesta = datos.respuestas[`p${p.id}`] || datos.respuestas[p.id] || datos.respuestas[String(p.id)] || '';
+            } else if (datos[`p${p.id}`]) {
+                respuesta = datos[`p${p.id}`];
+            }
+
+            let rec = '';
+            if (datos.recomendaciones) {
+                rec = datos.recomendaciones[`p${p.id}`] || datos.recomendaciones[p.id] || datos.recomendaciones[String(p.id)] || '';
+            }
+
+            const respUpper = String(respuesta || '').trim().toUpperCase();
+            const si = respUpper === 'SI' ? '[X]' : '[ ]';
+            const no = respUpper === 'NO' ? '[X]' : '[ ]';
+            const na = (respUpper === 'NA' || respUpper === 'N/A') ? '[X]' : '[ ]';
 
             // Borde fila
             page.drawRectangle({ x: tX, y: y - rowH + 4, width: tW, height: rowH, borderColor: rgb(0.6, 0.6, 0.6), borderWidth: 0.3 });
@@ -176,7 +187,7 @@ export const generarPdfModulo3 = async (datos) => {
     y1 -= lineaH;
     page1.drawText(`Georreferencia:  Latitud: ${datos.latitud || ''}   Longitud: ${datos.longitud || ''}`, { x: 56, y: y1, size: 9, font: fontNormal, color: black });
     y1 -= lineaH;
-    page1.drawText(`Capacidad Instalada (Cabezas): ${datos.cabezas || ''}`, { x: 56, y: y1, size: 9, font: fontNormal, color: black });
+    page1.drawText(`Capacidad Instalada (Cabezas): ${datos.cabezas || datos.capacidad_instalada || ''}`, { x: 56, y: y1, size: 9, font: fontNormal, color: black });
     page1.drawText(`Telefono: ${datos.telefono || ''}`, { x: 320, y: y1, size: 9, font: fontNormal, color: black });
     y1 -= lineaH;
     page1.drawText(`Fecha de la supervision: ${datos.fecha || ''}`, { x: 56, y: y1, size: 9, font: fontNormal, color: black });

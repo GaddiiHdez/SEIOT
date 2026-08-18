@@ -64,7 +64,11 @@ const ListaVerificacion = () => {
                         if (d.hora_inicio) setHoraInicio(d.hora_inicio.substring(0, 5));
                         if (d.hora_termino) setHoraTermino(d.hora_termino.substring(0, 5));
                         if (d.observaciones) setObservaciones(d.observaciones);
-                        if (d.cumple) setConclusion(d.cumple);
+                        
+                        if (d.cumple === true || d.cumple === 'cumple') setConclusion('cumple');
+                        else if (d.presenta_observaciones === true || d.cumple === 'observaciones') setConclusion('observaciones');
+                        else if (d.requiere_seguimiento === true || d.cumple === 'seguimiento') setConclusion('seguimiento');
+                        
                         if (d.responsable_psg) setResponsablePsg(d.responsable_psg);
                         if (d.responsable_supervisor) setResponsableSupervisor(d.responsable_supervisor);
                         if (d.nombre_testigo) setNombreTestigo(d.nombre_testigo);
@@ -73,19 +77,31 @@ const ListaVerificacion = () => {
                         if (d.numero_id_testigo) setNumeroIdTestigo(d.numero_id_testigo);
                     }
 
-                    // Cargar checklist
-                    const checklistResponse = await apiFetch(`/api/modulos/modulo3/checklist/${contexto.visita_id}`);
-                    if (checklistResponse && checklistResponse.ok) {
-                        const checklistData = await checklistResponse.json();
-                        const resp = {};
-                        const recom = {};
-                        checklistData.forEach(item => {
-                            resp[`p${item.pregunta_id}`] = item.respuesta;
-                            if (item.observacion) recom[`p${item.pregunta_id}`] = item.observacion;
+                    // Cargar respuestas del checklist directamente de data.checklist
+                    const resp = {};
+                    const recom = {};
+
+                    if (data.checklist && Array.isArray(data.checklist)) {
+                        data.checklist.forEach(item => {
+                            if (item.pregunta_id) {
+                                resp[`p${item.pregunta_id}`] = item.respuesta;
+                                if (item.observacion) recom[`p${item.pregunta_id}`] = item.observacion;
+                            }
                         });
-                        setRespuestas(resp);
-                        setRecomendaciones(recom);
                     }
+
+                    // Fallback a columnas p13..p62 si vinieran en data.datos
+                    if (data.datos) {
+                        for (let i = 13; i <= 62; i++) {
+                            const val = data.datos[`p${i}`];
+                            if (val && !resp[`p${i}`]) {
+                                resp[`p${i}`] = val;
+                            }
+                        }
+                    }
+
+                    setRespuestas(resp);
+                    setRecomendaciones(recom);
                 }
             } catch (error) {
                 console.error('Error cargando datos módulo 3:', error);

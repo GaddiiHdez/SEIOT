@@ -509,7 +509,7 @@ router.get('/modulo3/:visita_id', verificarToken, async (req, res) => {
 
         const [lista, checklist] = await Promise.all([
             pool.query('SELECT * FROM modulo3_lista_verificacion WHERE visita_id = $1', [visita_id]),
-            pool.query('SELECT * FROM modulo3_checklist WHERE visita_id = $1', [visita_id])
+            pool.query('SELECT * FROM modulo3_checklist WHERE visita_id = $1 ORDER BY pregunta_id ASC', [visita_id])
         ]);
 
         if (lista.rows.length === 0) return res.json({ existe: false });
@@ -517,6 +517,22 @@ router.get('/modulo3/:visita_id', verificarToken, async (req, res) => {
 
     } catch (error) {
         console.error('Error obtener módulo 3:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// ─── OBTENER CHECKLIST MÓDULO 3 ───────────────────────────────────────────────
+router.get('/modulo3/checklist/:visita_id', verificarToken, async (req, res) => {
+    try {
+        const { visita_id } = req.params;
+        const visita = await verificarAccesoVisita(req, res, visita_id);
+        if (!visita) return;
+
+        const checklist = await pool.query('SELECT * FROM modulo3_checklist WHERE visita_id = $1 ORDER BY pregunta_id ASC', [visita_id]);
+        res.json(checklist.rows);
+
+    } catch (error) {
+        console.error('Error obtener checklist módulo 3:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
