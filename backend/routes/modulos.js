@@ -52,7 +52,7 @@ const upload = multer({
 // ─── HELPER: Verificar acceso a visita ────────────────────────────────────────
 async function verificarAccesoVisita(req, res, visita_id, client = pool) {
     const visitaCheck = await client.query(
-        'SELECT id, capturista_id, folio FROM visitas WHERE id = $1',
+        'SELECT id, capturista_id, folio, psg, supervisor, fecha_inicio FROM visitas WHERE id = $1',
         [visita_id]
     );
     if (visitaCheck.rows.length === 0) {
@@ -535,23 +535,44 @@ router.post('/modulo3', verificarToken, async (req, res) => {
 
         // Detonar el envío de correos en segundo plano si se requiere seguimiento y hay instancias
         if (requiere_seguimiento && instanciasArray.length > 0 && tokenSeguimiento) {
-            enviarNotificacionesSeguimiento({
-                visitaId: visita_id,
-                folio: visita.folio,
-                datosPsg: {
-                    psg: visita.psg,
-                    nombre_titular,
-                    municipio,
-                    localidad,
-                    telefono
-                },
-                supervisor: nombre_supervisor,
-                fecha,
-                observaciones,
-                instanciasSeleccionadas: instanciasArray,
-                tokenSeguimiento,
-                usuarioEmisor: req.usuario
-            }).catch(err => console.error('❌ Error asíncrono al enviar correos de seguimiento:', err));
+            (async () => {
+                try {
+                    const psgRes = await pool.query(
+                        `SELECT v.folio, v.psg, v.supervisor, v.fecha_inicio,
+                                p.razon_social, p.representante, p.municipio, p.localidad, p.telefono
+                         FROM visitas v
+                         LEFT JOIN excel_psg p ON p.psg = v.psg
+                         WHERE v.id = $1`,
+                        [visita_id]
+                    );
+                    const infoVisita = psgRes.rows[0] || {};
+                    const fechaEmail = fecha || (infoVisita.fecha_inicio ? new Date(infoVisita.fecha_inicio).toLocaleDateString('es-MX') : new Date().toLocaleDateString('es-MX'));
+                    const psgClave = infoVisita.psg || visita.psg || 'N/D';
+                    const titularEmail = infoVisita.razon_social || nombre_psg || infoVisita.representante || nombre_titular || 'N/D';
+                    const municipioEmail = infoVisita.municipio || municipio || 'N/D';
+                    const supervisorEmail = nombre_supervisor || infoVisita.supervisor || 'N/D';
+
+                    await enviarNotificacionesSeguimiento({
+                        visitaId: visita_id,
+                        folio: infoVisita.folio || visita.folio,
+                        datosPsg: {
+                            psg: psgClave,
+                            nombre_titular: titularEmail,
+                            municipio: municipioEmail,
+                            localidad: infoVisita.localidad || localidad || '',
+                            telefono: infoVisita.telefono || telefono || ''
+                        },
+                        supervisor: supervisorEmail,
+                        fecha: fechaEmail,
+                        observaciones,
+                        instanciasSeleccionadas: instanciasArray,
+                        tokenSeguimiento,
+                        usuarioEmisor: req.usuario
+                    });
+                } catch (err) {
+                    console.error('❌ Error asíncrono al enviar correos de seguimiento:', err);
+                }
+            })();
         }
 
         res.json({ mensaje: 'Módulo 3 guardado correctamente', token_seguimiento: tokenSeguimiento });
@@ -938,13 +959,13 @@ router.get('/seguimiento/:token', async (req, res) => {
 
         const m3Query = await pool.query(
             `SELECT m3.*, v.folio, v.psg, v.estado_visita, v.creado_en as fecha_creacion,
-                    p.nombre_titular as psg_titular, p.representante as psg_representante,
+                    p.razon_social as psg_titular, p.representante as psg_representante,
                     p.municipio as psg_municipio, p.localidad as psg_localidad,
                     p.domicilio as psg_domicilio, p.telefono as psg_telefono,
-                    p.especie, p.tipo_explotacion
+                    p.tipo_psg
              FROM modulo3_lista_verificacion m3
              JOIN visitas v ON v.id = m3.visita_id
-             LEFT JOIN excel_psg p ON p.clave_psg = v.psg
+             LEFT JOIN excel_psg p ON p.psg = v.psg
              WHERE m3.token_seguimiento = $1`,
             [token]
         );
@@ -982,14 +1003,13 @@ router.get('/seguimiento/:token', async (req, res) => {
                 estado_visita: datosM3.estado_visita,
                 fecha_creacion: datosM3.fecha_creacion,
                 psg_datos: {
-                    titular: datosM3.psg_titular || datosM3.nombre_titular,
-                    representante: datosM3.psg_representante,
+                    titular: datosM3.psg_titular || datosM3.nombre_psg || datosM3.nombre_titular,
+                    representante: datosM3.psg_representante || datosM3.nombre_titular,
                     municipio: datosM3.psg_municipio || datosM3.municipio,
                     localidad: datosM3.psg_localidad || datosM3.localidad,
                     domicilio: datosM3.psg_domicilio,
                     telefono: datosM3.psg_telefono || datosM3.telefono,
-                    especie: datosM3.especie,
-                    tipo_explotacion: datosM3.tipo_explotacion
+                    tipo_psg: datosM3.tipo_psg
                 },
                 modulo3: {
                     fecha: datosM3.fecha,

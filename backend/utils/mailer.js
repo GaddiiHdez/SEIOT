@@ -85,6 +85,12 @@ export const generarCuerpoCorreo = ({
     urlLogin = ''
 }) => {
     const psgClave = datosPsg.psg || datosPsg.clave_psg || 'N/D';
+    let fechaSupervisionFinal = fechaSupervision;
+    if (!fechaSupervisionFinal || typeof fechaSupervisionFinal !== 'string' || !fechaSupervisionFinal.trim()) {
+        fechaSupervisionFinal = new Date().toLocaleDateString('es-MX');
+    } else if (fechaSupervisionFinal.includes('T')) {
+        fechaSupervisionFinal = new Date(fechaSupervisionFinal).toLocaleDateString('es-MX');
+    }
     const nombreTitular = datosPsg.nombre_titular || datosPsg.titular || datosPsg.representante || 'N/D';
     const municipio = datosPsg.municipio || 'N/D';
     const motivo = observaciones?.trim() || 'Sin observaciones adicionales registradas.';
@@ -99,7 +105,7 @@ Por medio del presente, el Sistema Estatal de Información de Origen y Trazabili
 PSG: ${psgClave}
 Nombre o razón social: ${nombreTitular}
 Municipio: ${municipio}
-Fecha de supervisión: ${fechaSupervision}
+Fecha de supervisión: ${fechaSupervisionFinal}
 Supervisor: ${supervisor}
 Instancias seleccionadas para seguimiento: ${nombresInstancias}
 Motivo u observaciones: ${motivo}
@@ -171,7 +177,7 @@ Este correo fue generado automáticamente por el SEIOT. Favor de no responder a 
                     </tr>
                     <tr>
                         <td style="padding: 8px 12px; font-weight: bold; color: #4a5568; border: 1px solid #e2e8f0;">Fecha de supervisión:</td>
-                        <td style="padding: 8px 12px; color: #1a202c; border: 1px solid #e2e8f0;">${fechaSupervision}</td>
+                        <td style="padding: 8px 12px; color: #1a202c; border: 1px solid #e2e8f0;">${fechaSupervisionFinal}</td>
                     </tr>
                     <tr style="background-color: #f8fafc;">
                         <td style="padding: 8px 12px; font-weight: bold; color: #4a5568; border: 1px solid #e2e8f0;">Supervisor oficial:</td>
