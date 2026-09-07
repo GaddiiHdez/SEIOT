@@ -93,13 +93,21 @@ app.get('/api/health/disco', verificarToken, (req, res) => {
         archivosEnUploads = [e.message];
     }
 
-    const candidatos = ['/var/data', '/data', '/uploads', '/mnt/data', '/app/uploads'].map(dir => {
+    const candidatos = [
+        '/opt/render/project/src/uploads',
+        '/opt/render/project/src/uploads/documentos_firmados',
+        '/var/data',
+        '/data',
+        '/uploads',
+        '/mnt/data',
+        '/app/uploads'
+    ].map(dir => {
         const exists = fs.existsSync(dir);
         let archivos = [];
         if (exists) {
             try { archivos = fs.readdirSync(dir); } catch (e) { archivos = [e.message]; }
         }
-        return { dir, exists, archivos };
+        return { dir, exists, totalArchivos: archivos.length, archivos: archivos.slice(0, 50) };
     });
 
     res.json({

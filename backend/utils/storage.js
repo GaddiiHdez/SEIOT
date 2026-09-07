@@ -7,11 +7,36 @@ const __dirname = path.dirname(__filename);
 
 // Lista de rutas candidatas donde Render suele montar el disco persistente
 const DISK_CANDIDATE_PATHS = [
+    '/opt/render/project/src/uploads',
     '/var/data',
     '/data',
     '/uploads',
     '/mnt/data'
 ];
+
+/**
+ * Detecta puntos de montaje físicos desde /proc/mounts en Linux
+ */
+export const getActiveMountPoints = () => {
+    const list = [];
+    try {
+        if (fs.existsSync('/proc/mounts')) {
+            const raw = fs.readFileSync('/proc/mounts', 'utf8');
+            for (const line of raw.split('\n')) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                    const [dev, mountPoint] = parts;
+                    if (dev.startsWith('/dev/nvme') || dev.startsWith('/dev/vd') || dev.startsWith('/dev/sd') || dev.startsWith('/dev/xvd')) {
+                        if (!mountPoint.startsWith('/tmp') && !mountPoint.startsWith('/opt/render-ssh') && !mountPoint.startsWith('/etc') && !mountPoint.startsWith('/dev') && mountPoint !== '/') {
+                            list.push(mountPoint);
+                        }
+                    }
+                }
+            }
+        }
+    } catch {}
+    return list;
+};
 
 /**
  * Retorna la ruta absoluta del directorio donde deben guardarse los PDFs firmados.
@@ -34,11 +59,16 @@ export const getUploadsDir = () => {
     }
 
     // 2. Auto-detección de disco persistente en Render
-    for (const diskPath of DISK_CANDIDATE_PATHS) {
+    const dynamicMounts = getActiveMountPoints();
+    const allCandidates = [...new Set([...dynamicMounts, ...DISK_CANDIDATE_PATHS])];
+
+    for (const diskPath of allCandidates) {
         try {
             if (fs.existsSync(diskPath)) {
                 fs.accessSync(diskPath, fs.constants.W_OK);
-                const targetSubdir = path.join(diskPath, 'documentos_firmados');
+                const targetSubdir = diskPath.endsWith('documentos_firmados')
+                    ? diskPath
+                    : path.join(diskPath, 'documentos_firmados');
                 if (!fs.existsSync(targetSubdir)) {
                     fs.mkdirSync(targetSubdir, { recursive: true });
                 }
