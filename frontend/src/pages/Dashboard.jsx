@@ -514,7 +514,7 @@ const Dashboard = () => {
       if (!res) return;
       if (!res.ok) {
         if (res.status === 404) {
-          alert('⚠️ El archivo físico no existe en el servidor. Puede haberse eliminado durante un reinicio del backend en Render (almacenamiento temporal). Por favor, vuelve a subir el PDF firmado.');
+          alert('⚠️ El archivo físico no se encuentra disponible en el servidor. Por favor, vuelve a subir el PDF firmado correspondiente.');
         } else {
           alert('No tienes permiso para ver este documento o tu sesión ha expirado.');
         }

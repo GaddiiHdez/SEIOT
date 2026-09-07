@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import modulosRoutes from './routes/modulos.js';
 import superadminRoutes from './routes/superadmin.js';
 import { verificarToken } from './routes/auth.js';
+import { findDocumentoFirmado, getUploadsDir } from './utils/storage.js';
 
 dotenv.config();
 
@@ -44,21 +45,23 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔴 CORRECCIÓN 3: Ruta protegida para documentos firmados
+// 🔴 Ruta protegida para documentos firmados (con soporte para disco persistente en Render)
 app.get('/uploads/documentos_firmados/:archivo', verificarToken, (req, res) => {
-    const safeFilename = path.basename(req.params.archivo);
-    const rutaArchivo = path.join(__dirname, 'uploads', 'documentos_firmados', safeFilename);
-    res.sendFile(rutaArchivo, (err) => {
-        if (err) {
-            res.status(404).json({ error: 'Archivo no encontrado.' });
-        }
-    });
+    const rutaArchivo = findDocumentoFirmado(req.params.archivo);
+    if (!rutaArchivo) {
+        return res.status(404).json({ error: 'Archivo no encontrado.' });
+    }
+    res.sendFile(rutaArchivo);
 });
 
-// ✅ Error 12: Un único health check en /api/health
-// AWS ECS Task Definition debe apuntar a /api/health
+// ✅ Health check con diagnóstico de disco persistente
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'SEIOT API corriendo', version: '1.2.1-fix-fecha' });
+    res.json({
+        status: 'ok',
+        message: 'SEIOT API corriendo',
+        version: '1.2.2-disk-support',
+        uploadsDir: getUploadsDir()
+    });
 });
 
 app.use('/api/psg', psgRoutes);

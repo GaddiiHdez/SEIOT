@@ -11,6 +11,7 @@ const fsPromises = fs.promises;
 import path from 'path';
 import { verificarToken } from './auth.js';
 import { registrarAuditLog } from '../utils/auditoria.js';
+import { getUploadsDir } from '../utils/storage.js';
 
 const execAsync = promisify(exec);
 const router = express.Router();
@@ -180,7 +181,7 @@ router.post('/backup', verificarToken, async (req, res) => {
         manifest.archivos['database_backup.json'] = calcularSha256(jsonBuffer);
 
         // 3. Incluir documentos PDF firmados con su respectivo hash SHA-256
-        const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
+        const uploadsDir = getUploadsDir();
         if (fs.existsSync(uploadsDir)) {
             const pdfFiles = await fsPromises.readdir(uploadsDir);
             for (const file of pdfFiles) {
@@ -276,7 +277,7 @@ router.post('/restore', verificarToken, uploadRestore.single('archivo'), async (
                 }
 
                 // C. EXTRAER DOCUMENTOS PDF FIRMADOS
-                const uploadsDir = path.join(process.cwd(), 'uploads', 'documentos_firmados');
+                const uploadsDir = getUploadsDir();
                 await fsPromises.mkdir(uploadsDir, { recursive: true });
 
                 for (const entry of zipEntries) {

@@ -79,7 +79,7 @@ const BotonSubirFirmado = ({ visita_id, modulo }) => {
             const res = await apiFetch(`/uploads/documentos_firmados/${docInfo.nombre_archivo}`);
             if (!res || !res.ok) {
                 if (res?.status === 404) {
-                    alert('⚠️ El archivo físico no existe en el servidor. Puede haberse eliminado durante un reinicio del backend en Render (almacenamiento temporal). Por favor, vuelve a subir el PDF firmado.');
+                    alert('⚠️ El archivo físico no se encuentra disponible en el servidor. Por favor, vuelve a subir el PDF firmado correspondiente.');
                 } else if (res?.status === 403 || res?.status === 401) {
                     alert('No tienes permiso para ver este documento o tu sesión ha expirado.');
                 } else {

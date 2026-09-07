@@ -7,6 +7,7 @@ import { promises as fsPromises } from 'fs';
 import { verificarToken } from './auth.js';
 import { registrarAuditLog } from '../utils/auditoria.js';
 import { generarTokenSeguimiento, enviarNotificacionesSeguimiento } from '../utils/mailer.js';
+import { getUploadsDir, findDocumentoFirmado } from '../utils/storage.js';
 
 const router = express.Router();
 
@@ -23,10 +24,10 @@ function formatDateForDb(fechaStr) {
     return fechaStr;
 }
 
-// ─── CONFIGURACIÓN MULTER (Almacenamiento local persistente) ───────────────────
+// ─── CONFIGURACIÓN MULTER (Almacenamiento persistente en Render / Local) ───────────
 const storage = multer.diskStorage({
     destination: async (req, file, cb) => {
-        const dir = './uploads/documentos_firmados';
+        const dir = getUploadsDir();
         try {
             await fsPromises.mkdir(dir, { recursive: true });
             cb(null, dir);
@@ -159,7 +160,7 @@ router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) =>
         if (!visita) return;
 
         const resultado = await pool.query(
-            'SELECT ruta_archivo FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
+            'SELECT ruta_archivo, nombre_archivo FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
             [visita_id, modulo]
         );
 
@@ -167,12 +168,15 @@ router.delete('/firmado/:visita_id/:modulo', verificarToken, async (req, res) =>
             return res.status(404).json({ error: 'No existe documento para eliminar.' });
         }
 
-        const ruta = resultado.rows[0].ruta_archivo;
+        const { ruta_archivo, nombre_archivo } = resultado.rows[0];
+        const rutaFisica = findDocumentoFirmado(nombre_archivo, ruta_archivo);
 
-        try {
-            await fsPromises.unlink(ruta);
-        } catch {
-            // El archivo físico puede no existir, continuar con eliminación en BD
+        if (rutaFisica) {
+            try {
+                await fsPromises.unlink(rutaFisica);
+            } catch {
+                // Continuar con eliminación en BD
+            }
         }
 
         await pool.query(
@@ -1110,8 +1114,8 @@ router.get('/seguimiento/:token/archivo/:modulo', async (req, res) => {
         }
 
         const { ruta_archivo, nombre_archivo } = docQuery.rows[0];
-        const fullPath = path.resolve(ruta_archivo);
-        if (!fs.existsSync(fullPath)) {
+        const fullPath = findDocumentoFirmado(nombre_archivo, ruta_archivo);
+        if (!fullPath) {
             return res.status(404).json({ error: 'El archivo físico no se encuentra disponible.' });
         }
         res.download(fullPath, nombre_archivo);
