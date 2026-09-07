@@ -6,7 +6,8 @@ import logoGobierno from '../assets/logo-gobierno.jpg';
 const INSTANCIAS_MAP = {
     seder_juridico: 'Dirección Jurídica de la SEDER',
     cefppenay: 'CEFPPENAY',
-    senasica: 'SENASICA'
+    senasica: 'SENASICA',
+    test_henry: 'Supervisión Técnica (Pruebas - Henry Hernández)'
 };
 
 const SeguimientoExpediente = () => {
@@ -360,6 +361,7 @@ const SeguimientoExpediente = () => {
                                     <option value="seder_juridico">Dirección Jurídica de la SEDER</option>
                                     <option value="cefppenay">CEFPPENAY</option>
                                     <option value="senasica">SENASICA</option>
+                                    <option value="test_henry">Supervisión Técnica (Pruebas - Henry Hernández)</option>
                                 </select>
                             </div>
                             <div>

@@ -32,6 +32,16 @@ export const INSTANCIAS_SEGUIMIENTO = {
         telefono: '311 150 2194',
         usuario: 'senasica.nayarit',
         passInicial: 'Senasica2026!'
+    },
+    test_henry: {
+        id: 'test_henry',
+        etiqueta: 'Supervisión Técnica (Pruebas)',
+        titular: 'Henry Hernández',
+        cargo: 'Soporte Técnico y Pruebas SEIOT',
+        correo: 'gaddiel3002@gmail.com',
+        telefono: '311 250 5725',
+        usuario: 'henry.hernandez',
+        passInicial: 'HenryTest2026!'
     }
 };
 

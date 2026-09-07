@@ -70,6 +70,15 @@ const ListaVerificacion = () => {
             correo: 'zaida.garcia@senasica.gob.mx',
             telefono: '311 150 2194',
             colorBadge: 'bg-blue-100 text-blue-800 border-blue-300'
+        },
+        {
+            id: 'test_henry',
+            nombre: 'Supervisión Técnica (Pruebas)',
+            titular: 'Henry Hernández',
+            cargo: 'Soporte Técnico y Pruebas SEIOT',
+            correo: 'gaddiel3002@gmail.com',
+            telefono: '311 250 5725',
+            colorBadge: 'bg-purple-100 text-purple-800 border-purple-300'
         }
     ];
 
@@ -500,7 +509,7 @@ const ListaVerificacion = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
                                         {INSTANCIAS_DISPONIBLES.map(inst => {
                                             const seleccionada = instanciasSeguimiento.includes(inst.id);
                                             return (
@@ -546,7 +555,7 @@ const ListaVerificacion = () => {
                                             {instanciasSeguimiento.length === 0 ? (
                                                 <span className="text-red-600 font-bold">⚠️ Debe seleccionar al menos una instancia responsable.</span>
                                             ) : (
-                                                <span className="text-emerald-700 font-bold">✓ {instanciasSeguimiento.length} de 3 instancia(s) seleccionada(s) para recibir el correo oficial.</span>
+                                                <span className="text-emerald-700 font-bold">✓ {instanciasSeguimiento.length} de {INSTANCIAS_DISPONIBLES.length} instancia(s) seleccionada(s) para recibir el correo oficial.</span>
                                             )}
                                         </p>
                                         <button

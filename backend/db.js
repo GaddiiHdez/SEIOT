@@ -141,6 +141,12 @@ const initSeguimiento = async () => {
                 usuario: 'senasica.nayarit',
                 pass: 'Senasica2026!',
                 rol: 'seguimiento'
+            },
+            {
+                nombre: 'Henry Hernández (Pruebas y Soporte Técnico)',
+                usuario: 'henry.hernandez',
+                pass: 'HenryTest2026!',
+                rol: 'seguimiento'
             }
         ];
 
