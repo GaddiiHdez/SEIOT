@@ -514,4 +514,33 @@ router.post('/sincronizar-pdfs', verificarToken, uploadRestore.single('archivo')
     }
 });
 
+// ─── LIMPIAR DISCO DE PDFs (ELIMINAR ARCHIVOS INÚTILES O DE PRUEBA) ───────────
+router.post('/limpiar-disco-pdfs', verificarToken, async (req, res) => {
+    if (!req.usuario?.superadmin && !req.usuario?.es_admin) {
+        return res.status(403).json({ error: 'Solo administradores pueden limpiar el disco.' });
+    }
+    try {
+        const uploadsDir = getUploadsDir();
+        let eliminados = 0;
+        if (fs.existsSync(uploadsDir)) {
+            const files = await fsPromises.readdir(uploadsDir);
+            for (const file of files) {
+                if (file.endsWith('.pdf')) {
+                    await fsPromises.unlink(path.join(uploadsDir, file)).catch(() => {});
+                    eliminados++;
+                }
+            }
+        }
+        res.json({
+            ok: true,
+            mensaje: `Se eliminaron ${eliminados} archivos PDF del disco persistente.`,
+            eliminados,
+            uploadsDir
+        });
+    } catch (e) {
+        console.error('Error limpiando disco de PDFs:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 export default router;
