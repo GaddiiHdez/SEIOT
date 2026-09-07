@@ -1,6 +1,7 @@
 /* eslint-env node */
 import pkg from 'pg';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -97,6 +98,74 @@ const initModulo1Columns = async () => {
     }
 };
 
+const initSeguimiento = async () => {
+    try {
+        // 1. Columnas en modulo3_lista_verificacion
+        await pool.query(`
+            ALTER TABLE public.modulo3_lista_verificacion 
+            ADD COLUMN IF NOT EXISTS instancias_notificadas text[],
+            ADD COLUMN IF NOT EXISTS token_seguimiento varchar(100);
+        `);
+
+        // 2. Tabla para registrar atenciones y oficios de seguimiento
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS public.modulo3_seguimiento_atencion (
+                id SERIAL PRIMARY KEY,
+                visita_id INT REFERENCES public.visitas(id) ON DELETE CASCADE,
+                instancia VARCHAR(100) NOT NULL,
+                nombre_responsable VARCHAR(150),
+                cargo_responsable VARCHAR(150),
+                oficio_referencia VARCHAR(100),
+                acciones_tomadas TEXT NOT NULL,
+                estatus VARCHAR(50) DEFAULT 'ATENDIDO',
+                creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        `);
+
+        // 3. Crear cuentas institucionales si no existen
+        const cuentas = [
+            {
+                nombre: 'Lic. Carlos Esteban Henson Reyes (Director Jurídico SEDER)',
+                usuario: 'juridico.seder',
+                pass: 'SederJuridico2026!',
+                rol: 'seguimiento'
+            },
+            {
+                nombre: 'M.V.Z. Ricardo Álvarez Hernández (Gerente CEFPPENAY)',
+                usuario: 'cefp.penay',
+                pass: 'CefpPenay2026!',
+                rol: 'seguimiento'
+            },
+            {
+                nombre: 'M.V.Z. Zaida Elizabeth García Alonso (SENASICA)',
+                usuario: 'senasica.nayarit',
+                pass: 'Senasica2026!',
+                rol: 'seguimiento'
+            }
+        ];
+
+        for (const c of cuentas) {
+            const existe = await pool.query('SELECT id FROM public.usuarios WHERE usuario = $1', [c.usuario]);
+            if (existe.rows.length === 0) {
+                const hash = await bcrypt.hash(c.pass, 10);
+                await pool.query(`
+                    INSERT INTO public.usuarios 
+                    (nombre, usuario, password_hash, es_admin, superadmin, rol, activo,
+                     modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4,
+                     ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas)
+                    VALUES ($1, $2, $3, false, false, $4, true,
+                            false, false, true, false, false, false, false,
+                            true, false, false, true, false, true)
+                `, [c.nombre, c.usuario, hash, c.rol]);
+                console.log(`✅ Usuario institucional ${c.usuario} creado.`);
+            }
+        }
+        console.log('✅ Esquema de seguimiento inicializado');
+    } catch (err) {
+        console.error('❌ Error al inicializar seguimiento:', err);
+    }
+};
+
 pool.connect()
     .then(async client => {
         console.log('✅ Conectado a PostgreSQL');
@@ -104,6 +173,7 @@ pool.connect()
         await initConfigTable();
         await initAuditLogsTable();
         await initModulo1Columns();
+        await initSeguimiento();
     })
     .catch(err => console.error('❌ Error conectando a PostgreSQL:', err));
 

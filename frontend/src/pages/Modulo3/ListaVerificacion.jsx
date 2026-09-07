@@ -1,6 +1,6 @@
 import { apiFetch } from '../../utils/api.js';
 import React, { useState, useEffect } from 'react';
-import { Save, ChevronRight, ChevronLeft, CheckSquare, Home, Download, ArrowLeft, FolderOpen } from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, ChevronsRight, CheckSquare, Home, Download, ArrowLeft, FolderOpen, Mail, Eye, X } from 'lucide-react';
 import BotonSubirFirmado from '../../components/BotonSubirFirmado';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -33,12 +33,51 @@ const ListaVerificacion = () => {
     const [horaTermino, setHoraTermino] = useState("");
     const [observaciones, setObservaciones] = useState("");
     const [conclusion, setConclusion] = useState(""); // CUMPLE / NO CUMPLE
+    const [instanciasSeguimiento, setInstanciasSeguimiento] = useState([]);
+    const [mostrarModalPreview, setMostrarModalPreview] = useState(false);
     const [responsablePsg, setResponsablePsg] = useState(contexto?.datosPsg?.representante || "");
     const [responsableSupervisor, setResponsableSupervisor] = useState("");
     const [nombreTestigo, setNombreTestigo] = useState("");
     const [domicilioTestigo, setDomicilioTestigo] = useState("");
     const [tipoIdTestigo, setTipoIdTestigo] = useState("");
     const [numeroIdTestigo, setNumeroIdTestigo] = useState("");
+
+    // Catálogo de instancias responsables oficiales
+    const INSTANCIAS_DISPONIBLES = [
+        {
+            id: 'seder_juridico',
+            nombre: 'Dirección Jurídica de la SEDER',
+            titular: 'Lic. Carlos Esteban Henson Reyes',
+            cargo: 'Director Jurídico',
+            correo: 'rural.direccionjuridica@nayarit.gob.mx',
+            telefono: '311 141 8084',
+            colorBadge: 'bg-amber-100 text-amber-800 border-amber-300'
+        },
+        {
+            id: 'cefppenay',
+            nombre: 'CEFPPENAY',
+            titular: 'M.V.Z. Ricardo Álvarez Hernández',
+            cargo: 'Gerente',
+            correo: 'gerencia.comitenay@gmail.com',
+            telefono: '449 137 1260',
+            colorBadge: 'bg-emerald-100 text-emerald-800 border-emerald-300'
+        },
+        {
+            id: 'senasica',
+            nombre: 'SENASICA',
+            titular: 'M.V.Z. Zaida Elizabeth García Alonso',
+            cargo: 'Resp. Campañas Zoosanitarias en Nayarit',
+            correo: 'zaida.garcia@senasica.gob.mx',
+            telefono: '311 150 2194',
+            colorBadge: 'bg-blue-100 text-blue-800 border-blue-300'
+        }
+    ];
+
+    const toggleInstancia = (id) => {
+        setInstanciasSeguimiento(prev =>
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
 
     // Respuestas y observaciones del checklist
     const [respuestas, setRespuestas] = useState({});
@@ -68,6 +107,10 @@ const ListaVerificacion = () => {
                         if (d.cumple === true || d.cumple === 'cumple') setConclusion('cumple');
                         else if (d.presenta_observaciones === true || d.cumple === 'observaciones') setConclusion('observaciones');
                         else if (d.requiere_seguimiento === true || d.cumple === 'seguimiento') setConclusion('seguimiento');
+
+                        if (d.instancias_notificadas && Array.isArray(d.instancias_notificadas)) {
+                            setInstanciasSeguimiento(d.instancias_notificadas);
+                        }
                         
                         if (d.responsable_psg) setResponsablePsg(d.responsable_psg);
                         if (d.responsable_supervisor) setResponsableSupervisor(d.responsable_supervisor);
@@ -115,7 +158,7 @@ const ListaVerificacion = () => {
 
     // ── BORRADOR .smpbk ──────────────────────────────────────────────────────
     const guardarBorrador = () => {
-        guardarBorradorLocal(3, contexto, { tipoPsg, telefono, latitud, longitud, cabezas, horaInicio, horaTermino, respuestas, recomendaciones, observaciones, conclusion, responsablePsg, responsableSupervisor, nombreTestigo, domicilioTestigo, tipoIdTestigo, numeroIdTestigo });
+        guardarBorradorLocal(3, contexto, { tipoPsg, telefono, latitud, longitud, cabezas, horaInicio, horaTermino, respuestas, recomendaciones, observaciones, conclusion, instanciasSeguimiento, responsablePsg, responsableSupervisor, nombreTestigo, domicilioTestigo, tipoIdTestigo, numeroIdTestigo });
     };
 
     const cargarBorrador = (e) => {
@@ -131,6 +174,7 @@ const ListaVerificacion = () => {
             recomendaciones: setRecomendaciones,
             observaciones: setObservaciones,
             conclusion: setConclusion,
+            instanciasSeguimiento: setInstanciasSeguimiento,
             responsablePsg: setResponsablePsg,
             responsableSupervisor: setResponsableSupervisor,
             nombreTestigo: setNombreTestigo,
@@ -168,6 +212,10 @@ const ListaVerificacion = () => {
     };
 
     const handleGuardar = async () => {
+        if (conclusion === 'seguimiento' && instanciasSeguimiento.length === 0) {
+            alert("⚠️ Ha seleccionado 'Requiere Seguimiento'. Por favor seleccione al menos una de las instancias responsables para remitir el expediente.");
+            return;
+        }
         try {
             const response = await apiFetch('/api/modulos/modulo3', {
                 method: 'POST',
@@ -191,6 +239,7 @@ const ListaVerificacion = () => {
                     cumple: conclusion === 'cumple',
                     presenta_observaciones: conclusion === 'observaciones',
                     requiere_seguimiento: conclusion === 'seguimiento',
+                    instancias_seguimiento: conclusion === 'seguimiento' ? instanciasSeguimiento : [],
                     responsable_psg: datosPsg.nombre_titular,
                     responsable_supervisor: contexto?.datosSupervisor?.nombre || supervisor,
                     nombre_testigo: nombreTestigo,
@@ -205,7 +254,12 @@ const ListaVerificacion = () => {
             if (!response.ok) { alert("Error al guardar."); return; }
             const contextoActualizado = { ...contexto, avance: { ...contexto.avance, modulo3: true } };
             localStorage.setItem('visitaActiva', JSON.stringify(contextoActualizado));
-            alert("¡Lista de Verificación Guardada!\nEl Módulo 4 ha sido desbloqueado.");
+            
+            let mensajeExito = "¡Lista de Verificación Guardada!\nEl Módulo 4 ha sido desbloqueado.";
+            if (conclusion === 'seguimiento' && instanciasSeguimiento.length > 0) {
+                mensajeExito += `\n\n📧 Se han remitido las notificaciones automáticas por correo a ${instanciasSeguimiento.length} instancia(s) responsable(s).`;
+            }
+            alert(mensajeExito);
             navigate('/dashboard');
         } catch (error) {
             console.error(error);
@@ -399,17 +453,112 @@ const ListaVerificacion = () => {
 
                         <div>
                             <h3 className="text-blue-700 font-bold text-center text-lg mb-4 uppercase">IV. Conclusión de la Supervisión</h3>
-                            <div className="flex flex-wrap gap-4 justify-between bg-blue-50 p-4 rounded border border-blue-200 mb-6 font-bold text-sm">
+                            <div className="flex flex-wrap gap-4 justify-between bg-blue-50 p-4 rounded border border-blue-200 mb-4 font-bold text-sm">
                                 <label htmlFor="conclusion-cumple" className="flex items-center gap-2 cursor-pointer">
-                                    <input id="conclusion-cumple" type="radio" name="conclusion" value="cumple" checked={conclusion === 'cumple'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Cumple
+                                    <input id="conclusion-cumple" type="radio" name="conclusion" value="cumple" checked={conclusion === 'cumple'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4 text-blue-600" /> Cumple
                                 </label>
                                 <label htmlFor="conclusion-observaciones" className="flex items-center gap-2 cursor-pointer">
-                                    <input id="conclusion-observaciones" type="radio" name="conclusion" value="observaciones" checked={conclusion === 'observaciones'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Presenta Observaciones
+                                    <input id="conclusion-observaciones" type="radio" name="conclusion" value="observaciones" checked={conclusion === 'observaciones'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4 text-blue-600" /> Presenta Observaciones
                                 </label>
                                 <label htmlFor="conclusion-seguimiento" className="flex items-center gap-2 cursor-pointer">
-                                    <input id="conclusion-seguimiento" type="radio" name="conclusion" value="seguimiento" checked={conclusion === 'seguimiento'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4" /> Requiere Seguimiento
+                                    <input id="conclusion-seguimiento" type="radio" name="conclusion" value="seguimiento" checked={conclusion === 'seguimiento'} onChange={(e) => setConclusion(e.target.value)} className="w-4 h-4 text-blue-600" /> Requiere Seguimiento
                                 </label>
                             </div>
+
+                            {/* Panel interactivo de instancias responsables cuando requiere seguimiento */}
+                            {conclusion === 'seguimiento' && (
+                                <div className="mb-6 p-4 sm:p-5 bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-xl border-2 border-amber-300 shadow-xs animate-fade-in">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="p-2 bg-amber-600 text-white rounded-lg shadow-xs">
+                                                <Mail size={18} />
+                                            </span>
+                                            <div>
+                                                <h4 className="font-bold text-gray-900 text-sm">
+                                                    Instancias Responsables para Notificación Automática
+                                                </h4>
+                                                <p className="text-xs text-gray-600">
+                                                    Seleccione una, varias o las tres dependencias para remitir el expediente y observaciones:
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                                            <button
+                                                type="button"
+                                                onClick={() => setInstanciasSeguimiento(['seder_juridico', 'cefppenay', 'senasica'])}
+                                                className="text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors border border-amber-300"
+                                            >
+                                                Seleccionar Todas
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setInstanciasSeguimiento([])}
+                                                className="text-xs font-semibold text-gray-600 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+                                            >
+                                                Limpiar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-4">
+                                        {INSTANCIAS_DISPONIBLES.map(inst => {
+                                            const seleccionada = instanciasSeguimiento.includes(inst.id);
+                                            return (
+                                                <div
+                                                    key={inst.id}
+                                                    onClick={() => toggleInstancia(inst.id)}
+                                                    className={`cursor-pointer rounded-xl p-3.5 border-2 transition-all flex flex-col justify-between select-none ${
+                                                        seleccionada
+                                                            ? 'bg-white border-amber-500 shadow-md ring-2 ring-amber-400/20'
+                                                            : 'bg-white/70 border-gray-200 hover:border-amber-300 hover:bg-white'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                                            <span className={`text-[11px] font-bold uppercase px-2 py-0.5 rounded border ${inst.colorBadge}`}>
+                                                                {inst.nombre}
+                                                            </span>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={seleccionada}
+                                                                onChange={() => {}} // click en tarjeta
+                                                                className="w-4 h-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500 mt-0.5 pointer-events-none"
+                                                            />
+                                                        </div>
+                                                        <p className="text-xs font-bold text-gray-900 line-clamp-1">{inst.titular}</p>
+                                                        <p className="text-[11px] text-gray-500 mb-2">{inst.cargo}</p>
+                                                    </div>
+                                                    <div className="pt-2 border-t border-gray-100 space-y-1 text-[11px]">
+                                                        <p className="text-gray-700 flex items-center gap-1.5 truncate" title={inst.correo}>
+                                                            <span className="text-gray-400">✉</span> {inst.correo}
+                                                        </p>
+                                                        <p className="text-gray-700 flex items-center gap-1.5">
+                                                            <span className="text-gray-400">📞</span> {inst.telefono}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-amber-200/80">
+                                        <p className="text-xs">
+                                            {instanciasSeguimiento.length === 0 ? (
+                                                <span className="text-red-600 font-bold">⚠️ Debe seleccionar al menos una instancia responsable.</span>
+                                            ) : (
+                                                <span className="text-emerald-700 font-bold">✓ {instanciasSeguimiento.length} de 3 instancia(s) seleccionada(s) para recibir el correo oficial.</span>
+                                            )}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMostrarModalPreview(true)}
+                                            className="text-xs text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1.5 hover:underline"
+                                        >
+                                            <Eye size={15} /> Ver vista previa del correo oficial
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 border border-gray-200 rounded">
                                 <div className="space-y-3">
@@ -440,13 +589,33 @@ const ListaVerificacion = () => {
                     )}
                 </div>
 
-                <div className="hidden md:flex gap-2">
+                <div className="hidden md:flex items-center gap-2">
                     {[1, 2, 3, 4, 5, 6].map(num => (
-                        <div key={num} className={`w-3 h-3 rounded-full ${pagina === num ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                        <button
+                            key={num}
+                            type="button"
+                            onClick={() => setPagina(num)}
+                            title={`Ir a Página ${num}${num === 1 ? ' (Datos Generales)' : num === 6 ? ' (Conclusión y Cierre)' : ` (Checklist parte ${num - 1})`}`}
+                            className={`transition-all rounded-full ${
+                                pagina === num
+                                    ? 'w-6 h-3 bg-blue-600 rounded-full'
+                                    : 'w-3 h-3 bg-gray-300 hover:bg-blue-400 hover:scale-125'
+                            }`}
+                        />
                     ))}
                 </div>
 
                 <div className="flex gap-2 items-center">
+                    {pagina < 6 && (
+                        <button
+                            type="button"
+                            onClick={() => setPagina(6)}
+                            className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-full shadow hover:shadow-md flex items-center gap-1.5 text-xs font-bold transition-all animate-pulse"
+                            title="Saltar directamente a la Conclusión, Observaciones y Cierre (Página 6)"
+                        >
+                            SALTAR AL FINAL <ChevronsRight size={18} />
+                        </button>
+                    )}
                     {pagina < 6 ? (
                         <button onClick={() => setPagina(pagina + 1)} className="bg-blue-800 text-white px-4 py-2 rounded-full shadow hover:bg-blue-900 flex items-center gap-2 text-sm font-bold">
                             SIGUIENTE <ChevronRight size={20} />
@@ -493,6 +662,72 @@ const ListaVerificacion = () => {
                     )}
                 </div>
             </div>
+
+            {/* Modal de Vista Previa del Correo Oficial */}
+            {mostrarModalPreview && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200">
+                        <div className="bg-gradient-to-r from-red-900 to-red-800 p-4 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Mail size={20} className="text-amber-400" />
+                                <h3 className="font-bold text-sm md:text-base">Vista Previa: Correo Oficial de Seguimiento</h3>
+                            </div>
+                            <button
+                                onClick={() => setMostrarModalPreview(false)}
+                                className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="p-5 max-h-[70vh] overflow-y-auto space-y-4 bg-gray-50 border-b border-gray-200">
+                            <div className="bg-white p-4 rounded-xl border border-gray-300 shadow-xs text-xs font-mono whitespace-pre-wrap leading-relaxed text-gray-800">
+{`A quien corresponda:
+Por medio del presente, el Sistema Estatal de Información de Origen y Trazabilidad (SEIOT) informa que, como resultado de la supervisión realizada a la PSG que se detalla a continuación, se determinó que requiere seguimiento:
+
+PSG: ${contexto?.datosPsg?.psg || contexto?.folio || 'N/D'}
+Nombre o razón social: ${datosPsg?.nombre_titular || datosPsg?.representante || 'N/D'}
+Municipio: ${datosPsg?.municipio || 'N/D'}
+Fecha de supervisión: ${fecha || new Date().toLocaleDateString('es-MX')}
+Supervisor: ${contexto?.datosSupervisor?.nombre || supervisor || 'N/D'}
+Instancias seleccionadas para seguimiento: ${
+    instanciasSeguimiento.length > 0
+        ? instanciasSeguimiento.map(id => INSTANCIAS_DISPONIBLES.find(i => i.id === id)?.nombre).join(' / ')
+        : '[NINGUNA INSTANCIA SELECCIONADA AÚN]'
+}
+Motivo u observaciones: ${observaciones.trim() || '[Sin observaciones registradas]'}
+
+Se solicita a las instancias señaladas revisar la información, realizar las acciones que correspondan conforme a sus atribuciones y registrar en el SEIOT el seguimiento y, en su caso, la atención brindada.
+
+Para consultar el expediente y las observaciones de la supervisión, ingrese al siguiente enlace:
+[ENLACE DIRECTO AL EXPEDIENTE EN EL SEIOT]
+
+--------------------------------------------------
+ACCESO PERMANENTE AL PORTAL SEIOT:
+Portal web: ${window.location.origin}/login
+Usuario asignado: [USUARIO_INSTANCIA]
+Contraseña inicial: [CONTRASEÑA_TEMPORAL]
+--------------------------------------------------
+
+Este correo fue generado automáticamente por el SEIOT. Favor de no responder a esta dirección.`}
+                            </div>
+                            
+                            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-amber-900 text-xs">
+                                💡 <strong>Nota del Sistema:</strong> Cada una de las {instanciasSeguimiento.length || 0} instancia(s) seleccionada(s) recibirá este correo con su enlace directo exclusivo para acceder al expediente y registrar su dictamen.
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 bg-white flex justify-end">
+                            <button
+                                onClick={() => setMostrarModalPreview(false)}
+                                className="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-bold text-xs shadow"
+                            >
+                                Cerrar Vista Previa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

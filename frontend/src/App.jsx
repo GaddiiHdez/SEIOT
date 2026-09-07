@@ -17,6 +17,7 @@ import AdminUsuarios from './pages/Admin/AdminUsuarios';
 import Consultas from './pages/Admin/Consultas';
 import SuperAdminPanel from './pages/Admin/SuperAdminPanel';
 import ManualUsuario from './pages/Manual/ManualUsuario';
+import SeguimientoExpediente from './pages/SeguimientoExpediente';
 
 const SyncManager = () => {
   useEffect(() => {
@@ -84,8 +85,9 @@ function App() {
         <SyncManager />
         <BrowserRouter>
           <Routes>
-            {/* Ruta pública */}
+            {/* Rutas públicas */}
             <Route path="/login" element={<Login />} />
+            <Route path="/seguimiento" element={<SeguimientoExpediente />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Rutas protegidas */}

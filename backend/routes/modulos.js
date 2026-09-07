@@ -6,6 +6,7 @@ import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import { verificarToken } from './auth.js';
 import { registrarAuditLog } from '../utils/auditoria.js';
+import { generarTokenSeguimiento, enviarNotificacionesSeguimiento } from '../utils/mailer.js';
 
 const router = express.Router();
 
@@ -421,7 +422,7 @@ router.get('/modulo2/:visita_id', verificarToken, async (req, res) => {
 
 // ─── GUARDAR MÓDULO 3 ─────────────────────────────────────────────────────────
 router.post('/modulo3', verificarToken, async (req, res) => {
-    const { visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitud, longitud, capacidad_instalada, nombre_supervisor, fecha, hora_inicio, hora_termino, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo, respuestas, recomendaciones } = req.body;
+    const { visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitud, longitud, capacidad_instalada, nombre_supervisor, fecha, hora_inicio, hora_termino, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo, respuestas, recomendaciones, instancias_seguimiento } = req.body;
 
     if (!respuestas || typeof respuestas !== 'object') {
         return res.status(400).json({ error: 'El campo respuestas es requerido y debe ser un objeto.' });
@@ -442,10 +443,23 @@ router.post('/modulo3', verificarToken, async (req, res) => {
         const horaTerminoVal = hora_termino !== '' && hora_termino !== null ? hora_termino : null;
         const fechaVal = formatDateForDb(fecha);
 
+        // Gestionar token de seguimiento para acceso directo
+        let tokenSeguimiento = null;
+        if (requiere_seguimiento) {
+            const existingM3 = await client.query('SELECT token_seguimiento FROM modulo3_lista_verificacion WHERE visita_id = $1', [visita_id]);
+            if (existingM3.rows.length > 0 && existingM3.rows[0].token_seguimiento) {
+                tokenSeguimiento = existingM3.rows[0].token_seguimiento;
+            } else {
+                tokenSeguimiento = generarTokenSeguimiento();
+            }
+        }
+
+        const instanciasArray = (requiere_seguimiento && Array.isArray(instancias_seguimiento)) ? instancias_seguimiento : [];
+
         await client.query(
             `INSERT INTO modulo3_lista_verificacion 
-            (visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitud, longitud, capacidad_instalada, nombre_supervisor, fecha, hora_inicio, hora_termino, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+            (visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitud, longitud, capacidad_instalada, nombre_supervisor, fecha, hora_inicio, hora_termino, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo, instancias_notificadas, token_seguimiento)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
             ON CONFLICT (visita_id)
             DO UPDATE SET
                 nombre_psg = EXCLUDED.nombre_psg,
@@ -470,8 +484,10 @@ router.post('/modulo3', verificarToken, async (req, res) => {
                 nombre_testigo = EXCLUDED.nombre_testigo,
                 domicilio_testigo = EXCLUDED.domicilio_testigo,
                 tipo_id_testigo = EXCLUDED.tipo_id_testigo,
-                numero_id_testigo = EXCLUDED.numero_id_testigo`,
-            [visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitudVal, longitudVal, capacidadVal, nombre_supervisor, fechaVal, horaInicioVal, horaTerminoVal, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo]
+                numero_id_testigo = EXCLUDED.numero_id_testigo,
+                instancias_notificadas = EXCLUDED.instancias_notificadas,
+                token_seguimiento = COALESCE(EXCLUDED.token_seguimiento, modulo3_lista_verificacion.token_seguimiento)`,
+            [visita_id, nombre_psg, tipo_psg, nombre_titular, telefono, municipio, localidad, latitudVal, longitudVal, capacidadVal, nombre_supervisor, fechaVal, horaInicioVal, horaTerminoVal, observaciones, cumple, presenta_observaciones, requiere_seguimiento, responsable_psg, responsable_supervisor, nombre_testigo, domicilio_testigo, tipo_id_testigo, numero_id_testigo, instanciasArray, tokenSeguimiento]
         );
 
         const entries = Object.entries(respuestas);
@@ -509,12 +525,36 @@ router.post('/modulo3', verificarToken, async (req, res) => {
             registroId: String(visita_id),
             detalles: {
                 modulo: 3,
-                folio: visita.folio
+                folio: visita.folio,
+                requiere_seguimiento: !!requiere_seguimiento,
+                instancias_notificadas: instanciasArray
             }
         });
 
         await client.query('COMMIT');
-        res.json({ mensaje: 'Módulo 3 guardado correctamente' });
+
+        // Detonar el envío de correos en segundo plano si se requiere seguimiento y hay instancias
+        if (requiere_seguimiento && instanciasArray.length > 0 && tokenSeguimiento) {
+            enviarNotificacionesSeguimiento({
+                visitaId: visita_id,
+                folio: visita.folio,
+                datosPsg: {
+                    psg: visita.psg,
+                    nombre_titular,
+                    municipio,
+                    localidad,
+                    telefono
+                },
+                supervisor: nombre_supervisor,
+                fecha,
+                observaciones,
+                instanciasSeleccionadas: instanciasArray,
+                tokenSeguimiento,
+                usuarioEmisor: req.usuario
+            }).catch(err => console.error('❌ Error asíncrono al enviar correos de seguimiento:', err));
+        }
+
+        res.json({ mensaje: 'Módulo 3 guardado correctamente', token_seguimiento: tokenSeguimiento });
 
     } catch (error) {
         if (client) await client.query('ROLLBACK');
@@ -884,6 +924,179 @@ router.get('/modulo6/:visita_id', verificarToken, async (req, res) => {
 
     } catch (error) {
         console.error('Error obtener módulo 6:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// ─── ENDPOINTS DE SEGUIMIENTO (ACCESO POR TOKEN DIRECTO PARA INSTANCIAS) ──────
+
+// Consultar expediente completo mediante token de seguimiento
+router.get('/seguimiento/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        if (!token) return res.status(400).json({ error: 'Token requerido.' });
+
+        const m3Query = await pool.query(
+            `SELECT m3.*, v.folio, v.psg, v.estado_visita, v.creado_en as fecha_creacion,
+                    p.nombre_titular as psg_titular, p.representante as psg_representante,
+                    p.municipio as psg_municipio, p.localidad as psg_localidad,
+                    p.domicilio as psg_domicilio, p.telefono as psg_telefono,
+                    p.especie, p.tipo_explotacion
+             FROM modulo3_lista_verificacion m3
+             JOIN visitas v ON v.id = m3.visita_id
+             LEFT JOIN excel_psg p ON p.clave_psg = v.psg
+             WHERE m3.token_seguimiento = $1`,
+            [token]
+        );
+
+        if (m3Query.rows.length === 0) {
+            return res.status(404).json({ error: 'Expediente no encontrado o enlace de seguimiento no válido.' });
+        }
+
+        const datosM3 = m3Query.rows[0];
+        const visitaId = datosM3.visita_id;
+
+        // Obtener checklist de preguntas
+        const checklistQuery = await pool.query(
+            'SELECT pregunta_id, respuesta, observacion FROM modulo3_checklist WHERE visita_id = $1 ORDER BY pregunta_id ASC',
+            [visitaId]
+        );
+
+        // Obtener historial de atenciones registradas
+        const atencionesQuery = await pool.query(
+            'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
+            [visitaId]
+        );
+
+        // Obtener lista de documentos firmados disponibles
+        const docsQuery = await pool.query(
+            'SELECT id, modulo, nombre_archivo, fecha_subida FROM documentos_firmados WHERE visita_id = $1 ORDER BY modulo ASC',
+            [visitaId]
+        );
+
+        res.json({
+            expediente: {
+                visita_id: visitaId,
+                folio: datosM3.folio,
+                psg: datosM3.psg,
+                estado_visita: datosM3.estado_visita,
+                fecha_creacion: datosM3.fecha_creacion,
+                psg_datos: {
+                    titular: datosM3.psg_titular || datosM3.nombre_titular,
+                    representante: datosM3.psg_representante,
+                    municipio: datosM3.psg_municipio || datosM3.municipio,
+                    localidad: datosM3.psg_localidad || datosM3.localidad,
+                    domicilio: datosM3.psg_domicilio,
+                    telefono: datosM3.psg_telefono || datosM3.telefono,
+                    especie: datosM3.especie,
+                    tipo_explotacion: datosM3.tipo_explotacion
+                },
+                modulo3: {
+                    fecha: datosM3.fecha,
+                    hora_inicio: datosM3.hora_inicio,
+                    hora_termino: datosM3.hora_termino,
+                    nombre_supervisor: datosM3.nombre_supervisor,
+                    observaciones: datosM3.observaciones,
+                    cumple: datosM3.cumple,
+                    presenta_observaciones: datosM3.presenta_observaciones,
+                    requiere_seguimiento: datosM3.requiere_seguimiento,
+                    instancias_notificadas: datosM3.instancias_notificadas || []
+                },
+                checklist: checklistQuery.rows,
+                atenciones: atencionesQuery.rows,
+                documentos_firmados: docsQuery.rows
+            }
+        });
+    } catch (error) {
+        console.error('Error consultar seguimiento por token:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// Registrar atención / oficio de seguimiento por parte de la dependencia
+router.post('/seguimiento/:token/atender', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas } = req.body;
+
+        if (!acciones_tomadas || !instancia) {
+            return res.status(400).json({ error: 'La instancia y las acciones tomadas son obligatorias.' });
+        }
+
+        const m3Query = await pool.query(
+            'SELECT m3.visita_id, v.folio FROM modulo3_lista_verificacion m3 JOIN visitas v ON v.id = m3.visita_id WHERE m3.token_seguimiento = $1',
+            [token]
+        );
+
+        if (m3Query.rows.length === 0) {
+            return res.status(404).json({ error: 'Token de seguimiento inválido.' });
+        }
+
+        const { visita_id, folio } = m3Query.rows[0];
+
+        const insertQuery = await pool.query(
+            `INSERT INTO modulo3_seguimiento_atencion 
+            (visita_id, instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *`,
+            [visita_id, instancia, nombre_responsable || '', cargo_responsable || '', oficio_referencia || '', acciones_tomadas]
+        );
+
+        await registrarAuditLog({
+            usuarioId: null,
+            usuarioNombre: nombre_responsable || instancia,
+            usuarioUsername: `ext_${instancia}`,
+            accion: 'ATENCION_SEGUIMIENTO',
+            tablaAfectada: 'modulo3_seguimiento_atencion',
+            registroId: String(insertQuery.rows[0].id),
+            detalles: {
+                visita_id,
+                folio,
+                instancia,
+                oficio_referencia
+            }
+        });
+
+        res.json({
+            mensaje: 'Atención de seguimiento registrada exitosamente.',
+            atencion: insertQuery.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error registrar atencion seguimiento:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// Descargar archivo firmado autorizado por token de seguimiento
+router.get('/seguimiento/:token/archivo/:modulo', async (req, res) => {
+    try {
+        const { token, modulo } = req.params;
+        const m3Query = await pool.query(
+            'SELECT visita_id FROM modulo3_lista_verificacion WHERE token_seguimiento = $1',
+            [token]
+        );
+        if (m3Query.rows.length === 0) {
+            return res.status(403).json({ error: 'Acceso no autorizado.' });
+        }
+        const visitaId = m3Query.rows[0].visita_id;
+
+        const docQuery = await pool.query(
+            'SELECT ruta_archivo, nombre_archivo FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
+            [visitaId, modulo]
+        );
+        if (docQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Documento no encontrado.' });
+        }
+
+        const { ruta_archivo, nombre_archivo } = docQuery.rows[0];
+        const fullPath = path.resolve(ruta_archivo);
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ error: 'El archivo físico no se encuentra disponible.' });
+        }
+        res.download(fullPath, nombre_archivo);
+    } catch (error) {
+        console.error('Error descargar archivo por seguimiento:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
