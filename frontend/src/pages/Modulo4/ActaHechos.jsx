@@ -416,7 +416,7 @@ const ActaHechos = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && !soloVista && <button 
+                            {puedeDescargar && <button 
                                 onClick={() => generarPdfModulo4({
                                     acta_no: actaNo,
                                     folio,

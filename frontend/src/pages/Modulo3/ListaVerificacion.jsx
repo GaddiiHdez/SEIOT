@@ -640,7 +640,7 @@ const ListaVerificacion = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && !soloVista && <button 
+                            {puedeDescargar && <button 
                                 onClick={() => generarPdfModulo3({
                                     nombre_psg: datosPsg.nombre_titular,
                                     tipo_psg: tipoPsg,

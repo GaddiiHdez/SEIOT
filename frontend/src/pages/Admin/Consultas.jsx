@@ -467,11 +467,20 @@ const Consultas = () => {
             const res = await apiFetch(`/api/modulos/firmado/${visitaDetalle.visita_id}/${moduloId}`);
             if (res.ok) {
                 const data = await res.json();
-                const token = localStorage.getItem('seiot_token');
-                const url = `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/uploads/documentos_firmados/${data.nombre_archivo}?token=${token}`;
+                const resPdf = await apiFetch(`/uploads/documentos_firmados/${data.nombre_archivo}`);
+                if (!resPdf || !resPdf.ok) {
+                    if (resPdf?.status === 404) {
+                        alert('⚠️ El archivo físico no existe en el servidor. Puede haberse eliminado durante un reinicio del backend en Render (almacenamiento temporal). Por favor, vuelve a subir el PDF firmado.');
+                    } else {
+                        alert('No tienes permiso para ver este documento o tu sesión ha expirado.');
+                    }
+                    return;
+                }
+                const blob = await resPdf.blob();
+                const url = window.URL.createObjectURL(blob);
                 window.open(url, '_blank');
             } else {
-                alert('No se pudo cargar el PDF firmado.');
+                alert('No se pudo encontrar el registro del PDF firmado.');
             }
         } catch (err) {
             console.error('Error abriendo PDF firmado:', err);

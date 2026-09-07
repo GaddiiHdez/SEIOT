@@ -399,7 +399,7 @@ const ActaSupervision = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && !soloVista && <button
+                            {puedeDescargar && <button
                                 onClick={() => generarPdfModulo5({
                                     acta_no: actaNo,
                                     folio,

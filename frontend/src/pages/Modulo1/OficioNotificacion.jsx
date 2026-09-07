@@ -244,7 +244,7 @@ const Notificacion = () => {
             {/* BARRA DE NAVEGACIÓN INFERIOR */}
             <div className="max-w-4xl mx-auto mt-6 flex flex-wrap justify-between items-center bg-white p-4 rounded-b-xl shadow-md border border-gray-200 gap-4">
                 <div className="flex gap-2">
-                    {puedeDescargar && !soloVista && <button 
+                    {puedeDescargar && <button 
                         onClick={() => generarPdfModulo1({
                             oficio_no: folio,
                             fecha_emision: fechaEmision,

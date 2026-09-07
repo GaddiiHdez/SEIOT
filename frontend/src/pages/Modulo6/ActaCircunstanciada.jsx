@@ -522,7 +522,7 @@ const ActaCircunstanciada = () => {
                                 <input type="file" accept=".smpbk" className="hidden" onChange={cargarBorrador} />
                             </label>
                             </>}
-                            {puedeDescargar && !soloVista && <button
+                            {puedeDescargar && <button
                                 onClick={(e) => { e.stopPropagation(); generarPdfModulo6({
                                     acta_no: actaNo,
                                     folio,
