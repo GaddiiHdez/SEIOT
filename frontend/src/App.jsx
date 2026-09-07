@@ -16,6 +16,7 @@ import ActaCircunstanciada from './pages/Modulo6/ActaCircunstanciada';
 import AdminUsuarios from './pages/Admin/AdminUsuarios';
 import Consultas from './pages/Admin/Consultas';
 import SuperAdminPanel from './pages/Admin/SuperAdminPanel';
+import NubeDisco from './pages/Admin/NubeDisco';
 import ManualUsuario from './pages/Manual/ManualUsuario';
 import SeguimientoExpediente from './pages/SeguimientoExpediente';
 
@@ -101,6 +102,7 @@ function App() {
           <Route path="/admin/usuarios" element={<RutaProtegida><AdminUsuarios /></RutaProtegida>} />
           <Route path="/admin/consultas" element={<RutaProtegida><Consultas /></RutaProtegida>} />
           <Route path="/admin/super" element={<RutaProtegida><SuperAdminPanel /></RutaProtegida>} />
+          <Route path="/admin/nube" element={<RutaProtegida><NubeDisco /></RutaProtegida>} />
           <Route path="/manual" element={<RutaProtegida><ManualUsuario /></RutaProtegida>} />
         </Routes>
       </BrowserRouter>

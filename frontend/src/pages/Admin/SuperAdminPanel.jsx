@@ -5,7 +5,7 @@ import { apiFetch } from '../../utils/api.js';
 import { 
     ShieldAlert, Trash2, AlertTriangle, KeyRound, Loader2, Download, 
     Upload, RefreshCw, Save, Calendar, User, Eye, Search, Filter, 
-    ChevronLeft, ChevronRight, BookOpen, Clock, X 
+    ChevronLeft, ChevronRight, BookOpen, Clock, X, Cloud 
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
@@ -383,8 +383,8 @@ const SuperAdminPanel = () => {
                         </div>
                     </div>
 
-                    {/* Selector de Pestañas */}
-                    <div className="bg-slate-950/80 p-1 rounded-xl border border-slate-800 flex shadow-inner">
+                    {/* Selector de Pestañas y Enlace a Nube */}
+                    <div className="bg-slate-950/80 p-1 rounded-xl border border-slate-800 flex items-center shadow-inner gap-1">
                         <button
                             onClick={() => { setTabActiva('mantenimiento'); setResultado(null); }}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
@@ -404,6 +404,13 @@ const SuperAdminPanel = () => {
                             }`}
                         >
                             <BookOpen size={12} className="inline mr-1.5" /> Bitácora (Auditoría)
+                        </button>
+                        <button
+                            onClick={() => navigate('/admin/nube')}
+                            className="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-red-800 to-red-700 hover:from-red-700 hover:to-red-600 text-amber-200 border border-amber-500/40 shadow flex items-center gap-1.5"
+                            title="Abrir Explorador de Disco Persistente de Render (Nube SEIOT)"
+                        >
+                            <Cloud size={13} className="text-amber-400" /> Nube SEIOT (Disco)
                         </button>
                     </div>
                 </div>
@@ -464,7 +471,7 @@ const SuperAdminPanel = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button
                                     onClick={handleDownloadBackup}
                                     disabled={!claveBackup.trim() || loadingBackup}
@@ -476,7 +483,7 @@ const SuperAdminPanel = () => {
                                 >
                                     {loadingBackup ? (
                                         <>
-                                            <Loader2 className="animate-spin" size={14} /> GENERANDO DUMP SQL NATIVO...
+                                            <Loader2 className="animate-spin" size={14} /> GENERANDO DUMP SQL...
                                         </>
                                     ) : (
                                         <>
@@ -524,6 +531,14 @@ const SuperAdminPanel = () => {
                                             <Upload size={14} /> SUBIR PDFs AL DISCO (.ZIP)
                                         </>
                                     )}
+                                </button>
+
+                                <button
+                                    onClick={() => navigate('/admin/nube')}
+                                    className="font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white shadow-md shadow-red-950/40 border border-amber-500/30"
+                                    title="Abrir la interfaz visual de la Nube SEIOT para explorar, visualizar y gestionar los archivos en el disco de Render"
+                                >
+                                    <Cloud size={14} className="text-amber-400" /> ABRIR NUBE SEIOT (DISCO)
                                 </button>
                             </div>
                         </div>

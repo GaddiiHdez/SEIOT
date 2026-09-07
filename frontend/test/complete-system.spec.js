@@ -21,7 +21,7 @@ test.describe('Prueba de Sistema de Extremo a Extremo (E2E) - SEIOT', () => {
 
     // Validar acceso al Dashboard
     await expect(page).toHaveURL(/\/dashboard/);
-    await expect(page.locator('h2:has-text("1. IDENTIFICACIÓN DEL PSG")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Identificación del PSG")')).toBeVisible();
 
     // ── STEP 2: CREAR NUEVA VISITA ──
     console.log('Buscando PSG e iniciando nueva visita...');

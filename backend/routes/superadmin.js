@@ -11,7 +11,7 @@ const fsPromises = fs.promises;
 import path from 'path';
 import { verificarToken } from './auth.js';
 import { registrarAuditLog } from '../utils/auditoria.js';
-import { getUploadsDir } from '../utils/storage.js';
+import { getUploadsDir, getDiskStats, findDocumentoFirmado } from '../utils/storage.js';
 
 const execAsync = promisify(exec);
 const router = express.Router();
@@ -540,6 +540,408 @@ router.post('/limpiar-disco-pdfs', verificarToken, async (req, res) => {
     } catch (e) {
         console.error('Error limpiando disco de PDFs:', e);
         res.status(500).json({ error: e.message });
+    }
+});
+
+// ============================================================================
+// ─── NUBE SEIOT: EXPLORADOR Y GESTOR DEL DISCO PERSISTENTE (SOLO SUPERADMIN) ─
+// ============================================================================
+
+// Helper de formateo de bytes legible
+function formatearBytes(bytes, decimals = 2) {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// 1. OBTENER ESTADO Y MÉTRICAS DEL DISCO VIRTUAL (SUPERADMIN)
+router.get('/disco/estado', verificarToken, async (req, res) => {
+    if (!req.usuario?.superadmin) {
+        return res.status(403).json({ error: 'Acceso denegado: Solo el SuperAdministrador tiene acceso a la Nube y Disco.' });
+    }
+
+    try {
+        const uploadsDir = getUploadsDir();
+        const diskStats = getDiskStats();
+
+        let totalPdfs = 0;
+        let tamanoTotalPdfs = 0;
+
+        if (fs.existsSync(uploadsDir)) {
+            const files = await fsPromises.readdir(uploadsDir);
+            for (const file of files) {
+                if (file.toLowerCase().endsWith('.pdf')) {
+                    try {
+                        const s = await fsPromises.stat(path.join(uploadsDir, file));
+                        if (s.isFile()) {
+                            totalPdfs++;
+                            tamanoTotalPdfs += s.size;
+                        }
+                    } catch {}
+                }
+            }
+        }
+
+        // Consultar cuántos registros hay en la base de datos
+        let totalRegistrosBD = 0;
+        try {
+            const dbCount = await pool.query('SELECT COUNT(*) FROM public.documentos_firmados');
+            totalRegistrosBD = parseInt(dbCount.rows[0]?.count || '0');
+        } catch {}
+
+        res.json({
+            ok: true,
+            discoMontado: diskStats.isMounted,
+            puntoMontaje: diskStats.mountPoint || uploadsDir,
+            rutaUploads: uploadsDir,
+            espacioTotalBytes: diskStats.totalBytes,
+            espacioTotal: formatearBytes(diskStats.totalBytes),
+            espacioUsadoBytes: diskStats.usedBytes,
+            espacioUsado: formatearBytes(diskStats.usedBytes),
+            espacioLibreBytes: diskStats.freeBytes,
+            espacioLibre: formatearBytes(diskStats.freeBytes),
+            porcentajeUso: diskStats.percentUsed,
+            totalArchivosDisco: totalPdfs,
+            tamanoArchivosDiscoBytes: tamanoTotalPdfs,
+            tamanoArchivosDisco: formatearBytes(tamanoTotalPdfs),
+            totalRegistrosBD
+        });
+    } catch (e) {
+        console.error('Error al consultar estado del disco:', e);
+        res.status(500).json({ error: 'Error al consultar estado del disco: ' + e.message });
+    }
+});
+
+// 2. LISTAR TODOS LOS ARCHIVOS DEL DISCO CON CRUCE DE BASE DE DATOS
+router.get('/disco/archivos', verificarToken, async (req, res) => {
+    if (!req.usuario?.superadmin) {
+        return res.status(403).json({ error: 'Acceso denegado: Solo el SuperAdministrador tiene acceso a la Nube y Disco.' });
+    }
+
+    try {
+        const uploadsDir = getUploadsDir();
+        const archivosEnDisco = [];
+        const setArchivosEnDisco = new Set();
+
+        // 1. Obtener registros de la BD con información de la visita
+        let dbRows = [];
+        try {
+            const dbResult = await pool.query(`
+                SELECT 
+                    df.id,
+                    df.visita_id,
+                    df.modulo,
+                    df.nombre_archivo,
+                    df.fecha_subida,
+                    v.folio,
+                    v.datos_psg
+                FROM public.documentos_firmados df
+                LEFT JOIN public.visitas v ON df.visita_id = v.id
+                ORDER BY df.id DESC
+            `);
+            dbRows = dbResult.rows || [];
+        } catch (dbErr) {
+            console.warn('Advertencia consultando documentos_firmados en BD:', dbErr.message);
+        }
+
+        const dbMap = new Map();
+        for (const row of dbRows) {
+            if (row.nombre_archivo) {
+                dbMap.set(row.nombre_archivo.trim(), row);
+            }
+        }
+
+        // 2. Leer archivos físicos en el disco
+        if (fs.existsSync(uploadsDir)) {
+            const files = await fsPromises.readdir(uploadsDir);
+            for (const file of files) {
+                const filePath = path.join(uploadsDir, file);
+                try {
+                    const stat = await fsPromises.stat(filePath);
+                    if (stat.isFile()) {
+                        setArchivosEnDisco.add(file);
+
+                        // Intentar deducir visita y módulo desde el nombre del archivo
+                        // Ejemplo: visita_65_modulo1_firmado.pdf
+                        let visitaId = null;
+                        let modulo = null;
+                        const matchVisita = file.match(/visita[_-](\d+)/i);
+                        if (matchVisita) visitaId = parseInt(matchVisita[1]);
+                        const matchModulo = file.match(/modulo[_-]?(\d+)/i);
+                        if (matchModulo) modulo = parseInt(matchModulo[1]);
+
+                        const dbInfo = dbMap.get(file);
+
+                        archivosEnDisco.push({
+                            nombre: file,
+                            tamanoBytes: stat.size,
+                            tamano: formatearBytes(stat.size),
+                            fechaModificacion: stat.mtime,
+                            enBaseDatos: !!dbInfo,
+                            visitaId: dbInfo?.visita_id || visitaId,
+                            modulo: dbInfo?.modulo || modulo,
+                            folio: dbInfo?.folio || null,
+                            empresa: dbInfo?.datos_psg?.nombre_empresa || null,
+                            fechaSubidaBD: dbInfo?.fecha_subida || null
+                        });
+                    }
+                } catch {}
+            }
+        }
+
+        // 3. Identificar registros en BD cuyos archivos físicos no están en el disco
+        const registrosSinArchivo = [];
+        for (const row of dbRows) {
+            if (!setArchivosEnDisco.has(row.nombre_archivo)) {
+                registrosSinArchivo.push({
+                    id: row.id,
+                    visitaId: row.visita_id,
+                    modulo: row.modulo,
+                    nombreArchivo: row.nombre_archivo,
+                    folio: row.folio,
+                    empresa: row.datos_psg?.nombre_empresa || null,
+                    fechaSubida: row.fecha_subida
+                });
+            }
+        }
+
+        // Ordenar archivos en disco por fecha de modificación más reciente primero
+        archivosEnDisco.sort((a, b) => new Date(b.fechaModificacion) - new Date(a.fechaModificacion));
+
+        res.json({
+            ok: true,
+            totalEnDisco: archivosEnDisco.length,
+            totalSinArchivo: registrosSinArchivo.length,
+            archivos: archivosEnDisco,
+            registrosSinArchivo,
+            rutaUploads: uploadsDir
+        });
+
+    } catch (e) {
+        console.error('Error listando archivos del disco:', e);
+        res.status(500).json({ error: 'Error al listar archivos del disco: ' + e.message });
+    }
+});
+
+// 3. SUBIR ARCHIVOS (PDFs MÚLTIPLES O ARCHIVO ZIP) DIRECTAMENTE AL DISCO
+router.post('/disco/subir', verificarToken, uploadRestore.array('archivos', 100), async (req, res) => {
+    if (!req.usuario?.superadmin) {
+        return res.status(403).json({ error: 'Acceso denegado: Solo el SuperAdministrador tiene acceso a la Nube y Disco.' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No se recibieron archivos para subir.' });
+    }
+
+    try {
+        const uploadsDir = getUploadsDir();
+        await fsPromises.mkdir(uploadsDir, { recursive: true });
+
+        const archivosProcesados = [];
+
+        for (const file of req.files) {
+            const originalName = file.originalname;
+            const originalLower = originalName.toLowerCase();
+
+            // CASO A: Archivo ZIP
+            if (originalLower.endsWith('.zip') || file.mimetype.includes('zip')) {
+                const zip = new AdmZip(file.buffer);
+                const entries = zip.getEntries();
+                for (const entry of entries) {
+                    if (!entry.isDirectory && entry.entryName.toLowerCase().endsWith('.pdf')) {
+                        const baseName = path.basename(entry.entryName);
+                        if (baseName) {
+                            const destPath = path.join(uploadsDir, baseName);
+                            await fsPromises.writeFile(destPath, entry.getData());
+                            archivosProcesados.push(baseName);
+                            await autoVincularDocumentoBD(baseName, destPath);
+                        }
+                    }
+                }
+            } 
+            // CASO B: Archivo PDF individual
+            else if (originalLower.endsWith('.pdf') || file.mimetype.includes('pdf')) {
+                const destPath = path.join(uploadsDir, originalName);
+                await fsPromises.writeFile(destPath, file.buffer);
+                archivosProcesados.push(originalName);
+                await autoVincularDocumentoBD(originalName, destPath);
+            }
+        }
+
+        // Registrar auditoría
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre || 'SuperAdmin',
+            accion: 'SUBIR_ARCHIVOS_DISCO',
+            tablaAfectada: 'documentos_firmados',
+            detalles: { cantidad: archivosProcesados.length, archivos: archivosProcesados.slice(0, 20) },
+            ip: req.ip || req.connection.remoteAddress
+        });
+
+        res.json({
+            ok: true,
+            mensaje: `Se subieron exitosamente ${archivosProcesados.length} archivo(s) al disco persistente.`,
+            total: archivosProcesados.length,
+            archivos: archivosProcesados
+        });
+
+    } catch (e) {
+        console.error('Error al subir archivos al disco:', e);
+        res.status(500).json({ error: 'Error al procesar la subida: ' + e.message });
+    }
+});
+
+// Helper para autovincular con PostgreSQL si el nombre cumple visita_X_moduloY_firmado.pdf
+async function autoVincularDocumentoBD(nombreArchivo, rutaArchivo) {
+    try {
+        const match = nombreArchivo.match(/visita_(\d+)_modulo(\d+)_firmado\.pdf/i);
+        if (match) {
+            const visitaId = parseInt(match[1]);
+            const modulo = parseInt(match[2]);
+
+            // Verificar si la visita existe
+            const existeVisita = await pool.query('SELECT id FROM public.visitas WHERE id = $1', [visitaId]);
+            if (existeVisita.rows.length === 0) return;
+
+            // Verificar si ya existe registro en documentos_firmados
+            const existeDoc = await pool.query(
+                'SELECT id FROM public.documentos_firmados WHERE visita_id = $1 AND modulo = $2',
+                [visitaId, modulo]
+            );
+
+            if (existeDoc.rows.length > 0) {
+                await pool.query(
+                    'UPDATE public.documentos_firmados SET nombre_archivo = $1, ruta_archivo = $2, fecha_subida = NOW() WHERE visita_id = $3 AND modulo = $4',
+                    [nombreArchivo, rutaArchivo, visitaId, modulo]
+                );
+            } else {
+                await pool.query(
+                    'INSERT INTO public.documentos_firmados (visita_id, modulo, nombre_archivo, ruta_archivo, fecha_subida) VALUES ($1, $2, $3, $4, NOW())',
+                    [visitaId, modulo, nombreArchivo, rutaArchivo]
+                );
+            }
+        }
+    } catch (err) {
+        console.warn('Error en autoVincularDocumentoBD:', err.message);
+    }
+}
+
+// 4. DESCARGAR O PREVISUALIZAR UN ARCHIVO ESPECÍFICO DEL DISCO (SUPERADMIN)
+router.get('/disco/descargar/:nombre', verificarToken, async (req, res) => {
+    if (!req.usuario?.superadmin) {
+        return res.status(403).json({ error: 'Acceso denegado: Solo el SuperAdministrador tiene acceso a la Nube y Disco.' });
+    }
+
+    const safeFilename = path.basename(req.params.nombre);
+    const resolvedPath = findDocumentoFirmado(safeFilename);
+
+    if (!resolvedPath || !fs.existsSync(resolvedPath)) {
+        return res.status(404).json({ error: `Archivo "${safeFilename}" no encontrado físicamente en el disco persistente.` });
+    }
+
+    if (req.query.inline === 'true') {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+        return res.sendFile(resolvedPath);
+    }
+
+    res.download(resolvedPath, safeFilename);
+});
+
+// 5. DESCARGAR TODO EL CONTENIDO DEL DISCO EN UN ARCHIVO ZIP (BACKUP COMPLETO)
+router.get('/disco/descargar-todo', verificarToken, async (req, res) => {
+    if (!req.usuario?.superadmin) {
+        return res.status(403).json({ error: 'Acceso denegado: Solo el SuperAdministrador tiene acceso a la Nube y Disco.' });
+    }
+
+    try {
+        const uploadsDir = getUploadsDir();
+        if (!fs.existsSync(uploadsDir)) {
+            return res.status(400).json({ error: 'El directorio de almacenamiento aún no tiene archivos.' });
+        }
+
+        const files = await fsPromises.readdir(uploadsDir);
+        const pdfFiles = files.filter(f => f.toLowerCase().endsWith('.pdf'));
+
+        if (pdfFiles.length === 0) {
+            return res.status(400).json({ error: 'No hay archivos PDF en el disco para descargar.' });
+        }
+
+        const zip = new AdmZip();
+        for (const file of pdfFiles) {
+            const filePath = path.join(uploadsDir, file);
+            try {
+                if (fs.statSync(filePath).isFile()) {
+                    zip.addLocalFile(filePath);
+                }
+            } catch {}
+        }
+
+        const zipBuffer = zip.toBuffer();
+        const fechaHoy = new Date().toISOString().split('T')[0];
+        const zipName = `seiot-respaldo-disco-${fechaHoy}.zip`;
+
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
+        res.setHeader('Content-Length', zipBuffer.length);
+        res.send(zipBuffer);
+
+    } catch (e) {
+        console.error('Error al generar respaldo ZIP del disco:', e);
+        res.status(500).json({ error: 'Error al generar el respaldo ZIP: ' + e.message });
+    }
+});
+
+// 6. ELIMINAR UN ARCHIVO DEL DISCO PERSISTENTE (SUPERADMIN)
+router.delete('/disco/archivo/:nombre', verificarToken, async (req, res) => {
+    if (!req.usuario?.superadmin) {
+        return res.status(403).json({ error: 'Acceso denegado: Solo el SuperAdministrador tiene acceso a la Nube y Disco.' });
+    }
+
+    try {
+        const safeFilename = path.basename(req.params.nombre);
+        const uploadsDir = getUploadsDir();
+        const resolvedPath = findDocumentoFirmado(safeFilename) || path.join(uploadsDir, safeFilename);
+
+        let eliminadoFisico = false;
+        if (fs.existsSync(resolvedPath)) {
+            await fsPromises.unlink(resolvedPath);
+            eliminadoFisico = true;
+        }
+
+        // Si se especificó eliminar también de la base de datos
+        let eliminadoBD = false;
+        if (req.query.eliminarDeBD === 'true') {
+            const deleteResult = await pool.query(
+                'DELETE FROM public.documentos_firmados WHERE nombre_archivo = $1',
+                [safeFilename]
+            );
+            eliminadoBD = (deleteResult.rowCount || 0) > 0;
+        }
+
+        // Auditoría
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre || 'SuperAdmin',
+            accion: 'ELIMINAR_ARCHIVO_DISCO',
+            tablaAfectada: 'documentos_firmados',
+            detalles: { archivo: safeFilename, eliminadoFisico, eliminadoBD },
+            ip: req.ip || req.connection.remoteAddress
+        });
+
+        res.json({
+            ok: true,
+            mensaje: `El archivo "${safeFilename}" fue eliminado correctamente.`,
+            eliminadoFisico,
+            eliminadoBD
+        });
+
+    } catch (e) {
+        console.error('Error al eliminar archivo del disco:', e);
+        res.status(500).json({ error: 'Error al eliminar el archivo: ' + e.message });
     }
 });
 

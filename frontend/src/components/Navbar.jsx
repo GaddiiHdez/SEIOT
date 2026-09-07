@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, BarChart2, Users, ArrowLeft, X, Clock, ShieldAlert, Wrench, BookOpen } from 'lucide-react';
+import { LogOut, BarChart2, Users, ArrowLeft, X, Clock, ShieldAlert, Wrench, BookOpen, Cloud } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg';
 
@@ -73,6 +73,10 @@ const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupe
                   <>
                     <ShieldAlert size={16} className="text-red-400" /> Mantenimiento
                   </>
+                ) : path === '/admin/nube' ? (
+                  <>
+                    <Cloud size={16} className="text-amber-400" /> Nube SEIOT
+                  </>
                 ) : (
                   <>
                     <Users size={16} /> Gestión de Usuarios
@@ -106,13 +110,22 @@ const Navbar = ({ folioActivo, setFolioActivo, setPsgInput, setDatosPsg, setSupe
               </button>
             )}
             {usuario?.superadmin && (
-              <button 
-                onClick={() => navigate('/admin/super')} 
-                className="flex items-center justify-center text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 p-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
-                title="Mantenimiento de SuperAdmin"
-              >
-                <Wrench size={14} />
-              </button>
+              <>
+                <button 
+                  onClick={() => navigate('/admin/nube')} 
+                  className="flex items-center gap-1.5 text-xs bg-red-800/60 hover:bg-red-700/80 border border-amber-500/50 text-amber-300 px-3 py-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
+                  title="Nube SEIOT — Explorador de Disco Persistente"
+                >
+                  <Cloud size={14} /> Nube Disco
+                </button>
+                <button 
+                  onClick={() => navigate('/admin/super')} 
+                  className="flex items-center justify-center text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 p-2.5 rounded-lg font-bold transition-all duration-200 active:scale-95 shadow-sm"
+                  title="Mantenimiento de SuperAdmin"
+                >
+                  <Wrench size={14} />
+                </button>
+              </>
             )}
           </div>
         )}

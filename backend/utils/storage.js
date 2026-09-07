@@ -142,3 +142,38 @@ export const findDocumentoFirmado = (filename, rutaGuardada = null) => {
 
     return null;
 };
+
+/**
+ * Obtiene métricas de espacio y estado del volumen de almacenamiento
+ */
+export const getDiskStats = () => {
+    const dir = getUploadsDir();
+    const stats = {
+        totalBytes: 0,
+        freeBytes: 0,
+        usedBytes: 0,
+        percentUsed: 0,
+        mountPoint: null,
+        isMounted: false
+    };
+
+    try {
+        const mounts = getActiveMountPoints();
+        stats.mountPoint = mounts.length > 0 ? mounts[0] : null;
+        stats.isMounted = mounts.length > 0;
+
+        if (fs.statfsSync && fs.existsSync(dir)) {
+            const fsStat = fs.statfsSync(dir);
+            const total = fsStat.bsize * fsStat.blocks;
+            const free = fsStat.bsize * fsStat.bavail;
+            const used = total - free;
+            stats.totalBytes = total;
+            stats.freeBytes = free;
+            stats.usedBytes = used;
+            stats.percentUsed = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+        }
+    } catch (e) {
+        console.warn('[STORAGE] Error al calcular statfs:', e.message);
+    }
+    return stats;
+};
