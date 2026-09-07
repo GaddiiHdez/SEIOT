@@ -61,9 +61,36 @@ async function verificarAccesoVisita(req, res, visita_id, client = pool) {
         return null;
     }
     const visita = visitaCheck.rows[0];
-    const puedeVerOtros = req.usuario.superadmin || req.usuario.es_admin || req.usuario.permisos?.ver_visitas_otros;
-    if (!puedeVerOtros && (visita.capturista_id === null || visita.capturista_id !== req.usuario.id)) {
-        res.status(403).json({ error: 'No tienes permiso para modificar esta visita.' });
+
+    // Si es cuenta de seguimiento institucional
+    if (req.usuario && req.usuario.rol === 'seguimiento') {
+        // Bloquear cualquier modificación (POST, PUT, DELETE)
+        if (req.method !== 'GET') {
+            res.status(403).json({ error: 'Las cuentas institucionales de seguimiento son de sólo consulta y dictamen.' });
+            return null;
+        }
+        // Para consultas GET, validar que la visita esté asignada a su dependencia
+        const INSTANCIAS_MAP_USER = {
+            'juridico.seder': 'seder_juridico',
+            'cefp.penay': 'cefppenay',
+            'senasica.nayarit': 'senasica',
+            'henry.hernandez': 'test_henry'
+        };
+        const userInstancia = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
+        const m3Check = await client.query(
+            'SELECT 1 FROM modulo3_lista_verificacion WHERE visita_id = $1 AND $2 = ANY(instancias_notificadas)',
+            [visita_id, userInstancia]
+        );
+        if (m3Check.rows.length === 0) {
+            res.status(403).json({ error: 'Acceso denegado: Esta visita no ha sido canalizada a su dependencia.' });
+            return null;
+        }
+        return visita;
+    }
+
+    const puedeVerOtros = req.usuario?.superadmin || req.usuario?.es_admin || req.usuario?.permisos?.ver_visitas_otros;
+    if (!puedeVerOtros && (visita.capturista_id === null || visita.capturista_id !== req.usuario?.id)) {
+        res.status(403).json({ error: 'No tienes permiso para modificar o consultar esta visita.' });
         return null;
     }
     return visita;
@@ -955,7 +982,9 @@ router.get('/modulo6/:visita_id', verificarToken, async (req, res) => {
 
 // ─── ENDPOINTS DE SEGUIMIENTO (ACCESO POR TOKEN DIRECTO PARA INSTANCIAS) ──────
 
-// Consultar expediente completo mediante token de seguimiento
+// ─── ENDPOINTS DE SEGUIMIENTO (ACCESO POR TOKEN DIRECTO PARA INSTANCIAS) ──────
+
+// 1. Consultar expediente completo mediante token de seguimiento (con todos los módulos)
 router.get('/seguimiento/:token', async (req, res) => {
     try {
         const { token } = req.params;
@@ -963,6 +992,7 @@ router.get('/seguimiento/:token', async (req, res) => {
 
         const m3Query = await pool.query(
             `SELECT m3.*, v.folio, v.psg, v.estado_visita, v.fecha_inicio as fecha_creacion,
+                    v.seguimiento_atendido, v.dictamen_seguimiento, v.fecha_atencion_seguimiento,
                     p.razon_social as psg_titular, p.representante as psg_representante,
                     p.municipio as psg_municipio, p.localidad as psg_localidad,
                     p.domicilio as psg_domicilio, p.telefono as psg_telefono,
@@ -981,11 +1011,14 @@ router.get('/seguimiento/:token', async (req, res) => {
         const datosM3 = m3Query.rows[0];
         const visitaId = datosM3.visita_id;
 
-        // Obtener checklist de preguntas
-        const checklistQuery = await pool.query(
-            'SELECT pregunta_id, respuesta, observacion FROM modulo3_checklist WHERE visita_id = $1 ORDER BY pregunta_id ASC',
-            [visitaId]
-        );
+        // Obtener datos estructurados de todos los módulos de la visita
+        const [m1Res, m2Res, m4Res, m5Res, m6Res] = await Promise.all([
+            pool.query('SELECT fecha_emision, nombre_servidor, cargo_servidor, observaciones FROM modulo1_oficio_notificacion WHERE visita_id = $1', [visitaId]),
+            pool.query('SELECT fecha, nombre_ordena, cargo_ordena, nombre_titular, domicilio FROM modulo2_orden_supervision WHERE visita_id = $1', [visitaId]),
+            pool.query('SELECT acta_no, fecha, hora, hechos_observados, nombre_testigo1, nombre_testigo2 FROM modulo4_acta_hechos WHERE visita_id = $1', [visitaId]),
+            pool.query('SELECT acta_no, fecha, observaciones_detectadas, medidas_preventivas, manifestaciones FROM modulo5_acta_supervision WHERE visita_id = $1', [visitaId]),
+            pool.query('SELECT acta_no, fecha, irregularidades_detectadas, sanciones, hechos_articulos FROM modulo6_acta_circunstanciada WHERE visita_id = $1', [visitaId])
+        ]);
 
         // Obtener historial de atenciones registradas
         const atencionesQuery = await pool.query(
@@ -1006,6 +1039,9 @@ router.get('/seguimiento/:token', async (req, res) => {
                 psg: datosM3.psg,
                 estado_visita: datosM3.estado_visita,
                 fecha_creacion: datosM3.fecha_creacion,
+                seguimiento_atendido: datosM3.seguimiento_atendido || false,
+                dictamen_seguimiento: datosM3.dictamen_seguimiento || null,
+                fecha_atencion_seguimiento: datosM3.fecha_atencion_seguimiento || null,
                 psg_datos: {
                     titular: datosM3.psg_titular || datosM3.nombre_psg || datosM3.nombre_titular,
                     representante: datosM3.psg_representante || datosM3.nombre_titular,
@@ -1015,18 +1051,24 @@ router.get('/seguimiento/:token', async (req, res) => {
                     telefono: datosM3.psg_telefono || datosM3.telefono,
                     tipo_psg: datosM3.tipo_psg
                 },
-                modulo3: {
-                    fecha: datosM3.fecha,
-                    hora_inicio: datosM3.hora_inicio,
-                    hora_termino: datosM3.hora_termino,
-                    nombre_supervisor: datosM3.nombre_supervisor,
-                    observaciones: datosM3.observaciones,
-                    cumple: datosM3.cumple,
-                    presenta_observaciones: datosM3.presenta_observaciones,
-                    requiere_seguimiento: datosM3.requiere_seguimiento,
-                    instancias_notificadas: datosM3.instancias_notificadas || []
+                modulos: {
+                    modulo1: m1Res.rows[0] || null,
+                    modulo2: m2Res.rows[0] || null,
+                    modulo3: {
+                        fecha: datosM3.fecha,
+                        hora_inicio: datosM3.hora_inicio,
+                        hora_termino: datosM3.hora_termino,
+                        nombre_supervisor: datosM3.nombre_supervisor,
+                        observaciones: datosM3.observaciones,
+                        cumple: datosM3.cumple,
+                        presenta_observaciones: datosM3.presenta_observaciones,
+                        requiere_seguimiento: datosM3.requiere_seguimiento,
+                        instancias_notificadas: datosM3.instancias_notificadas || []
+                    },
+                    modulo4: m4Res.rows[0] || null,
+                    modulo5: m5Res.rows[0] || null,
+                    modulo6: m6Res.rows[0] || null
                 },
-                checklist: checklistQuery.rows,
                 atenciones: atencionesQuery.rows,
                 documentos_firmados: docsQuery.rows
             }
@@ -1037,11 +1079,11 @@ router.get('/seguimiento/:token', async (req, res) => {
     }
 });
 
-// Registrar atención / oficio de seguimiento por parte de la dependencia
+// 2. Registrar atención / dictamen oficial de seguimiento por parte de la dependencia
 router.post('/seguimiento/:token/atender', async (req, res) => {
     try {
         const { token } = req.params;
-        const { instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas } = req.body;
+        const { instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas, dictamen } = req.body;
 
         if (!acciones_tomadas || !instancia) {
             return res.status(400).json({ error: 'La instancia y las acciones tomadas son obligatorias.' });
@@ -1057,13 +1099,24 @@ router.post('/seguimiento/:token/atender', async (req, res) => {
         }
 
         const { visita_id, folio } = m3Query.rows[0];
+        const veredicto = dictamen || 'SOLVENTADO';
 
         const insertQuery = await pool.query(
             `INSERT INTO modulo3_seguimiento_atencion 
-            (visita_id, instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            (visita_id, instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas, dictamen, estatus)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'ATENDIDO')
             RETURNING *`,
-            [visita_id, instancia, nombre_responsable || '', cargo_responsable || '', oficio_referencia || '', acciones_tomadas]
+            [visita_id, instancia, nombre_responsable || '', cargo_responsable || '', oficio_referencia || '', acciones_tomadas, veredicto]
+        );
+
+        // Actualizar el estado de la visita para que el capturista y los supervisores vean el veredicto
+        await pool.query(
+            `UPDATE visitas SET 
+                seguimiento_atendido = true,
+                dictamen_seguimiento = $1,
+                fecha_atencion_seguimiento = NOW()
+            WHERE id = $2`,
+            [veredicto, visita_id]
         );
 
         await registrarAuditLog({
@@ -1077,18 +1130,101 @@ router.post('/seguimiento/:token/atender', async (req, res) => {
                 visita_id,
                 folio,
                 instancia,
+                dictamen: veredicto,
                 oficio_referencia
             }
         });
 
         res.json({
-            mensaje: 'Atención de seguimiento registrada exitosamente.',
+            mensaje: 'Atención y dictamen oficial de seguimiento registrados exitosamente.',
             atencion: insertQuery.rows[0]
         });
 
     } catch (error) {
         console.error('Error registrar atencion seguimiento:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// 3. Consultar la bandeja de expedientes asignados a la dependencia autenticada
+router.get('/seguimiento/mis-expedientes', verificarToken, async (req, res) => {
+    try {
+        if (req.usuario.rol !== 'seguimiento') {
+            return res.status(403).json({ error: 'Acceso exclusivo para cuentas institucionales de seguimiento.' });
+        }
+
+        // Mapeo de usuarios a instancia
+        const INSTANCIAS_MAP_USER = {
+            'juridico.seder': 'seder_juridico',
+            'cefp.penay': 'cefppenay',
+            'senasica.nayarit': 'senasica',
+            'henry.hernandez': 'test_henry'
+        };
+
+        const instanciaId = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
+
+        if (!instanciaId) {
+            return res.status(400).json({ error: 'No se encontró la instancia asignada a tu usuario.' });
+        }
+
+        // Consultar únicamente los expedientes canalizados a esta instancia
+        const expedientesQuery = await pool.query(
+            `SELECT 
+                v.id as visita_id,
+                v.folio,
+                v.psg,
+                v.fecha_inicio as fecha_supervision,
+                v.supervisor,
+                v.estado_visita,
+                v.seguimiento_atendido,
+                v.dictamen_seguimiento,
+                v.fecha_atencion_seguimiento,
+                p.razon_social,
+                p.municipio,
+                p.localidad,
+                p.tipo_psg,
+                p.telefono,
+                m3.token_seguimiento,
+                m3.fecha as m3_fecha,
+                m3.observaciones as m3_observaciones,
+                m3.instancias_notificadas
+             FROM modulo3_lista_verificacion m3
+             JOIN visitas v ON v.id = m3.visita_id
+             LEFT JOIN excel_psg p ON p.psg = v.psg
+             WHERE $1 = ANY(m3.instancias_notificadas)
+             ORDER BY v.fecha_inicio DESC`,
+            [instanciaId]
+        );
+
+        res.json({
+            ok: true,
+            instancia: instanciaId,
+            total: expedientesQuery.rows.length,
+            expedientes: expedientesQuery.rows
+        });
+
+    } catch (error) {
+        console.error('Error al consultar mis-expedientes:', error);
+        res.status(500).json({ error: 'Error al consultar expedientes asignados: ' + error.message });
+    }
+});
+
+// 4. Consultar historial de atenciones de una visita (para capturistas y administradores)
+router.get('/seguimiento/visita/:visita_id', verificarToken, async (req, res) => {
+    try {
+        const { visita_id } = req.params;
+        const atencionesQuery = await pool.query(
+            'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
+            [visita_id]
+        );
+        res.json({
+            ok: true,
+            visita_id,
+            atenciones: atencionesQuery.rows
+        });
+    } catch (error) {
+        console.error('Error al consultar atenciones de visita:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 

@@ -95,6 +95,9 @@ const generarFolioInterno = async (client, psg) => {
 
 // Crear nueva visita
 router.post('/visitas', verificarToken, async (req, res) => {
+    if (req.usuario.rol === 'seguimiento') {
+        return res.status(403).json({ error: 'Las dependencias de seguimiento no tienen autorización para iniciar visitas.' });
+    }
     const client = await pool.connect();
     try {
         let { folio, psg, supervisor } = req.body;
@@ -166,8 +169,24 @@ router.get('/visitas/buscar', verificarToken, async (req, res) => {
 
         const v = resultado.rows[0];
 
-        // Verificar permiso para ver visitas de otros
-        if (!puedeVerOtros && (v.capturista_id === null || v.capturista_id !== req.usuario.id)) {
+        // Si es cuenta de seguimiento institucional, sólo puede ver visitas asignadas a su dependencia
+        if (req.usuario.rol === 'seguimiento') {
+            const INSTANCIAS_MAP_USER = {
+                'juridico.seder': 'seder_juridico',
+                'cefp.penay': 'cefppenay',
+                'senasica.nayarit': 'senasica',
+                'henry.hernandez': 'test_henry'
+            };
+            const userInstancia = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
+            const m3Check = await pool.query(
+                'SELECT 1 FROM modulo3_lista_verificacion WHERE visita_id = $1 AND $2 = ANY(instancias_notificadas)',
+                [v.id, userInstancia]
+            );
+            if (m3Check.rows.length === 0) {
+                return res.status(403).json({ error: 'Acceso denegado: Esta visita no ha sido canalizada a su dependencia.' });
+            }
+        } else if (!puedeVerOtros && (v.capturista_id === null || v.capturista_id !== req.usuario.id)) {
+            // Verificar permiso para ver visitas de otros para usuarios normales
             return res.status(403).json({ error: 'No tienes permiso para ver visitas de otros usuarios.' });
         }
 
@@ -205,6 +224,9 @@ router.get('/visitas/buscar', verificarToken, async (req, res) => {
             visita_id: v.id,
             fecha: new Date(v.fecha_inicio).toLocaleDateString('es-MX'),
             estado_visita: v.estado_visita,
+            seguimiento_atendido: v.seguimiento_atendido || false,
+            dictamen_seguimiento: v.dictamen_seguimiento || null,
+            fecha_atencion_seguimiento: v.fecha_atencion_seguimiento || null,
             avance: {
                 modulo1: v.modulo1_completado || false,
                 modulo2: v.modulo2_completado || false,
@@ -224,7 +246,10 @@ router.get('/visitas/buscar', verificarToken, async (req, res) => {
 // ─── CONSULTAS CON FILTROS ────────────────────────────────────────────────────
 router.get('/consultas', verificarToken, async (req, res) => {
     try {
-        // Verificar permiso de consultas
+        // Verificar permiso de consultas (bloqueado para cuentas de seguimiento institucional)
+        if (req.usuario.rol === 'seguimiento') {
+            return res.status(403).json({ error: 'Las dependencias de seguimiento no tienen autorización para acceder al módulo general de consultas.' });
+        }
         const puedeConsultas = req.usuario.es_admin || req.usuario.permisos?.consultas;
         if (!puedeConsultas) {
             return res.status(403).json({ error: 'No tienes permiso para acceder a consultas.' });
@@ -318,11 +343,14 @@ router.get('/consultas', verificarToken, async (req, res) => {
                 v.modulo1_completado, v.modulo2_completado, v.modulo3_completado,
                 v.modulo4_completado, v.modulo5_completado, v.modulo6_completado,
                 v.estado_visita,
+                v.seguimiento_atendido, v.dictamen_seguimiento, v.fecha_atencion_seguimiento,
+                m3.requiere_seguimiento, m3.instancias_notificadas,
                 p.razon_social, p.municipio, p.localidad, p.tipo_psg,
                 u.nombre AS capturista_nombre
              FROM visitas v
              LEFT JOIN excel_psg p ON p.psg = v.psg
              LEFT JOIN usuarios u ON u.id = v.capturista_id
+             LEFT JOIN modulo3_lista_verificacion m3 ON m3.visita_id = v.id
              ${where}
              ORDER BY v.fecha_inicio DESC`;
 
@@ -350,7 +378,10 @@ router.get('/consultas', verificarToken, async (req, res) => {
 // ─── EXPORTAR TODO A EXCEL (datos completos) ─────────────────────────────────
 router.get('/consultas/exportar', verificarToken, async (req, res) => {
     try {
-        // Verificar permiso de consultas
+        // Verificar permiso de consultas (bloqueado para cuentas de seguimiento institucional)
+        if (req.usuario.rol === 'seguimiento') {
+            return res.status(403).json({ error: 'Las dependencias de seguimiento no tienen autorización para exportar datos generales.' });
+        }
         const puedeConsultas = req.usuario.es_admin || req.usuario.permisos?.consultas;
         if (!puedeConsultas) {
             return res.status(403).json({ error: 'No tienes permiso para exportar.' });

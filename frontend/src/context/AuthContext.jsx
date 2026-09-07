@@ -28,6 +28,7 @@ const AuthProvider = ({ children }) => {
                     es_admin: data.es_admin ?? prev?.es_admin,
                     superadmin: data.superadmin ?? prev?.superadmin ?? false,
                     rol: data.rol || prev?.rol,
+                    instancia: data.instancia || prev?.instancia,
                     permisos: {
                         ...(prev?.permisos || {}),
                         ...(data.permisos || {}),

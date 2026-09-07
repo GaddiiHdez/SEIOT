@@ -62,6 +62,33 @@ const ModalVistaRapida = ({
                         </div>
                     </div>
 
+                    {/* ESTATUS DE SEGUIMIENTO INSTITUCIONAL */}
+                    {visitaDetalle.requiere_seguimiento && (
+                        <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+                            visitaDetalle.seguimiento_atendido
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                : 'bg-amber-50 border-amber-200 text-amber-900'
+                        }`}>
+                            <div className="space-y-0.5">
+                                <span className="text-[9px] font-extrabold uppercase tracking-wider block opacity-75">
+                                    Seguimiento por Dependencias (Módulo 3)
+                                </span>
+                                <p className="font-bold text-xs">
+                                    {visitaDetalle.seguimiento_atendido 
+                                        ? `Dictamen Oficial: ${visitaDetalle.dictamen_seguimiento || 'Atendido'}`
+                                        : 'Pendiente de dictamen institucional'}
+                                </p>
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
+                                visitaDetalle.seguimiento_atendido
+                                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                                    : 'bg-amber-100 border-amber-300 text-amber-800'
+                            }`}>
+                                {visitaDetalle.seguimiento_atendido ? 'Dictaminado' : 'En Trámite'}
+                            </span>
+                        </div>
+                    )}
+
                     {/* GRID DE MÓDULOS */}
                     <div>
                         <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block mb-3 pl-1">Expediente por Módulos</span>

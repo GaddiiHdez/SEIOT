@@ -38,7 +38,13 @@ const Login = () => {
             login(data.token, data.usuario);
 
             // Redirigir según rol
-            navigate('/dashboard', { replace: true });
+            if (data.usuario.rol === 'seguimiento') {
+                navigate('/seguimiento/bandeja', { replace: true });
+            } else if (data.usuario.rol === 'vista') {
+                navigate('/admin/consultas', { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
 
         } catch {
             setError('Error de conexión con el servidor');

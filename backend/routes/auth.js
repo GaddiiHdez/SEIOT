@@ -99,7 +99,7 @@ export const verificarToken = async (req, res, next) => {
         } else {
             // Consultar usuario y permisos actuales en BD
             const resultado = await pool.query(
-                `SELECT id, nombre, usuario, es_admin, superadmin, rol, activo,
+                `SELECT id, nombre, usuario, es_admin, superadmin, rol, activo, instancia,
                         modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4,
                         ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs,
                         panel_admin, consultas
@@ -128,6 +128,7 @@ export const verificarToken = async (req, res, next) => {
             es_admin: user.es_admin,
             superadmin: user.superadmin || false,
             rol: user.rol,
+            instancia: user.instancia || null,
             permisos: construirPermisos(user)
         };
 
@@ -186,6 +187,7 @@ router.post('/login', async (req, res) => {
                 es_admin: user.es_admin,
                 superadmin: user.superadmin || false,
                 rol: user.rol,
+                instancia: user.instancia || null,
                 permisos
             },
             JWT_SECRET,
@@ -211,6 +213,7 @@ router.post('/login', async (req, res) => {
                 es_admin: user.es_admin,
                 superadmin: user.superadmin || false,
                 rol: user.rol,
+                instancia: user.instancia || null,
                 permisos
             }
         });
@@ -232,6 +235,7 @@ router.get('/perfil', verificarToken, async (req, res) => {
             es_admin: req.usuario.es_admin,
             superadmin: req.usuario.superadmin,
             rol: req.usuario.rol,
+            instancia: req.usuario.instancia,
             permisos: req.usuario.permisos
         });
     } catch (error) {

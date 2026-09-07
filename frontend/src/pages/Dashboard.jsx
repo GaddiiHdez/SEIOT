@@ -1,7 +1,7 @@
 import { apiFetch } from '../utils/api.js';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X, MoreVertical, Download, Clock } from 'lucide-react';
+import { FileText, ClipboardList, CheckSquare, AlertTriangle, FileSignature, LogOut, Search, PlusCircle, User, MapPin, CheckCircle, Lock, Settings, Users, BarChart2, FileCheck, ArrowLeft, X, MoreVertical, Download, Clock, Scale, Award, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoGobierno from '../assets/logo-gobierno.jpg'; 
 
@@ -149,6 +149,54 @@ const Dashboard = () => {
 
     consultarPdfs();
   }, [visitaId]);
+
+  // ─── CONSULTAR SEGUIMIENTO Y DICTAMEN DE LA VISITA ────────────────────────
+  const [infoSeguimiento, setInfoSeguimiento] = useState(null);
+  const [modalSeguimientoAbierto, setModalSeguimientoAbierto] = useState(false);
+  const [atencionesSeguimiento, setAtencionesSeguimiento] = useState([]);
+  const [cargandoAtenciones, setCargandoAtenciones] = useState(false);
+
+  useEffect(() => {
+    if (!visitaId) {
+      setInfoSeguimiento(null);
+      return;
+    }
+
+    const consultarSeguimiento = async () => {
+      try {
+        const res = await apiFetch(`/api/modulos/modulo3/${visitaId}`);
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data.existe && data.datos?.requiere_seguimiento) {
+            setInfoSeguimiento(data.datos);
+          } else {
+            setInfoSeguimiento(null);
+          }
+        }
+      } catch {
+        setInfoSeguimiento(null);
+      }
+    };
+
+    consultarSeguimiento();
+  }, [visitaId]);
+
+  const abrirModalSeguimiento = async () => {
+    if (!visitaId) return;
+    setModalSeguimientoAbierto(true);
+    setCargandoAtenciones(true);
+    try {
+      const res = await apiFetch(`/api/modulos/seguimiento/visita/${visitaId}`);
+      if (res && res.ok) {
+        const data = await res.json();
+        setAtencionesSeguimiento(data.atenciones || []);
+      }
+    } catch (err) {
+      console.error('Error cargando atenciones:', err);
+    } finally {
+      setCargandoAtenciones(false);
+    }
+  };
 
   // Cerrar menú al hacer clic en cualquier parte de la pantalla
   useEffect(() => {
@@ -616,7 +664,57 @@ const Dashboard = () => {
 
         {/* --- ZONA 3: MÓDULOS --- */}
         {folioActivo && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-6">
+            {/* Banner de Seguimiento / Dictamen Institucional */}
+            {infoSeguimiento && (
+              <div className="bg-white rounded-2xl border-2 overflow-hidden shadow-xs transition-all border-amber-300">
+                <div className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  visitaGuardada?.seguimiento_atendido || atencionesSeguimiento.length > 0
+                    ? 'bg-emerald-50/70 border-b border-emerald-200' 
+                    : 'bg-amber-50/70 border-b border-amber-200'
+                }`}>
+                  <div className="flex items-start sm:items-center gap-3">
+                    <div className={`p-2.5 rounded-xl ${
+                      visitaGuardada?.seguimiento_atendido || atencionesSeguimiento.length > 0
+                        ? 'bg-emerald-100 text-emerald-800' 
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      <Scale size={22} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-xs uppercase tracking-wider text-gray-800">
+                          Seguimiento Institucional (Módulo 3)
+                        </span>
+                        {visitaGuardada?.seguimiento_atendido ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            Dictamen: {visitaGuardada.dictamen_seguimiento || 'Solventado / Atendido'}
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-300">
+                            Pendiente de Dictamen
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        Canalizado a: <strong className="text-red-950">{(infoSeguimiento.instancias_notificadas || []).join(', ') || 'Dependencias Oficiales'}</strong>
+                        {visitaGuardada?.fecha_atencion_seguimiento && (
+                          <span className="ml-2 text-gray-500 font-medium">· Dictaminado el {new Date(visitaGuardada.fecha_atencion_seguimiento).toLocaleDateString('es-MX')}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={abrirModalSeguimiento}
+                    className="self-start sm:self-auto px-4 py-2 bg-red-800 hover:bg-red-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 shrink-0"
+                  >
+                    <Eye size={14} /> Ver Resolución y Bitácora
+                  </button>
+                </div>
+              </div>
+            )}
+
             <ProgresoVisita
               folioActivo={folioActivo}
               descargandoTodos={descargandoTodos}
@@ -652,6 +750,82 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Modal Historial de Dictámenes y Resoluciones */}
+      {modalSeguimientoAbierto && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-gray-200 overflow-hidden animate-fade-in">
+            <div className="bg-gradient-to-r from-red-950 to-red-900 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Scale size={20} className="text-[#BC955B]" />
+                <div>
+                  <h3 className="font-bold text-sm">Resolución y Bitácora de Seguimiento</h3>
+                  <p className="text-xs text-red-200">Folio: {folioActivo}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalSeguimientoAbierto(false)}
+                className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              {cargandoAtenciones ? (
+                <div className="py-12 text-center text-gray-500">
+                  <div className="w-8 h-8 border-3 border-red-800 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="font-semibold">Consultando bitácora de resoluciones...</p>
+                </div>
+              ) : atencionesSeguimiento.length === 0 ? (
+                <div className="py-10 text-center text-gray-500 space-y-2">
+                  <Clock size={32} className="mx-auto text-amber-500" />
+                  <p className="font-bold text-gray-800 text-sm">Pendiente de Dictamen Oficial</p>
+                  <p className="text-xs max-w-md mx-auto text-gray-500 leading-relaxed">
+                    La visita fue remitida formalmente a las dependencias correspondientes ({(infoSeguimiento?.instancias_notificadas || []).join(', ')}). Aún no se ha capturado un dictamen formal o acuerdo de resolución en la bitácora.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {atencionesSeguimiento.map((at) => (
+                    <div key={at.id} className="p-4 rounded-xl border border-gray-200 bg-slate-50 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-bold text-sm text-red-950">{at.instancia}</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-emerald-100 text-emerald-800 border-emerald-300">
+                          Dictamen: {at.dictamen || 'ATENDIDO'}
+                        </span>
+                      </div>
+                      {(at.nombre_responsable || at.cargo_responsable || at.oficio_referencia) && (
+                        <div className="text-[11px] text-gray-600 bg-white p-2.5 rounded-lg border border-gray-150 flex flex-wrap gap-x-4 gap-y-1">
+                          {at.nombre_responsable && <span>Responsable: <strong>{at.nombre_responsable}</strong></span>}
+                          {at.cargo_responsable && <span>Cargo: <strong>{at.cargo_responsable}</strong></span>}
+                          {at.oficio_referencia && <span>Oficio / Exp: <strong>{at.oficio_referencia}</strong></span>}
+                        </div>
+                      )}
+                      <div className="pt-1">
+                        <span className="text-gray-500 font-bold block text-[10px] uppercase tracking-wider mb-0.5">Acciones Realizadas / Fundamentación:</span>
+                        <p className="text-gray-800 font-sans leading-relaxed whitespace-pre-wrap">{at.acciones_tomadas}</p>
+                      </div>
+                      <p className="text-[10px] text-gray-400 text-right">
+                        Registrado el {new Date(at.creado_en).toLocaleString('es-MX')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setModalSeguimientoAbierto(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-xs font-bold transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

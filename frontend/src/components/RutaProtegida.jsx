@@ -34,6 +34,14 @@ const RutaProtegida = ({ children }) => {
     const token = localStorage.getItem('seiot_token');
     if (!usuario || !token) return <Navigate to="/login" replace />;
 
+    // Cuentas institucionales de seguimiento — restringidas exclusivamente a su bandeja y expedientes
+    if (usuario?.rol === 'seguimiento') {
+        const pathname = window.location.pathname;
+        if (pathname !== '/seguimiento/bandeja' && pathname !== '/seguimiento/expediente') {
+            return <Navigate to="/seguimiento/bandeja" replace />;
+        }
+    }
+
     // Usuario vista sin visita activa — redirigir a consultas
     if (usuario?.rol === 'vista' && window.location.pathname === '/dashboard') {
         const visitaActiva = localStorage.getItem('visitaActiva');

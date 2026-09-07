@@ -107,15 +107,28 @@ const TablaResultados = ({
                                             </div>
                                         </td>
                                         <td className="p-4 text-center whitespace-nowrap">
-                                            {esFinalizado(row) ? (
-                                                <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                                                    <CheckCircle size={10} /> Finalizado
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                                                    <Clock size={10} /> En proceso
-                                                </span>
-                                            )}
+                                            <div className="flex flex-col items-center gap-1">
+                                                {esFinalizado(row) ? (
+                                                    <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                                        <CheckCircle size={10} /> Finalizado
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                                        <Clock size={10} /> En proceso
+                                                    </span>
+                                                )}
+                                                {row.requiere_seguimiento && (
+                                                    row.seguimiento_atendido ? (
+                                                        <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-300" title="Dictamen oficial emitido por la dependencia">
+                                                            ⚖️ {row.dictamen_seguimiento || 'Dictaminado'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-300" title="Pendiente de dictamen institucional">
+                                                            ⚠️ Seg. Pendiente
+                                                        </span>
+                                                    )
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="p-4 text-center pr-6 whitespace-nowrap">
                                             <button

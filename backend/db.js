@@ -105,9 +105,17 @@ const initSeguimiento = async () => {
             ALTER TABLE public.modulo3_lista_verificacion 
             ADD COLUMN IF NOT EXISTS instancias_notificadas text[],
             ADD COLUMN IF NOT EXISTS token_seguimiento varchar(100);
+
+            ALTER TABLE public.visitas
+            ADD COLUMN IF NOT EXISTS seguimiento_atendido BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS dictamen_seguimiento VARCHAR(50),
+            ADD COLUMN IF NOT EXISTS fecha_atencion_seguimiento TIMESTAMP WITH TIME ZONE;
+
+            ALTER TABLE public.usuarios
+            ADD COLUMN IF NOT EXISTS instancia VARCHAR(50);
         `);
 
-        // 2. Tabla para registrar atenciones y oficios de seguimiento
+        // 2. Tabla para registrar atenciones y oficios de seguimiento con dictamen
         await pool.query(`
             CREATE TABLE IF NOT EXISTS public.modulo3_seguimiento_atencion (
                 id SERIAL PRIMARY KEY,
@@ -117,36 +125,44 @@ const initSeguimiento = async () => {
                 cargo_responsable VARCHAR(150),
                 oficio_referencia VARCHAR(100),
                 acciones_tomadas TEXT NOT NULL,
+                dictamen VARCHAR(50) DEFAULT 'SOLVENTADO',
                 estatus VARCHAR(50) DEFAULT 'ATENDIDO',
                 creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
+
+            ALTER TABLE public.modulo3_seguimiento_atencion
+            ADD COLUMN IF NOT EXISTS dictamen VARCHAR(50) DEFAULT 'SOLVENTADO';
         `);
 
-        // 3. Crear cuentas institucionales si no existen
+        // 3. Crear o actualizar cuentas institucionales con permisos estrictos de solo seguimiento
         const cuentas = [
             {
                 nombre: 'Lic. Carlos Esteban Henson Reyes (Director Jurídico SEDER)',
                 usuario: 'juridico.seder',
                 pass: 'SederJuridico2026!',
-                rol: 'seguimiento'
+                rol: 'seguimiento',
+                instancia: 'seder_juridico'
             },
             {
                 nombre: 'M.V.Z. Ricardo Álvarez Hernández (Gerente CEFPPENAY)',
                 usuario: 'cefp.penay',
                 pass: 'CefpPenay2026!',
-                rol: 'seguimiento'
+                rol: 'seguimiento',
+                instancia: 'cefppenay'
             },
             {
                 nombre: 'M.V.Z. Zaida Elizabeth García Alonso (SENASICA)',
                 usuario: 'senasica.nayarit',
                 pass: 'Senasica2026!',
-                rol: 'seguimiento'
+                rol: 'seguimiento',
+                instancia: 'senasica'
             },
             {
                 nombre: 'Henry Hernández (Pruebas y Soporte Técnico)',
                 usuario: 'henry.hernandez',
                 pass: 'HenryTest2026!',
-                rol: 'seguimiento'
+                rol: 'seguimiento',
+                instancia: 'test_henry'
             }
         ];
 
@@ -156,17 +172,34 @@ const initSeguimiento = async () => {
                 const hash = await bcrypt.hash(c.pass, 10);
                 await pool.query(`
                     INSERT INTO public.usuarios 
-                    (nombre, usuario, password_hash, es_admin, superadmin, rol, activo,
+                    (nombre, usuario, password_hash, es_admin, superadmin, rol, activo, instancia,
                      modulo1, modulo2, modulo3, modulo4, modulo5, modulo6, modulo6_pagina4,
                      ver_visitas_otros, editar_campos, eliminar_documentos, descargar_pdfs, panel_admin, consultas)
-                    VALUES ($1, $2, $3, false, false, $4, true,
-                            false, false, true, false, false, false, false,
-                            true, false, false, true, false, true)
-                `, [c.nombre, c.usuario, hash, c.rol]);
+                    VALUES ($1, $2, $3, false, false, $4, true, $5,
+                            false, false, false, false, false, false, false,
+                            false, false, false, true, false, false)
+                `, [c.nombre, c.usuario, hash, c.rol, c.instancia]);
                 console.log(`✅ Usuario institucional ${c.usuario} creado.`);
+            } else {
+                // Actualizar permisos existentes para asegurar que estén restringidos
+                await pool.query(`
+                    UPDATE public.usuarios SET
+                        rol = $1,
+                        instancia = $2,
+                        es_admin = false,
+                        superadmin = false,
+                        modulo1 = false, modulo2 = false, modulo3 = false, modulo4 = false, modulo5 = false, modulo6 = false, modulo6_pagina4 = false,
+                        ver_visitas_otros = false,
+                        editar_campos = false,
+                        eliminar_documentos = false,
+                        descargar_pdfs = true,
+                        panel_admin = false,
+                        consultas = false
+                    WHERE usuario = $3
+                `, [c.rol, c.instancia, c.usuario]);
             }
         }
-        console.log('✅ Esquema de seguimiento inicializado');
+        console.log('✅ Esquema de seguimiento y permisos restringidos inicializados');
     } catch (err) {
         console.error('❌ Error al inicializar seguimiento:', err);
     }

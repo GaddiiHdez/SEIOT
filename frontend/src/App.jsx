@@ -19,6 +19,7 @@ import SuperAdminPanel from './pages/Admin/SuperAdminPanel';
 import NubeDisco from './pages/Admin/NubeDisco';
 import ManualUsuario from './pages/Manual/ManualUsuario';
 import SeguimientoExpediente from './pages/SeguimientoExpediente';
+import BandejaSeguimiento from './pages/BandejaSeguimiento';
 
 const SyncManager = () => {
   useEffect(() => {
@@ -89,6 +90,8 @@ function App() {
             {/* Rutas públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/seguimiento" element={<SeguimientoExpediente />} />
+            <Route path="/seguimiento/expediente" element={<SeguimientoExpediente />} />
+            <Route path="/seguimiento/bandeja" element={<RutaProtegida><BandejaSeguimiento /></RutaProtegida>} />
             <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Rutas protegidas */}
