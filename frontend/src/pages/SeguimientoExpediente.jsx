@@ -10,6 +10,8 @@ const INSTANCIAS_MAP = {
     test_henry: 'Supervisión Técnica (Pruebas - Henry Hernández)'
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
 const SeguimientoExpediente = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -37,7 +39,7 @@ const SeguimientoExpediente = () => {
 
         const cargarExpediente = async () => {
             try {
-                const res = await fetch(`/api/modulos/seguimiento/${token}`);
+                const res = await fetch(`${API_URL}/api/modulos/seguimiento/${token}`);
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.error || 'No fue posible cargar el expediente.');
@@ -63,7 +65,7 @@ const SeguimientoExpediente = () => {
 
         setGuardandoAtencion(true);
         try {
-            const res = await fetch(`/api/modulos/seguimiento/${token}/atender`, {
+            const res = await fetch(`${API_URL}/api/modulos/seguimiento/${token}/atender`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -315,7 +317,7 @@ const SeguimientoExpediente = () => {
                                 {documentos_firmados.map(doc => (
                                     <a
                                         key={doc.id}
-                                        href={`/api/modulos/seguimiento/${token}/archivo/${doc.modulo}`}
+                                        href={`${API_URL}/api/modulos/seguimiento/${token}/archivo/${doc.modulo}`}
                                         download
                                         className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-red-400 hover:bg-red-50/30 transition-all text-xs group"
                                     >
