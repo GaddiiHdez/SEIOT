@@ -59,8 +59,55 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         message: 'SEIOT API corriendo',
-        version: '1.2.2-disk-support',
+        version: '1.2.3-disk-diag',
         uploadsDir: getUploadsDir()
+    });
+});
+
+// 🔍 Diagnóstico detallado del disco y sistema de archivos (requiere token)
+app.get('/api/health/disco', verificarToken, (req, res) => {
+    let mounts = [];
+    try {
+        if (fs.existsSync('/proc/mounts')) {
+            const raw = fs.readFileSync('/proc/mounts', 'utf8');
+            mounts = raw.split('\n').filter(line => 
+                line.includes('/dev/') || 
+                line.includes('data') || 
+                line.includes('upload') || 
+                line.includes('disk') ||
+                line.includes('/var/')
+            );
+        }
+    } catch (e) {
+        mounts = [e.message];
+    }
+
+    const currentUploads = getUploadsDir();
+    let archivosEnUploads = [];
+    try {
+        if (fs.existsSync(currentUploads)) {
+            archivosEnUploads = fs.readdirSync(currentUploads);
+        }
+    } catch (e) {
+        archivosEnUploads = [e.message];
+    }
+
+    const candidatos = ['/var/data', '/data', '/uploads', '/mnt/data', '/app/uploads'].map(dir => {
+        const exists = fs.existsSync(dir);
+        let archivos = [];
+        if (exists) {
+            try { archivos = fs.readdirSync(dir); } catch (e) { archivos = [e.message]; }
+        }
+        return { dir, exists, archivos };
+    });
+
+    res.json({
+        uploadsDir: currentUploads,
+        env_UPLOADS_DIR: process.env.UPLOADS_DIR || null,
+        totalArchivosEnUploads: archivosEnUploads.length,
+        archivos: archivosEnUploads,
+        candidatos,
+        mounts
     });
 });
 
