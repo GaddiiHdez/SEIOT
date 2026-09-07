@@ -958,7 +958,7 @@ router.get('/seguimiento/:token', async (req, res) => {
         if (!token) return res.status(400).json({ error: 'Token requerido.' });
 
         const m3Query = await pool.query(
-            `SELECT m3.*, v.folio, v.psg, v.estado_visita, v.creado_en as fecha_creacion,
+            `SELECT m3.*, v.folio, v.psg, v.estado_visita, v.fecha_inicio as fecha_creacion,
                     p.razon_social as psg_titular, p.representante as psg_representante,
                     p.municipio as psg_municipio, p.localidad as psg_localidad,
                     p.domicilio as psg_domicilio, p.telefono as psg_telefono,
@@ -1029,7 +1029,7 @@ router.get('/seguimiento/:token', async (req, res) => {
         });
     } catch (error) {
         console.error('Error consultar seguimiento por token:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        res.status(500).json({ error: 'Error interno del servidor.', detalle: error.message });
     }
 });
 

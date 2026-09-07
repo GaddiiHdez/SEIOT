@@ -58,7 +58,7 @@ app.get('/uploads/documentos_firmados/:archivo', verificarToken, (req, res) => {
 // ✅ Error 12: Un único health check en /api/health
 // AWS ECS Task Definition debe apuntar a /api/health
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'SEIOT API corriendo', version: '1.0.0' });
+    res.json({ status: 'ok', message: 'SEIOT API corriendo', version: '1.2.1-fix-fecha' });
 });
 
 app.use('/api/psg', psgRoutes);
