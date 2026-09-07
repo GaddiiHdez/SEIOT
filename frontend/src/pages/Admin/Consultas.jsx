@@ -200,10 +200,71 @@ const Consultas = () => {
             if (!response.ok) { alert('Error al exportar.'); return; }
             const datos = await response.json();
 
-            const ws = XLSX.utils.json_to_sheet(datos);
+            // Mapeo institucional y amigable de columnas (eliminando las no deseadas)
+            const datosFormateados = datos.map((fila) => {
+                const f = {};
+                if (fila.folio !== undefined) f['Folio'] = fila.folio || '';
+                if (fila.psg !== undefined) f['No. PSG'] = fila.psg || '';
+                if (fila.razon_social !== undefined) f['Razón Social'] = fila.razon_social || '';
+                if (fila.tipo_psg !== undefined) f['Tipo PSG'] = fila.tipo_psg || '';
+                if (fila.municipio !== undefined) f['Municipio'] = fila.municipio || '';
+                if (fila.localidad !== undefined) f['Localidad'] = fila.localidad || '';
+                if (fila.domicilio !== undefined) f['Domicilio'] = fila.domicilio || '';
+                if (fila.telefono !== undefined) f['Teléfono'] = fila.telefono || '';
+                if (fila.supervisor !== undefined) f['Supervisor'] = fila.supervisor || '';
+                if (fila.fecha_inicio !== undefined) {
+                    f['Fecha Inicio'] = fila.fecha_inicio ? new Date(fila.fecha_inicio).toLocaleDateString('es-MX') : '';
+                }
+                // M1
+                if (fila.m1_fecha_emision !== undefined) f['M1 Fecha Emisión'] = fila.m1_fecha_emision || '';
+                if (fila.m1_nombre_servidor !== undefined) f['M1 Servidor'] = fila.m1_nombre_servidor || '';
+                if (fila.m1_cargo_servidor !== undefined) f['M1 Cargo'] = fila.m1_cargo_servidor || '';
+                // M2
+                if (fila.m2_fecha !== undefined) f['M2 Fecha'] = fila.m2_fecha || '';
+                if (fila.m2_nombre_ordena !== undefined) f['M2 Quien Ordena'] = fila.m2_nombre_ordena || '';
+                // M3
+                if (fila.m3_fecha !== undefined) f['M3 Fecha'] = fila.m3_fecha || '';
+                if (fila.m3_hora_inicio !== undefined) f['M3 Hora Inicio'] = fila.m3_hora_inicio || '';
+                if (fila.m3_hora_termino !== undefined) f['M3 Hora Término'] = fila.m3_hora_termino || '';
+                if (fila.m3_requiere_seguimiento !== undefined) {
+                    f['M3 Requiere Seguimiento'] = fila.m3_requiere_seguimiento === true ? 'SÍ' : (fila.m3_requiere_seguimiento === false ? 'NO' : '');
+                }
+                if (fila.m3_observaciones !== undefined) f['M3 Observaciones'] = fila.m3_observaciones || '';
+                // M4
+                if (fila.m4_acta_no !== undefined) f['M4 Acta No.'] = fila.m4_acta_no || '';
+                if (fila.m4_fecha !== undefined) f['M4 Fecha'] = fila.m4_fecha || '';
+                if (fila.m4_hechos_observados !== undefined) f['M4 Hechos Observados'] = fila.m4_hechos_observados || '';
+                // M5
+                if (fila.m5_observaciones_detectadas !== undefined) f['M5 Observaciones Detectadas'] = fila.m5_observaciones_detectadas || '';
+                // M6
+                if (fila.m6_acta_no !== undefined) f['M6 Acta No.'] = fila.m6_acta_no || '';
+                if (fila.m6_fecha !== undefined) f['M6 Fecha'] = fila.m6_fecha || '';
+
+                return f;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(datosFormateados);
+
+            // Ajustar ancho automático de columnas para una presentación impecable
+            if (datosFormateados.length > 0) {
+                const keys = Object.keys(datosFormateados[0]);
+                const colWidths = keys.map((key) => {
+                    const maxValLen = datosFormateados.reduce((max, item) => {
+                        const val = item[key] ? String(item[key]) : '';
+                        return Math.max(max, val.length);
+                    }, key.length);
+                    // Límite razonable entre 12 y 50 caracteres
+                    return { wch: Math.min(Math.max(maxValLen + 3, 12), 50) };
+                });
+                ws['!cols'] = colWidths;
+            }
+
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Visitas');
-            const nombre = soloFiltrados ? 'consulta_filtrada.xlsx' : 'consulta_completa.xlsx';
+            XLSX.utils.book_append_sheet(wb, ws, 'Supervisiones SEIOT');
+            const fechaStr = new Date().toISOString().split('T')[0];
+            const nombre = soloFiltrados 
+                ? `SEIOT_Reporte_Filtrado_${fechaStr}.xlsx` 
+                : `SEIOT_Reporte_General_${fechaStr}.xlsx`;
             XLSX.writeFile(wb, nombre);
         } catch (error) {
             console.error(error);

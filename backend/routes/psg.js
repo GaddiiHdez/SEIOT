@@ -450,24 +450,16 @@ router.get('/consultas/exportar', verificarToken, async (req, res) => {
             municipio: v.municipio, localidad: v.localidad, tipo_psg: v.tipo_psg,
             telefono: v.telefono, domicilio: v.domicilio,
             supervisor: v.supervisor, fecha_inicio: v.fecha_inicio,
-            estado_visita: v.estado_visita,
-            modulo1_completado: v.modulo1_completado, modulo2_completado: v.modulo2_completado,
-            modulo3_completado: v.modulo3_completado, modulo4_completado: v.modulo4_completado,
-            modulo5_completado: v.modulo5_completado, modulo6_completado: v.modulo6_completado,
             // Módulo 1
             m1_fecha_emision: im1[v.id]?.fecha_emision, m1_nombre_servidor: im1[v.id]?.nombre_servidor, m1_cargo_servidor: im1[v.id]?.cargo_servidor,
             // Módulo 2
             m2_fecha: im2[v.id]?.fecha, m2_nombre_ordena: im2[v.id]?.nombre_ordena,
             // Módulo 3
             m3_fecha: im3[v.id]?.fecha, m3_hora_inicio: im3[v.id]?.hora_inicio, m3_hora_termino: im3[v.id]?.hora_termino,
-            m3_cumple: im3[v.id]?.cumple, m3_presenta_observaciones: im3[v.id]?.presenta_observaciones,
             m3_requiere_seguimiento: im3[v.id]?.requiere_seguimiento, m3_observaciones: im3[v.id]?.observaciones,
             // Módulo 4
             m4_acta_no: im4[v.id]?.acta_no, m4_fecha: im4[v.id]?.fecha, m4_hechos_observados: im4[v.id]?.hechos_observados,
             // Módulo 5
-            m5_acta_no: im5[v.id]?.acta_no, m5_fecha: im5[v.id]?.fecha,
-            m5_cumple: im5[v.id]?.cumple, m5_presenta_observaciones: im5[v.id]?.presenta_observaciones,
-            m5_requiere_seguimiento: im5[v.id]?.requiere_seguimiento,
             m5_observaciones_detectadas: im5[v.id]?.observaciones_detectadas,
             // Módulo 6
             m6_acta_no: im6[v.id]?.acta_no, m6_fecha: im6[v.id]?.fecha,
