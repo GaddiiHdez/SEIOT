@@ -21,6 +21,7 @@ const SuperAdminPanel = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [loadingBackup, setLoadingBackup] = useState(false);
     const [loadingRestore, setLoadingRestore] = useState(false);
+    const [loadingSyncPdfs, setLoadingSyncPdfs] = useState(false);
     
     // Estado de retroalimentación
     const [resultado, setResultado] = useState(null);
@@ -226,15 +227,12 @@ const SuperAdminPanel = () => {
             formData.append('confirmacion', claveBackup.trim());
             formData.append('archivo', selectedFile);
 
-            const token = localStorage.getItem('seiot_token');
-            const res = await fetch('/api/superadmin/restore', {
+            const res = await apiFetch('/api/superadmin/restore', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
                 body: formData
             });
 
+            if (!res) return;
             const data = await res.json();
             if (res.ok) {
                 localStorage.removeItem('visitaActiva');
@@ -252,6 +250,43 @@ const SuperAdminPanel = () => {
             setResultado({ tipo: 'error', mensaje: 'Error de conexión al intentar restaurar el respaldo.' });
         } finally {
             setLoadingRestore(false);
+        }
+    };
+
+    // Sincronizar solo PDFs al disco persistente (.ZIP)
+    const handleSyncPdfsOnly = async () => {
+        if (!selectedFile) {
+            alert('⚠️ Selecciona un archivo ZIP con los documentos PDF firmados (ej. respaldo_documentos_firmados.zip).');
+            return;
+        }
+
+        setLoadingSyncPdfs(true);
+        setResultado(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('archivo', selectedFile);
+
+            const res = await apiFetch('/api/superadmin/sincronizar-pdfs', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res) return;
+            const data = await res.json();
+            if (res.ok) {
+                setResultado({ tipo: 'success', mensaje: data.mensaje || 'PDFs sincronizados exitosamente.' });
+                setSelectedFile(null);
+                const fileInput = document.getElementById('backup-file-input');
+                if (fileInput) fileInput.value = '';
+            } else {
+                setResultado({ tipo: 'error', mensaje: data.error || 'Error al sincronizar PDFs.' });
+            }
+        } catch (err) {
+            console.error('Error sincronizando PDFs:', err);
+            setResultado({ tipo: 'error', mensaje: 'Error de conexión al sincronizar PDFs: ' + err.message });
+        } finally {
+            setLoadingSyncPdfs(false);
         }
     };
 
@@ -429,7 +464,7 @@ const SuperAdminPanel = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <button
                                     onClick={handleDownloadBackup}
                                     disabled={!claveBackup.trim() || loadingBackup}
@@ -445,7 +480,7 @@ const SuperAdminPanel = () => {
                                         </>
                                     ) : (
                                         <>
-                                            <Download size={14} /> DESCARGAR RESPALDO COMPLETO (.ZIP)
+                                            <Download size={14} /> DESCARGAR RESPALDO (.ZIP)
                                         </>
                                     )}
                                 </button>
@@ -461,11 +496,32 @@ const SuperAdminPanel = () => {
                                 >
                                     {loadingRestore ? (
                                         <>
-                                            <Loader2 className="animate-spin" size={14} /> RESTAURANDO CON VERIFICACIÓN SHA-256...
+                                            <Loader2 className="animate-spin" size={14} /> RESTAURANDO CON SHA-256...
                                         </>
                                     ) : (
                                         <>
                                             <Upload size={14} /> RESTAURAR SISTEMA
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={handleSyncPdfsOnly}
+                                    disabled={!selectedFile || loadingSyncPdfs}
+                                    className={`font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 ${
+                                        selectedFile 
+                                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-950/40' 
+                                            : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
+                                    }`}
+                                    title="Copia los PDFs del archivo ZIP directamente al disco de Render sin modificar la base de datos"
+                                >
+                                    {loadingSyncPdfs ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={14} /> SUBIENDO AL DISCO...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload size={14} /> SUBIR PDFs AL DISCO (.ZIP)
                                         </>
                                     )}
                                 </button>
