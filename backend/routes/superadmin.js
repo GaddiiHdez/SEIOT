@@ -475,4 +475,43 @@ router.get('/auditoria', verificarToken, async (req, res) => {
     }
 });
 
+// ─── SINCRONIZAR O RESTAURAR SOLO PDFs AL ALMACENAMIENTO PERSISTENTE ─────────
+router.post('/sincronizar-pdfs', verificarToken, uploadRestore.single('archivo'), async (req, res) => {
+    if (!req.usuario?.superadmin && !req.usuario?.es_admin) {
+        return res.status(403).json({ error: 'Solo administradores pueden sincronizar PDFs.' });
+    }
+    if (!req.file) {
+        return res.status(400).json({ error: 'No se recibió ningún archivo ZIP.' });
+    }
+
+    try {
+        const zip = new AdmZip(req.file.buffer);
+        const entries = zip.getEntries();
+        const uploadsDir = getUploadsDir();
+        await fsPromises.mkdir(uploadsDir, { recursive: true });
+
+        const restaurados = [];
+        for (const entry of entries) {
+            if (!entry.isDirectory && entry.entryName.endsWith('.pdf')) {
+                const baseName = path.basename(entry.entryName);
+                if (baseName) {
+                    const destPath = path.join(uploadsDir, baseName);
+                    await fsPromises.writeFile(destPath, entry.getData());
+                    restaurados.push(baseName);
+                }
+            }
+        }
+
+        res.json({
+            mensaje: `✅ Se sincronizaron exitosamente ${restaurados.length} archivos PDF al almacenamiento persistente.`,
+            total: restaurados.length,
+            archivos: restaurados,
+            destino: uploadsDir
+        });
+    } catch (e) {
+        console.error('Error sincronizando PDFs:', e);
+        res.status(500).json({ error: 'Error al procesar el archivo ZIP: ' + e.message });
+    }
+});
+
 export default router;
