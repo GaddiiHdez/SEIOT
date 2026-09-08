@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import logoGobierno from '../assets/logo-gobierno.jpg';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../utils/api';
 
 const INSTANCIAS_MAP = {
     seder_juridico: 'Dirección Jurídica de la SEDER',
@@ -27,7 +28,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const SeguimientoExpediente = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const token = searchParams.get('token');
+    const tokenParam = searchParams.get('token');
+    const visitaIdParam = searchParams.get('visita_id') || searchParams.get('id');
+    const token = tokenParam ? tokenParam.trim() : '';
     const { usuario } = useAuth();
 
     const [cargando, setCargando] = useState(true);
@@ -59,21 +62,41 @@ const SeguimientoExpediente = () => {
     }, [usuario]);
 
     useEffect(() => {
-        if (!token) {
-            setError('No se proporcionó un token de acceso al expediente.');
+        if (!token && !visitaIdParam) {
+            setError('No se proporcionó un enlace válido ni identificador de expediente.');
             setCargando(false);
             return;
         }
 
         const cargarExpediente = async () => {
+            setCargando(true);
+            setError(null);
             try {
-                const res = await fetch(`${API_URL}/api/modulos/seguimiento/${token}`);
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || 'No fue posible cargar el expediente.');
+                let data = null;
+
+                // 1. Intentar por token directo si existe
+                if (token) {
+                    const res = await fetch(`${API_URL}/api/modulos/seguimiento/${token}`);
+                    if (res.ok) {
+                        const json = await res.json();
+                        data = json.expediente;
+                    }
                 }
-                const data = await res.json();
-                setExpediente(data.expediente);
+
+                // 2. Si no cargó por token pero hay sesión y visita_id, consultar endpoint autenticado
+                if (!data && visitaIdParam && localStorage.getItem('seiot_token')) {
+                    const resAuth = await apiFetch(`/api/modulos/seguimiento/expediente-visita/${visitaIdParam}`);
+                    if (resAuth && resAuth.ok) {
+                        const jsonAuth = await resAuth.json();
+                        data = jsonAuth.expediente;
+                    }
+                }
+
+                if (!data) {
+                    throw new Error('Expediente no encontrado o enlace de seguimiento no válido.');
+                }
+
+                setExpediente(data);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -82,7 +105,7 @@ const SeguimientoExpediente = () => {
         };
 
         cargarExpediente();
-    }, [token]);
+    }, [token, visitaIdParam]);
 
     const handleRegistrarAtencion = async (e) => {
         e.preventDefault();
@@ -93,21 +116,35 @@ const SeguimientoExpediente = () => {
 
         setGuardandoAtencion(true);
         try {
-            const res = await fetch(`${API_URL}/api/modulos/seguimiento/${token}/atender`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    instancia: INSTANCIAS_MAP[instancia] || instancia,
-                    nombre_responsable: nombreResponsable,
-                    cargo_responsable: cargoResponsable,
-                    oficio_referencia: oficioReferencia,
-                    acciones_tomadas: accionesTomadas,
-                    dictamen: dictamen
-                })
-            });
+            const payload = {
+                instancia: INSTANCIAS_MAP[instancia] || instancia,
+                nombre_responsable: nombreResponsable,
+                cargo_responsable: cargoResponsable,
+                oficio_referencia: oficioReferencia,
+                acciones_tomadas: accionesTomadas,
+                dictamen: dictamen
+            };
 
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
+            let res;
+            const effectiveToken = token || expediente?.token_seguimiento;
+
+            if (effectiveToken) {
+                res = await fetch(`${API_URL}/api/modulos/seguimiento/${effectiveToken}/atender`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else if (expediente?.visita_id) {
+                res = await apiFetch(`/api/modulos/seguimiento/visita/${expediente.visita_id}/atender`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                throw new Error('No se pudo identificar la referencia del expediente.');
+            }
+
+            if (!res || !res.ok) {
+                const errData = res ? await res.json().catch(() => ({})) : {};
                 throw new Error(errData.error || 'Error al registrar el dictamen.');
             }
 
@@ -511,7 +548,7 @@ const SeguimientoExpediente = () => {
 
                                         {doc ? (
                                             <a
-                                                href={`${API_URL}/api/modulos/seguimiento/${token}/archivo/${mod.id}`}
+                                                href={`${API_URL}/api/modulos/seguimiento/${token || expediente?.token_seguimiento}/archivo/${mod.id}`}
                                                 download
                                                 className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red-800 hover:bg-red-900 text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
                                             >
@@ -741,7 +778,7 @@ const SeguimientoExpediente = () => {
                         <div className="p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-3">
                             {getDocFirmado(moduloModal.id) ? (
                                 <a
-                                    href={`${API_URL}/api/modulos/seguimiento/${token}/archivo/${moduloModal.id}`}
+                                    href={`${API_URL}/api/modulos/seguimiento/${token || expediente?.token_seguimiento}/archivo/${moduloModal.id}`}
                                     download
                                     className="flex items-center gap-1.5 px-4 py-2 bg-red-800 hover:bg-red-900 text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
                                 >

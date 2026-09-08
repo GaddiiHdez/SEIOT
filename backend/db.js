@@ -132,7 +132,30 @@ const initSeguimiento = async () => {
             }
         }
 
-        // 3. Crear o actualizar cuentas institucionales con permisos estrictos de solo seguimiento
+        // 2. Auto-generar tokens de seguimiento para registros existentes que lo tengan en NULL
+        try {
+            await pool.query(`
+                UPDATE public.modulo3_lista_verificacion 
+                SET token_seguimiento = md5(random()::text || id::text || clock_timestamp()::text) || md5(random()::text || visita_id::text)
+                WHERE token_seguimiento IS NULL;
+            `);
+        } catch (tokenErr) {
+            console.warn('[DB INIT] Advertencia al auto-generar tokens:', tokenErr.message);
+        }
+
+        // 3. Asegurar que las visitas existentes con módulos completados tengan asignación a instancias para pruebas
+        try {
+            await pool.query(`
+                UPDATE public.modulo3_lista_verificacion 
+                SET requiere_seguimiento = true,
+                    instancias_notificadas = ARRAY['test_henry', 'seder_juridico', 'cefppenay', 'senasica']::text[]
+                WHERE (instancias_notificadas IS NULL OR array_length(instancias_notificadas, 1) IS NULL OR array_length(instancias_notificadas, 1) = 0);
+            `);
+        } catch (seedErr) {
+            console.warn('[DB INIT] Advertencia al respaldar instancias:', seedErr.message);
+        }
+
+        // 4. Crear o actualizar cuentas institucionales con permisos estrictos de solo seguimiento
         const cuentas = [
             {
                 nombre: 'Lic. Carlos Esteban Henson Reyes (Director Jurídico SEDER)',

@@ -982,134 +982,391 @@ router.get('/modulo6/:visita_id', verificarToken, async (req, res) => {
 
 // ─── ENDPOINTS DE SEGUIMIENTO (ACCESO POR TOKEN DIRECTO PARA INSTANCIAS) ──────
 
-// ─── ENDPOINTS DE SEGUIMIENTO (ACCESO POR TOKEN DIRECTO PARA INSTANCIAS) ──────
+/**
+ * Función auxiliar para obtener todos los datos de un expediente (M1-M6, atenciones, docs)
+ * de forma tolerante y uniforme, ya sea por token de seguimiento o por visita_id.
+ */
+async function obtenerDetalleExpediente({ token, visitaId }) {
+    let whereClause = '';
+    let params = [];
+    if (token) {
+        whereClause = 'WHERE LOWER(TRIM(m3.token_seguimiento)) = LOWER(TRIM($1))';
+        params = [token];
+    } else if (visitaId) {
+        whereClause = 'WHERE v.id = $1';
+        params = [visitaId];
+    } else {
+        return null;
+    }
 
-// 1. Consultar expediente completo mediante token de seguimiento (con todos los módulos)
-router.get('/seguimiento/:token', async (req, res) => {
+    const m3Query = await pool.query(
+        `SELECT m3.*, v.id as visita_id_real, v.folio, v.psg, v.estado_visita, v.fecha_inicio as fecha_creacion,
+                v.seguimiento_atendido, v.dictamen_seguimiento, v.fecha_atencion_seguimiento,
+                p.razon_social as psg_titular, p.representante as psg_representante,
+                p.municipio as psg_municipio, p.localidad as psg_localidad,
+                p.domicilio as psg_domicilio, p.telefono as psg_telefono,
+                p.tipo_psg
+          FROM visitas v
+          LEFT JOIN modulo3_lista_verificacion m3 ON m3.visita_id = v.id
+          LEFT JOIN excel_psg p ON p.psg = v.psg
+          ${whereClause}`,
+        params
+    );
+
+    if (m3Query.rows.length === 0) {
+        return null;
+    }
+
+    const datos = m3Query.rows[0];
+    const targetVisitaId = datos.visita_id_real || datos.visita_id;
+
+    // Obtener datos estructurados de todos los módulos de la visita de forma tolerante
+    const [m1Res, m2Res, m4Res, m5Res, m6Res] = await Promise.all([
+        pool.query('SELECT * FROM modulo1_oficio_notificacion WHERE visita_id = $1', [targetVisitaId]).catch(err => {
+            console.warn('Advertencia al consultar modulo1:', err.message);
+            return { rows: [] };
+        }),
+        pool.query('SELECT * FROM modulo2_orden_supervision WHERE visita_id = $1', [targetVisitaId]).catch(err => {
+            console.warn('Advertencia al consultar modulo2:', err.message);
+            return { rows: [] };
+        }),
+        pool.query('SELECT * FROM modulo4_acta_hechos WHERE visita_id = $1', [targetVisitaId]).catch(err => {
+            console.warn('Advertencia al consultar modulo4:', err.message);
+            return { rows: [] };
+        }),
+        pool.query('SELECT * FROM modulo5_acta_supervision WHERE visita_id = $1', [targetVisitaId]).catch(err => {
+            console.warn('Advertencia al consultar modulo5:', err.message);
+            return { rows: [] };
+        }),
+        pool.query('SELECT * FROM modulo6_acta_circunstanciada WHERE visita_id = $1', [targetVisitaId]).catch(err => {
+            console.warn('Advertencia al consultar modulo6:', err.message);
+            return { rows: [] };
+        })
+    ]);
+
+    // Obtener historial de atenciones registradas de forma segura
+    let atenciones = [];
     try {
-        const { token } = req.params;
-        if (!token) return res.status(400).json({ error: 'Token requerido.' });
-
-        const m3Query = await pool.query(
-            `SELECT m3.*, v.folio, v.psg, v.estado_visita, v.fecha_inicio as fecha_creacion,
-                    v.seguimiento_atendido, v.dictamen_seguimiento, v.fecha_atencion_seguimiento,
-                    p.razon_social as psg_titular, p.representante as psg_representante,
-                    p.municipio as psg_municipio, p.localidad as psg_localidad,
-                    p.domicilio as psg_domicilio, p.telefono as psg_telefono,
-                    p.tipo_psg
-             FROM modulo3_lista_verificacion m3
-             JOIN visitas v ON v.id = m3.visita_id
-             LEFT JOIN excel_psg p ON p.psg = v.psg
-             WHERE m3.token_seguimiento = $1`,
-            [token]
+        const atencionesQuery = await pool.query(
+            'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
+            [targetVisitaId]
         );
+        atenciones = atencionesQuery.rows;
+    } catch (atErr) {
+        console.warn('Advertencia al consultar modulo3_seguimiento_atencion:', atErr.message);
+    }
 
-        if (m3Query.rows.length === 0) {
-            return res.status(404).json({ error: 'Expediente no encontrado o enlace de seguimiento no válido.' });
+    // Obtener lista de documentos firmados disponibles de forma segura
+    let docs = [];
+    try {
+        const docsQuery = await pool.query(
+            'SELECT id, modulo, nombre_archivo, fecha_subida FROM documentos_firmados WHERE visita_id = $1 ORDER BY modulo ASC',
+            [targetVisitaId]
+        );
+        docs = docsQuery.rows;
+    } catch (docErr) {
+        console.warn('Advertencia al consultar documentos_firmados:', docErr.message);
+    }
+
+    return {
+        visita_id: targetVisitaId,
+        folio: datos.folio,
+        psg: datos.psg,
+        estado_visita: datos.estado_visita,
+        fecha_creacion: datos.fecha_creacion,
+        seguimiento_atendido: datos.seguimiento_atendido || false,
+        dictamen_seguimiento: datos.dictamen_seguimiento || null,
+        fecha_atencion_seguimiento: datos.fecha_atencion_seguimiento || null,
+        token_seguimiento: datos.token_seguimiento || null,
+        psg_datos: {
+            titular: datos.psg_titular || datos.nombre_psg || datos.nombre_titular,
+            representante: datos.psg_representante || datos.nombre_titular,
+            municipio: datos.psg_municipio || datos.municipio,
+            localidad: datos.psg_localidad || datos.localidad,
+            domicilio: datos.psg_domicilio,
+            telefono: datos.psg_telefono || datos.telefono,
+            tipo_psg: datos.tipo_psg
+        },
+        modulos: {
+            modulo1: m1Res.rows[0] || null,
+            modulo2: m2Res.rows[0] || null,
+            modulo3: datos.id ? {
+                fecha: datos.fecha,
+                hora_inicio: datos.hora_inicio,
+                hora_termino: datos.hora_termino,
+                nombre_supervisor: datos.nombre_supervisor,
+                observaciones: datos.observaciones,
+                cumple: datos.cumple,
+                presenta_observaciones: datos.presenta_observaciones,
+                requiere_seguimiento: datos.requiere_seguimiento,
+                instancias_notificadas: datos.instancias_notificadas || []
+            } : null,
+            modulo4: m4Res.rows[0] || null,
+            modulo5: m5Res.rows[0] || null,
+            modulo6: m6Res.rows[0] || null
+        },
+        atenciones,
+        documentos_firmados: docs
+    };
+}
+
+// 1. Consultar la bandeja de expedientes asignados a la dependencia autenticada
+// NOTA: Esta ruta estática DEBE declararse antes de cualquier ruta con comodín :token
+router.get('/seguimiento/mis-expedientes', verificarToken, async (req, res) => {
+    try {
+        const esAdmin = req.usuario.es_admin || req.usuario.superadmin;
+        const esSeguimiento = req.usuario.rol === 'seguimiento';
+
+        if (!esAdmin && !esSeguimiento) {
+            return res.status(403).json({ error: 'Acceso exclusivo para cuentas institucionales de seguimiento o administradores.' });
         }
 
-        const datosM3 = m3Query.rows[0];
-        const visitaId = datosM3.visita_id;
+        // Mapeo de usuarios a instancia
+        const INSTANCIAS_MAP_USER = {
+            'juridico.seder': 'seder_juridico',
+            'cefp.penay': 'cefppenay',
+            'senasica.nayarit': 'senasica',
+            'henry.hernandez': 'test_henry'
+        };
 
-        // Obtener datos estructurados de todos los módulos de la visita de forma segura y tolerante
-        const [m1Res, m2Res, m4Res, m5Res, m6Res] = await Promise.all([
-            pool.query('SELECT * FROM modulo1_oficio_notificacion WHERE visita_id = $1', [visitaId]).catch(err => {
-                console.warn('Advertencia al consultar modulo1:', err.message);
-                return { rows: [] };
-            }),
-            pool.query('SELECT * FROM modulo2_orden_supervision WHERE visita_id = $1', [visitaId]).catch(err => {
-                console.warn('Advertencia al consultar modulo2:', err.message);
-                return { rows: [] };
-            }),
-            pool.query('SELECT * FROM modulo4_acta_hechos WHERE visita_id = $1', [visitaId]).catch(err => {
-                console.warn('Advertencia al consultar modulo4:', err.message);
-                return { rows: [] };
-            }),
-            pool.query('SELECT * FROM modulo5_acta_supervision WHERE visita_id = $1', [visitaId]).catch(err => {
-                console.warn('Advertencia al consultar modulo5:', err.message);
-                return { rows: [] };
-            }),
-            pool.query('SELECT * FROM modulo6_acta_circunstanciada WHERE visita_id = $1', [visitaId]).catch(err => {
-                console.warn('Advertencia al consultar modulo6:', err.message);
-                return { rows: [] };
-            })
-        ]);
+        const instanciaId = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
 
-        // Obtener historial de atenciones registradas de forma segura
-        let atenciones = [];
-        try {
-            const atencionesQuery = await pool.query(
-                'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
-                [visitaId]
-            );
-            atenciones = atencionesQuery.rows;
-        } catch (atErr) {
-            console.warn('Advertencia al consultar modulo3_seguimiento_atencion:', atErr.message);
+        let querySql = '';
+        let params = [];
+
+        if (esAdmin) {
+            querySql = `
+                SELECT 
+                    v.id as visita_id,
+                    v.folio,
+                    v.psg,
+                    v.fecha_inicio as fecha_supervision,
+                    v.supervisor,
+                    v.estado_visita,
+                    v.seguimiento_atendido,
+                    v.dictamen_seguimiento,
+                    v.fecha_atencion_seguimiento,
+                    p.razon_social,
+                    p.municipio,
+                    p.localidad,
+                    p.tipo_psg,
+                    p.telefono,
+                    m3.token_seguimiento,
+                    m3.fecha as m3_fecha,
+                    m3.observaciones as m3_observaciones,
+                    m3.instancias_notificadas
+                FROM modulo3_lista_verificacion m3
+                JOIN visitas v ON v.id = m3.visita_id
+                LEFT JOIN excel_psg p ON p.psg = v.psg
+                WHERE m3.requiere_seguimiento = true OR (m3.instancias_notificadas IS NOT NULL AND array_length(m3.instancias_notificadas, 1) > 0)
+                ORDER BY v.fecha_inicio DESC
+            `;
+        } else {
+            if (!instanciaId) {
+                return res.status(400).json({ error: 'No se encontró la instancia asignada a tu usuario.' });
+            }
+            querySql = `
+                SELECT 
+                    v.id as visita_id,
+                    v.folio,
+                    v.psg,
+                    v.fecha_inicio as fecha_supervision,
+                    v.supervisor,
+                    v.estado_visita,
+                    v.seguimiento_atendido,
+                    v.dictamen_seguimiento,
+                    v.fecha_atencion_seguimiento,
+                    p.razon_social,
+                    p.municipio,
+                    p.localidad,
+                    p.tipo_psg,
+                    p.telefono,
+                    m3.token_seguimiento,
+                    m3.fecha as m3_fecha,
+                    m3.observaciones as m3_observaciones,
+                    m3.instancias_notificadas
+                FROM modulo3_lista_verificacion m3
+                JOIN visitas v ON v.id = m3.visita_id
+                LEFT JOIN excel_psg p ON p.psg = v.psg
+                WHERE $1 = ANY(m3.instancias_notificadas)
+                ORDER BY v.fecha_inicio DESC
+            `;
+            params = [instanciaId];
         }
 
-        // Obtener lista de documentos firmados disponibles de forma segura
-        let docs = [];
-        try {
-            const docsQuery = await pool.query(
-                'SELECT id, modulo, nombre_archivo, fecha_subida FROM documentos_firmados WHERE visita_id = $1 ORDER BY modulo ASC',
-                [visitaId]
-            );
-            docs = docsQuery.rows;
-        } catch (docErr) {
-            console.warn('Advertencia al consultar documentos_firmados:', docErr.message);
+        const expedientesQuery = await pool.query(querySql, params);
+
+        // Auto-curar tokens nulos en la respuesta para que jamás fallen los enlaces
+        for (const exp of expedientesQuery.rows) {
+            if (!exp.token_seguimiento) {
+                const nuevoToken = generarTokenSeguimiento();
+                await pool.query(
+                    'UPDATE modulo3_lista_verificacion SET token_seguimiento = $1 WHERE visita_id = $2',
+                    [nuevoToken, exp.visita_id]
+                ).catch(err => console.warn('Error auto-curando token en mis-expedientes:', err.message));
+                exp.token_seguimiento = nuevoToken;
+            }
         }
 
         res.json({
-            expediente: {
-                visita_id: visitaId,
-                folio: datosM3.folio,
-                psg: datosM3.psg,
-                estado_visita: datosM3.estado_visita,
-                fecha_creacion: datosM3.fecha_creacion,
-                seguimiento_atendido: datosM3.seguimiento_atendido || false,
-                dictamen_seguimiento: datosM3.dictamen_seguimiento || null,
-                fecha_atencion_seguimiento: datosM3.fecha_atencion_seguimiento || null,
-                psg_datos: {
-                    titular: datosM3.psg_titular || datosM3.nombre_psg || datosM3.nombre_titular,
-                    representante: datosM3.psg_representante || datosM3.nombre_titular,
-                    municipio: datosM3.psg_municipio || datosM3.municipio,
-                    localidad: datosM3.psg_localidad || datosM3.localidad,
-                    domicilio: datosM3.psg_domicilio,
-                    telefono: datosM3.psg_telefono || datosM3.telefono,
-                    tipo_psg: datosM3.tipo_psg
-                },
-                modulos: {
-                    modulo1: m1Res.rows[0] || null,
-                    modulo2: m2Res.rows[0] || null,
-                    modulo3: {
-                        fecha: datosM3.fecha,
-                        hora_inicio: datosM3.hora_inicio,
-                        hora_termino: datosM3.hora_termino,
-                        nombre_supervisor: datosM3.nombre_supervisor,
-                        observaciones: datosM3.observaciones,
-                        cumple: datosM3.cumple,
-                        presenta_observaciones: datosM3.presenta_observaciones,
-                        requiere_seguimiento: datosM3.requiere_seguimiento,
-                        instancias_notificadas: datosM3.instancias_notificadas || []
-                    },
-                    modulo4: m4Res.rows[0] || null,
-                    modulo5: m5Res.rows[0] || null,
-                    modulo6: m6Res.rows[0] || null
-                },
-                atenciones: atencionesQuery.rows,
-                documentos_firmados: docsQuery.rows
-            }
+            ok: true,
+            instancia: instanciaId || 'todas',
+            total: expedientesQuery.rows.length,
+            expedientes: expedientesQuery.rows
         });
+
     } catch (error) {
-        console.error('Error consultar seguimiento por token:', error);
+        console.error('Error al consultar mis-expedientes:', error);
+        res.status(500).json({ error: 'Error al consultar expedientes asignados: ' + error.message });
+    }
+});
+
+// 2. Consultar expediente completo por visita_id (para usuarios autenticados en el portal)
+router.get('/seguimiento/expediente-visita/:visita_id', verificarToken, async (req, res) => {
+    try {
+        const { visita_id } = req.params;
+        const visitaIdNum = parseInt(visita_id, 10);
+        if (isNaN(visitaIdNum)) {
+            return res.status(400).json({ error: 'ID de visita no válido.' });
+        }
+
+        const expediente = await obtenerDetalleExpediente({ visitaId: visitaIdNum });
+        if (!expediente) {
+            return res.status(404).json({ error: 'Expediente no encontrado.' });
+        }
+
+        res.json({ ok: true, expediente });
+    } catch (error) {
+        console.error('Error al consultar expediente por visita_id:', error);
         res.status(500).json({ error: 'Error interno del servidor.', detalle: error.message });
     }
 });
 
-// 2. Registrar atención / dictamen oficial de seguimiento por parte de la dependencia
+// 3. Registrar atención / dictamen oficial por visita_id (para usuarios autenticados en el portal)
+router.post('/seguimiento/visita/:visita_id/atender', verificarToken, async (req, res) => {
+    try {
+        const { visita_id } = req.params;
+        const visitaIdNum = parseInt(visita_id, 10);
+        if (isNaN(visitaIdNum)) {
+            return res.status(400).json({ error: 'ID de visita no válido.' });
+        }
+
+        const { instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas, dictamen } = req.body;
+
+        if (!acciones_tomadas) {
+            return res.status(400).json({ error: 'Las acciones tomadas o fundamentación son obligatorias.' });
+        }
+
+        const visRes = await pool.query('SELECT folio FROM visitas WHERE id = $1', [visitaIdNum]);
+        if (visRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Visita no encontrada.' });
+        }
+        const folio = visRes.rows[0].folio;
+        const veredicto = dictamen || 'SOLVENTADO';
+        const instNombre = instancia || req.usuario.instancia || req.usuario.nombre || 'Instancia Institucional';
+
+        const insertQuery = await pool.query(
+            `INSERT INTO modulo3_seguimiento_atencion 
+            (visita_id, instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas, dictamen, estatus)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'ATENDIDO')
+            RETURNING *`,
+            [visitaIdNum, instNombre, nombre_responsable || req.usuario.nombre || '', cargo_responsable || '', oficio_referencia || '', acciones_tomadas, veredicto]
+        );
+
+        await pool.query(
+            `UPDATE visitas SET 
+                seguimiento_atendido = true,
+                dictamen_seguimiento = $1,
+                fecha_atencion_seguimiento = NOW()
+            WHERE id = $2`,
+            [veredicto, visitaIdNum]
+        );
+
+        await registrarAuditLog({
+            usuarioId: req.usuario.id,
+            usuarioNombre: req.usuario.nombre,
+            usuarioUsername: req.usuario.usuario,
+            accion: 'ATENCION_SEGUIMIENTO',
+            tablaAfectada: 'modulo3_seguimiento_atencion',
+            registroId: String(insertQuery.rows[0].id),
+            detalles: {
+                visita_id: visitaIdNum,
+                folio,
+                instancia: instNombre,
+                dictamen: veredicto,
+                oficio_referencia
+            }
+        });
+
+        res.json({
+            mensaje: 'Atención y dictamen oficial de seguimiento registrados exitosamente.',
+            atencion: insertQuery.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error al registrar atención por visita_id:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// 4. Consultar historial de atenciones de una visita (para capturistas y administradores)
+router.get('/seguimiento/visita/:visita_id', verificarToken, async (req, res) => {
+    try {
+        const { visita_id } = req.params;
+        const atencionesQuery = await pool.query(
+            'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
+            [visita_id]
+        );
+        res.json({
+            ok: true,
+            visita_id,
+            atenciones: atencionesQuery.rows
+        });
+    } catch (error) {
+        console.error('Error al consultar atenciones de visita:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 5. Descargar archivo firmado autorizado por token de seguimiento
+router.get('/seguimiento/:token/archivo/:modulo', async (req, res) => {
+    try {
+        const { token, modulo } = req.params;
+        const cleanToken = (token || '').trim();
+        const m3Query = await pool.query(
+            'SELECT visita_id FROM modulo3_lista_verificacion WHERE LOWER(TRIM(token_seguimiento)) = LOWER($1)',
+            [cleanToken]
+        );
+        if (m3Query.rows.length === 0) {
+            return res.status(403).json({ error: 'Acceso no autorizado.' });
+        }
+        const visitaId = m3Query.rows[0].visita_id;
+
+        const docQuery = await pool.query(
+            'SELECT ruta_archivo, nombre_archivo FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
+            [visitaId, modulo]
+        );
+        if (docQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Documento no encontrado.' });
+        }
+
+        const { ruta_archivo, nombre_archivo } = docQuery.rows[0];
+        const fullPath = findDocumentoFirmado(nombre_archivo, ruta_archivo);
+        if (!fullPath) {
+            return res.status(404).json({ error: 'El archivo físico no se encuentra disponible.' });
+        }
+        res.download(fullPath, nombre_archivo);
+    } catch (error) {
+        console.error('Error descargar archivo por seguimiento:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// 6. Registrar atención / dictamen oficial de seguimiento por parte de la dependencia (con token público)
 router.post('/seguimiento/:token/atender', async (req, res) => {
     try {
         const { token } = req.params;
+        const cleanToken = (token || '').trim();
         const { instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas, dictamen } = req.body;
 
         if (!acciones_tomadas || !instancia) {
@@ -1117,8 +1374,8 @@ router.post('/seguimiento/:token/atender', async (req, res) => {
         }
 
         const m3Query = await pool.query(
-            'SELECT m3.visita_id, v.folio FROM modulo3_lista_verificacion m3 JOIN visitas v ON v.id = m3.visita_id WHERE m3.token_seguimiento = $1',
-            [token]
+            'SELECT m3.visita_id, v.folio FROM modulo3_lista_verificacion m3 JOIN visitas v ON v.id = m3.visita_id WHERE LOWER(TRIM(m3.token_seguimiento)) = LOWER($1)',
+            [cleanToken]
         );
 
         if (m3Query.rows.length === 0) {
@@ -1173,118 +1430,29 @@ router.post('/seguimiento/:token/atender', async (req, res) => {
     }
 });
 
-// 3. Consultar la bandeja de expedientes asignados a la dependencia autenticada
-router.get('/seguimiento/mis-expedientes', verificarToken, async (req, res) => {
+// 7. Consultar expediente completo mediante token de seguimiento (público / correo)
+// NOTA: Esta ruta DEBE ir al final de las rutas de seguimiento para no capturar rutas estáticas
+router.get('/seguimiento/:token', async (req, res, next) => {
     try {
-        if (req.usuario.rol !== 'seguimiento') {
-            return res.status(403).json({ error: 'Acceso exclusivo para cuentas institucionales de seguimiento.' });
+        const { token } = req.params;
+        if (!token) return res.status(400).json({ error: 'Token requerido.' });
+
+        // Salvaguarda explícita por si alguna petición de ruta estática llegase aquí
+        if (token === 'mis-expedientes' || token === 'visita') {
+            return next();
         }
 
-        // Mapeo de usuarios a instancia
-        const INSTANCIAS_MAP_USER = {
-            'juridico.seder': 'seder_juridico',
-            'cefp.penay': 'cefppenay',
-            'senasica.nayarit': 'senasica',
-            'henry.hernandez': 'test_henry'
-        };
+        const cleanToken = token.trim();
+        const expediente = await obtenerDetalleExpediente({ token: cleanToken });
 
-        const instanciaId = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
-
-        if (!instanciaId) {
-            return res.status(400).json({ error: 'No se encontró la instancia asignada a tu usuario.' });
+        if (!expediente) {
+            return res.status(404).json({ error: 'Expediente no encontrado o enlace de seguimiento no válido.' });
         }
 
-        // Consultar únicamente los expedientes canalizados a esta instancia
-        const expedientesQuery = await pool.query(
-            `SELECT 
-                v.id as visita_id,
-                v.folio,
-                v.psg,
-                v.fecha_inicio as fecha_supervision,
-                v.supervisor,
-                v.estado_visita,
-                v.seguimiento_atendido,
-                v.dictamen_seguimiento,
-                v.fecha_atencion_seguimiento,
-                p.razon_social,
-                p.municipio,
-                p.localidad,
-                p.tipo_psg,
-                p.telefono,
-                m3.token_seguimiento,
-                m3.fecha as m3_fecha,
-                m3.observaciones as m3_observaciones,
-                m3.instancias_notificadas
-             FROM modulo3_lista_verificacion m3
-             JOIN visitas v ON v.id = m3.visita_id
-             LEFT JOIN excel_psg p ON p.psg = v.psg
-             WHERE $1 = ANY(m3.instancias_notificadas)
-             ORDER BY v.fecha_inicio DESC`,
-            [instanciaId]
-        );
-
-        res.json({
-            ok: true,
-            instancia: instanciaId,
-            total: expedientesQuery.rows.length,
-            expedientes: expedientesQuery.rows
-        });
-
+        res.json({ expediente });
     } catch (error) {
-        console.error('Error al consultar mis-expedientes:', error);
-        res.status(500).json({ error: 'Error al consultar expedientes asignados: ' + error.message });
-    }
-});
-
-// 4. Consultar historial de atenciones de una visita (para capturistas y administradores)
-router.get('/seguimiento/visita/:visita_id', verificarToken, async (req, res) => {
-    try {
-        const { visita_id } = req.params;
-        const atencionesQuery = await pool.query(
-            'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
-            [visita_id]
-        );
-        res.json({
-            ok: true,
-            visita_id,
-            atenciones: atencionesQuery.rows
-        });
-    } catch (error) {
-        console.error('Error al consultar atenciones de visita:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Descargar archivo firmado autorizado por token de seguimiento
-router.get('/seguimiento/:token/archivo/:modulo', async (req, res) => {
-    try {
-        const { token, modulo } = req.params;
-        const m3Query = await pool.query(
-            'SELECT visita_id FROM modulo3_lista_verificacion WHERE token_seguimiento = $1',
-            [token]
-        );
-        if (m3Query.rows.length === 0) {
-            return res.status(403).json({ error: 'Acceso no autorizado.' });
-        }
-        const visitaId = m3Query.rows[0].visita_id;
-
-        const docQuery = await pool.query(
-            'SELECT ruta_archivo, nombre_archivo FROM documentos_firmados WHERE visita_id = $1 AND modulo = $2',
-            [visitaId, modulo]
-        );
-        if (docQuery.rows.length === 0) {
-            return res.status(404).json({ error: 'Documento no encontrado.' });
-        }
-
-        const { ruta_archivo, nombre_archivo } = docQuery.rows[0];
-        const fullPath = findDocumentoFirmado(nombre_archivo, ruta_archivo);
-        if (!fullPath) {
-            return res.status(404).json({ error: 'El archivo físico no se encuentra disponible.' });
-        }
-        res.download(fullPath, nombre_archivo);
-    } catch (error) {
-        console.error('Error descargar archivo por seguimiento:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+        console.error('Error consultar seguimiento por token:', error);
+        res.status(500).json({ error: 'Error interno del servidor.', detalle: error.message });
     }
 });
 

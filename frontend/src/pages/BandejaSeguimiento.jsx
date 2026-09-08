@@ -256,18 +256,17 @@ const BandejaSeguimiento = () => {
                                                     )}
                                                 </td>
                                                 <td className="py-3 px-4 text-center">
-                                                    {exp.token_seguimiento ? (
-                                                        <button
-                                                            onClick={() => navigate(`/seguimiento/expediente?token=${exp.token_seguimiento}`)}
-                                                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-800 hover:bg-red-900 text-white rounded-lg font-bold text-xs transition-colors shadow-xs"
-                                                        >
-                                                            <Scale size={13} /> Revisar y Dictaminar
-                                                        </button>
-                                                    ) : (
-                                                        <span className="text-[11px] text-gray-400 italic">
-                                                            Sin token generado
-                                                        </span>
-                                                    )}
+                                                    <button
+                                                        onClick={() => {
+                                                            const queryParams = new URLSearchParams();
+                                                            if (exp.token_seguimiento) queryParams.set('token', exp.token_seguimiento);
+                                                            if (exp.visita_id) queryParams.set('visita_id', exp.visita_id);
+                                                            navigate(`/seguimiento/expediente?${queryParams.toString()}`);
+                                                        }}
+                                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-800 hover:bg-red-900 text-white rounded-lg font-bold text-xs transition-all shadow-xs hover:shadow-md cursor-pointer"
+                                                    >
+                                                        <Scale size={13} /> Revisar y Dictaminar
+                                                    </button>
                                                 </td>
                                             </tr>
                                         );
