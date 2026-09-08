@@ -188,16 +188,16 @@ const SeguimientoExpediente = () => {
             subtitulo: 'Oficio de Notificación de Visita de Supervisión',
             data: modulos.modulo1,
             descripcion: modulos.modulo1 
-                ? `Emitido el ${modulos.modulo1.fecha_emision || 'N/D'} por ${modulos.modulo1.nombre_servidor || 'Servidor Oficial'}. Recibe: ${modulos.modulo1.recibe_notificacion || 'Titular / Encargado'}.`
+                ? `Emitido el ${modulos.modulo1.fecha_emision || 'N/D'} por ${modulos.modulo1.nombre_servidor || 'Servidor Oficial'}. Recibe: ${modulos.modulo1.recibe_notificacion || modulos.modulo1.nombre_psg || 'Titular / Encargado'}.`
                 : 'Pendiente de emisión o sin datos registrados.',
             detalles: modulos.modulo1 ? [
                 { label: 'Fecha de Emisión', valor: modulos.modulo1.fecha_emision },
-                { label: 'Hora de Notificación', valor: modulos.modulo1.hora_notificacion },
+                { label: 'Hora de Notificación', valor: modulos.modulo1.hora_emision || modulos.modulo1.hora_notificacion },
                 { label: 'Servidor Público Comisionado', valor: modulos.modulo1.nombre_servidor },
                 { label: 'Cargo del Servidor', valor: modulos.modulo1.cargo_servidor },
                 { label: 'Identificación Oficial', valor: modulos.modulo1.identificacion_servidor },
-                { label: 'Persona Notificada', valor: modulos.modulo1.recibe_notificacion },
-                { label: 'Identificación Persona Notificada', valor: modulos.modulo1.identificacion_recibe }
+                { label: 'Persona Notificada / PSG', valor: modulos.modulo1.nombre_psg || modulos.modulo1.recibe_notificacion },
+                { label: 'Domicilio Notificado', valor: modulos.modulo1.domicilio }
             ] : []
         },
         {
@@ -206,16 +206,16 @@ const SeguimientoExpediente = () => {
             subtitulo: 'Orden Oficial de Inspección y Vigilancia',
             data: modulos.modulo2,
             descripcion: modulos.modulo2
-                ? `Ordenada por ${modulos.modulo2.nombre_ordena || 'Autoridad Emisora'}. Inspector comisionado: ${modulos.modulo2.nombre_comisionado || 'Oficial de Supervisión'}.`
+                ? `Ordenada por ${modulos.modulo2.nombre_ordena || 'Autoridad Emisora'}. Inspector comisionado: ${modulos.modulo2.nombre_pc || modulos.modulo2.nombre_comisionado || 'Oficial de Supervisión'}.`
                 : 'Pendiente de emisión o sin datos registrados.',
             detalles: modulos.modulo2 ? [
                 { label: 'Fecha de la Orden', valor: modulos.modulo2.fecha },
                 { label: 'Hora', valor: modulos.modulo2.hora },
                 { label: 'Autoridad que Ordena', valor: modulos.modulo2.nombre_ordena },
                 { label: 'Cargo de la Autoridad', valor: modulos.modulo2.cargo_ordena },
-                { label: 'Personal Comisionado', valor: modulos.modulo2.nombre_comisionado },
-                { label: 'Cargo Comisionado', valor: modulos.modulo2.cargo_comisionado },
-                { label: 'Objeto de la Supervisión', valor: modulos.modulo2.objeto }
+                { label: 'Personal Comisionado', valor: modulos.modulo2.nombre_pc || modulos.modulo2.nombre_comisionado },
+                { label: 'Cargo Comisionado', valor: modulos.modulo2.cargo_pc || modulos.modulo2.cargo_comisionado },
+                { label: 'Objeto de la Supervisión', valor: modulos.modulo2.objeto || 'Supervisión y verificación técnica pecuaria' }
             ] : []
         },
         {
@@ -242,16 +242,16 @@ const SeguimientoExpediente = () => {
             subtitulo: 'Acta de Hechos u Omisiones Detectadas',
             data: modulos.modulo4,
             descripcion: modulos.modulo4
-                ? `Acta levantada el ${modulos.modulo4.fecha || 'N/D'}. Inspector: ${modulos.modulo4.supervisor || 'N/D'}.`
+                ? `Acta levantada el ${modulos.modulo4.fecha || 'N/D'}. Inspector: ${modulos.modulo4.nombre_supervisor || modulos.modulo4.supervisor || 'N/D'}.`
                 : 'No requerida o no levantada en esta supervisión.',
             detalles: modulos.modulo4 ? [
                 { label: 'Fecha del Acta', valor: modulos.modulo4.fecha },
-                { label: 'Horario', valor: `${modulos.modulo4.hora_inicio || '--:--'} a ${modulos.modulo4.hora_cierre || '--:--'}` },
-                { label: 'Supervisor Actuante', valor: modulos.modulo4.supervisor },
-                { label: 'Razón Social / Unidad', valor: modulos.modulo4.razon_social },
-                { label: 'Testigo 1', valor: modulos.modulo4.testigo1_nombre },
-                { label: 'Testigo 2', valor: modulos.modulo4.testigo2_nombre },
-                { label: 'Narrativa de Hechos u Omisiones', valor: modulos.modulo4.hechos_narrativa || modulos.modulo4.hechos || 'Sin narrativa capturada.' }
+                { label: 'Horario', valor: `${modulos.modulo4.hora_inicio || modulos.modulo4.hora || '--:--'} a ${modulos.modulo4.hora_termino || modulos.modulo4.hora_cierre || '--:--'}` },
+                { label: 'Supervisor Actuante', valor: modulos.modulo4.nombre_supervisor || modulos.modulo4.supervisor },
+                { label: 'Razón Social / Unidad', valor: modulos.modulo4.nombre_psg || modulos.modulo4.razon_social },
+                { label: 'Testigo Asistente', valor: modulos.modulo4.nombre_testigo || modulos.modulo4.testigo1_nombre },
+                { label: 'Testigo de Cierre', valor: modulos.modulo4.nombre_testigo_cierre || modulos.modulo4.testigo2_nombre },
+                { label: 'Narrativa de Hechos u Omisiones', valor: modulos.modulo4.hechos_observados || modulos.modulo4.hechos_narrativa || modulos.modulo4.hechos || 'Sin narrativa capturada.' }
             ] : []
         },
         {
@@ -265,8 +265,8 @@ const SeguimientoExpediente = () => {
             detalles: modulos.modulo5 ? [
                 { label: 'Acta Número', valor: modulos.modulo5.acta_no },
                 { label: 'Fecha de Inspección', valor: modulos.modulo5.fecha },
-                { label: 'Horario', valor: `${modulos.modulo5.hora_inicio || '--:--'} a ${modulos.modulo5.hora_fin || '--:--'}` },
-                { label: 'Supervisor Oficial', valor: modulos.modulo5.supervisor },
+                { label: 'Horario', valor: `${modulos.modulo5.hora_inicio || '--:--'} a ${modulos.modulo5.hora_termino || modulos.modulo5.hora_fin || '--:--'}` },
+                { label: 'Supervisor Oficial', valor: modulos.modulo5.nombre_supervisor || modulos.modulo5.supervisor },
                 { label: 'Observaciones Detectadas', valor: modulos.modulo5.observaciones_detectadas || 'Ninguna observación asentada.' },
                 { label: 'Medidas Preventivas Dictadas', valor: modulos.modulo5.medidas_preventivas || 'Sin medidas preventivas dictadas.' },
                 { label: 'Manifestaciones del Interesado', valor: modulos.modulo5.manifestaciones || 'Sin manifestaciones adicionales.' }
@@ -278,13 +278,13 @@ const SeguimientoExpediente = () => {
             subtitulo: 'Acta Circunstanciada y Conclusión de Visita',
             data: modulos.modulo6,
             descripcion: modulos.modulo6
-                ? `Concluida el ${modulos.modulo6.fecha || 'N/D'} por ${modulos.modulo6.supervisor || 'Inspector'}. Visita protocolizada.`
+                ? `Concluida el ${modulos.modulo6.fecha || 'N/D'} por ${modulos.modulo6.nombre_oficial || modulos.modulo6.supervisor || 'Inspector'}. Visita protocolizada.`
                 : 'Pendiente de formalización o sin datos registrados.',
             detalles: modulos.modulo6 ? [
                 { label: 'Fecha de Cierre', valor: modulos.modulo6.fecha },
-                { label: 'Horario de Término', valor: `${modulos.modulo6.hora_inicio || '--:--'} a ${modulos.modulo6.hora_cierre || '--:--'}` },
-                { label: 'Supervisor Responsable', valor: modulos.modulo6.supervisor },
-                { label: 'Hechos Relevantes', valor: modulos.modulo6.hechos_relevantes || 'Sin hechos adicionales registrados.' },
+                { label: 'Horario', valor: `${modulos.modulo6.hora || '--:--'} (Cierre: ${modulos.modulo6.fecha_cierre || 'N/D'})` },
+                { label: 'Supervisor Responsable', valor: modulos.modulo6.nombre_oficial || modulos.modulo6.supervisor },
+                { label: 'Hechos Relevantes', valor: modulos.modulo6.hechos_observaciones || modulos.modulo6.hechos_relevantes || 'Sin hechos adicionales registrados.' },
                 { label: 'Manifestaciones Finales', valor: modulos.modulo6.manifestaciones || 'Sin manifestaciones finales.' }
             ] : []
         }

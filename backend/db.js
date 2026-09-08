@@ -100,24 +100,15 @@ const initModulo1Columns = async () => {
 
 const initSeguimiento = async () => {
     try {
-        // 1. Columnas en modulo3_lista_verificacion
-        await pool.query(`
-            ALTER TABLE public.modulo3_lista_verificacion 
-            ADD COLUMN IF NOT EXISTS instancias_notificadas text[],
-            ADD COLUMN IF NOT EXISTS token_seguimiento varchar(100);
-
-            ALTER TABLE public.visitas
-            ADD COLUMN IF NOT EXISTS seguimiento_atendido BOOLEAN DEFAULT FALSE,
-            ADD COLUMN IF NOT EXISTS dictamen_seguimiento VARCHAR(50),
-            ADD COLUMN IF NOT EXISTS fecha_atencion_seguimiento TIMESTAMP WITH TIME ZONE;
-
-            ALTER TABLE public.usuarios
-            ADD COLUMN IF NOT EXISTS instancia VARCHAR(50);
-        `);
-
-        // 2. Tabla para registrar atenciones y oficios de seguimiento con dictamen
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS public.modulo3_seguimiento_atencion (
+        // 1. Columnas en modulo3_lista_verificacion, visitas y usuarios
+        const migraciones = [
+            'ALTER TABLE public.modulo3_lista_verificacion ADD COLUMN IF NOT EXISTS instancias_notificadas text[];',
+            'ALTER TABLE public.modulo3_lista_verificacion ADD COLUMN IF NOT EXISTS token_seguimiento varchar(100);',
+            'ALTER TABLE public.visitas ADD COLUMN IF NOT EXISTS seguimiento_atendido BOOLEAN DEFAULT FALSE;',
+            'ALTER TABLE public.visitas ADD COLUMN IF NOT EXISTS dictamen_seguimiento VARCHAR(50);',
+            'ALTER TABLE public.visitas ADD COLUMN IF NOT EXISTS fecha_atencion_seguimiento TIMESTAMP WITH TIME ZONE;',
+            'ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS instancia VARCHAR(50);',
+            `CREATE TABLE IF NOT EXISTS public.modulo3_seguimiento_atencion (
                 id SERIAL PRIMARY KEY,
                 visita_id INT REFERENCES public.visitas(id) ON DELETE CASCADE,
                 instancia VARCHAR(100) NOT NULL,
@@ -128,11 +119,18 @@ const initSeguimiento = async () => {
                 dictamen VARCHAR(50) DEFAULT 'SOLVENTADO',
                 estatus VARCHAR(50) DEFAULT 'ATENDIDO',
                 creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
+            );`,
+            "ALTER TABLE public.modulo3_seguimiento_atencion ADD COLUMN IF NOT EXISTS dictamen VARCHAR(50) DEFAULT 'SOLVENTADO';",
+            "ALTER TABLE public.modulo3_seguimiento_atencion ADD COLUMN IF NOT EXISTS estatus VARCHAR(50) DEFAULT 'ATENDIDO';"
+        ];
 
-            ALTER TABLE public.modulo3_seguimiento_atencion
-            ADD COLUMN IF NOT EXISTS dictamen VARCHAR(50) DEFAULT 'SOLVENTADO';
-        `);
+        for (const sql of migraciones) {
+            try {
+                await pool.query(sql);
+            } catch (migErr) {
+                console.warn('[DB INIT] Advertencia en migración seguimiento:', migErr.message);
+            }
+        }
 
         // 3. Crear o actualizar cuentas institucionales con permisos estrictos de solo seguimiento
         const cuentas = [

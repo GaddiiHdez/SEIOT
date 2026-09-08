@@ -1011,26 +1011,53 @@ router.get('/seguimiento/:token', async (req, res) => {
         const datosM3 = m3Query.rows[0];
         const visitaId = datosM3.visita_id;
 
-        // Obtener datos estructurados de todos los módulos de la visita
+        // Obtener datos estructurados de todos los módulos de la visita de forma segura y tolerante
         const [m1Res, m2Res, m4Res, m5Res, m6Res] = await Promise.all([
-            pool.query('SELECT fecha_emision, nombre_servidor, cargo_servidor, observaciones FROM modulo1_oficio_notificacion WHERE visita_id = $1', [visitaId]),
-            pool.query('SELECT fecha, nombre_ordena, cargo_ordena, nombre_titular, domicilio FROM modulo2_orden_supervision WHERE visita_id = $1', [visitaId]),
-            pool.query('SELECT acta_no, fecha, hora, hechos_observados, nombre_testigo1, nombre_testigo2 FROM modulo4_acta_hechos WHERE visita_id = $1', [visitaId]),
-            pool.query('SELECT acta_no, fecha, observaciones_detectadas, medidas_preventivas, manifestaciones FROM modulo5_acta_supervision WHERE visita_id = $1', [visitaId]),
-            pool.query('SELECT acta_no, fecha, irregularidades_detectadas, sanciones, hechos_articulos FROM modulo6_acta_circunstanciada WHERE visita_id = $1', [visitaId])
+            pool.query('SELECT * FROM modulo1_oficio_notificacion WHERE visita_id = $1', [visitaId]).catch(err => {
+                console.warn('Advertencia al consultar modulo1:', err.message);
+                return { rows: [] };
+            }),
+            pool.query('SELECT * FROM modulo2_orden_supervision WHERE visita_id = $1', [visitaId]).catch(err => {
+                console.warn('Advertencia al consultar modulo2:', err.message);
+                return { rows: [] };
+            }),
+            pool.query('SELECT * FROM modulo4_acta_hechos WHERE visita_id = $1', [visitaId]).catch(err => {
+                console.warn('Advertencia al consultar modulo4:', err.message);
+                return { rows: [] };
+            }),
+            pool.query('SELECT * FROM modulo5_acta_supervision WHERE visita_id = $1', [visitaId]).catch(err => {
+                console.warn('Advertencia al consultar modulo5:', err.message);
+                return { rows: [] };
+            }),
+            pool.query('SELECT * FROM modulo6_acta_circunstanciada WHERE visita_id = $1', [visitaId]).catch(err => {
+                console.warn('Advertencia al consultar modulo6:', err.message);
+                return { rows: [] };
+            })
         ]);
 
-        // Obtener historial de atenciones registradas
-        const atencionesQuery = await pool.query(
-            'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
-            [visitaId]
-        );
+        // Obtener historial de atenciones registradas de forma segura
+        let atenciones = [];
+        try {
+            const atencionesQuery = await pool.query(
+                'SELECT * FROM modulo3_seguimiento_atencion WHERE visita_id = $1 ORDER BY creado_en DESC',
+                [visitaId]
+            );
+            atenciones = atencionesQuery.rows;
+        } catch (atErr) {
+            console.warn('Advertencia al consultar modulo3_seguimiento_atencion:', atErr.message);
+        }
 
-        // Obtener lista de documentos firmados disponibles
-        const docsQuery = await pool.query(
-            'SELECT id, modulo, nombre_archivo, fecha_subida FROM documentos_firmados WHERE visita_id = $1 ORDER BY modulo ASC',
-            [visitaId]
-        );
+        // Obtener lista de documentos firmados disponibles de forma segura
+        let docs = [];
+        try {
+            const docsQuery = await pool.query(
+                'SELECT id, modulo, nombre_archivo, fecha_subida FROM documentos_firmados WHERE visita_id = $1 ORDER BY modulo ASC',
+                [visitaId]
+            );
+            docs = docsQuery.rows;
+        } catch (docErr) {
+            console.warn('Advertencia al consultar documentos_firmados:', docErr.message);
+        }
 
         res.json({
             expediente: {
