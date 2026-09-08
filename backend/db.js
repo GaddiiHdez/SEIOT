@@ -143,16 +143,22 @@ const initSeguimiento = async () => {
             console.warn('[DB INIT] Advertencia al auto-generar tokens:', tokenErr.message);
         }
 
-        // 3. Asegurar que las visitas existentes con módulos completados tengan asignación a instancias para pruebas
+        // 3. Limpiar asignaciones masivas históricas y mantener únicamente el expediente de prueba activo (Visita ID 2)
         try {
             await pool.query(`
                 UPDATE public.modulo3_lista_verificacion 
-                SET requiere_seguimiento = true,
-                    instancias_notificadas = ARRAY['test_henry', 'seder_juridico', 'cefppenay', 'senasica']::text[]
-                WHERE (instancias_notificadas IS NULL OR array_length(instancias_notificadas, 1) IS NULL OR array_length(instancias_notificadas, 1) = 0);
+                SET requiere_seguimiento = false,
+                    instancias_notificadas = '{}'::text[]
+                WHERE visita_id != 2;
             `);
-        } catch (seedErr) {
-            console.warn('[DB INIT] Advertencia al respaldar instancias:', seedErr.message);
+            await pool.query(`
+                UPDATE public.modulo3_lista_verificacion 
+                SET requiere_seguimiento = true,
+                    instancias_notificadas = ARRAY['test_henry', 'seder_juridico']::text[]
+                WHERE visita_id = 2;
+            `);
+        } catch (cleanErr) {
+            console.warn('[DB INIT] Advertencia al limpiar asignaciones:', cleanErr.message);
         }
 
         // 4. Crear o actualizar cuentas institucionales con permisos estrictos de solo seguimiento

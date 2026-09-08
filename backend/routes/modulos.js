@@ -1188,7 +1188,7 @@ router.get('/seguimiento/mis-expedientes', verificarToken, async (req, res) => {
                 FROM modulo3_lista_verificacion m3
                 JOIN visitas v ON v.id = m3.visita_id
                 LEFT JOIN excel_psg p ON p.psg = v.psg
-                WHERE $1 = ANY(m3.instancias_notificadas)
+                WHERE $1 = ANY(m3.instancias_notificadas) AND m3.requiere_seguimiento = true
                 ORDER BY v.fecha_inicio DESC
             `;
             params = [instanciaId];
@@ -1235,6 +1235,22 @@ router.get('/seguimiento/expediente-visita/:visita_id', verificarToken, async (r
             return res.status(404).json({ error: 'Expediente no encontrado.' });
         }
 
+        // Validación estricta de privacidad institucional
+        const esAdmin = req.usuario.es_admin || req.usuario.superadmin;
+        if (!esAdmin && req.usuario.rol === 'seguimiento') {
+            const INSTANCIAS_MAP_USER = {
+                'juridico.seder': 'seder_juridico',
+                'cefp.penay': 'cefppenay',
+                'senasica.nayarit': 'senasica',
+                'henry.hernandez': 'test_henry'
+            };
+            const userInstancia = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
+            const notif = expediente.modulos?.modulo3?.instancias_notificadas || [];
+            if (!notif.includes(userInstancia)) {
+                return res.status(403).json({ error: 'Acceso denegado: Este expediente no ha sido canalizado a su dependencia.' });
+            }
+        }
+
         res.json({ ok: true, expediente });
     } catch (error) {
         console.error('Error al consultar expediente por visita_id:', error);
@@ -1249,6 +1265,23 @@ router.post('/seguimiento/visita/:visita_id/atender', verificarToken, async (req
         const visitaIdNum = parseInt(visita_id, 10);
         if (isNaN(visitaIdNum)) {
             return res.status(400).json({ error: 'ID de visita no válido.' });
+        }
+
+        // Validación estricta de autorización para dictaminar
+        const esAdmin = req.usuario.es_admin || req.usuario.superadmin;
+        if (!esAdmin && req.usuario.rol === 'seguimiento') {
+            const INSTANCIAS_MAP_USER = {
+                'juridico.seder': 'seder_juridico',
+                'cefp.penay': 'cefppenay',
+                'senasica.nayarit': 'senasica',
+                'henry.hernandez': 'test_henry'
+            };
+            const userInstancia = req.usuario.instancia || INSTANCIAS_MAP_USER[req.usuario.usuario];
+            const m3Check = await pool.query('SELECT instancias_notificadas FROM modulo3_lista_verificacion WHERE visita_id = $1', [visitaIdNum]);
+            const notif = m3Check.rows[0]?.instancias_notificadas || [];
+            if (!notif.includes(userInstancia)) {
+                return res.status(403).json({ error: 'Acceso denegado: No tiene autorización para dictaminar este expediente.' });
+            }
         }
 
         const { instancia, nombre_responsable, cargo_responsable, oficio_referencia, acciones_tomadas, dictamen } = req.body;
