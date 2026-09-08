@@ -143,19 +143,19 @@ const initSeguimiento = async () => {
             console.warn('[DB INIT] Advertencia al auto-generar tokens:', tokenErr.message);
         }
 
-        // 3. Limpiar asignaciones masivas históricas y mantener únicamente el expediente de prueba activo (Visita ID 2)
+        // 3. Limpiar asignaciones masivas históricas y mantener únicamente un expediente de prueba activo
         try {
             await pool.query(`
                 UPDATE public.modulo3_lista_verificacion 
                 SET requiere_seguimiento = false,
                     instancias_notificadas = '{}'::text[]
-                WHERE visita_id != 2;
+                WHERE visita_id != (SELECT visita_id FROM modulo3_lista_verificacion ORDER BY visita_id ASC LIMIT 1);
             `);
             await pool.query(`
                 UPDATE public.modulo3_lista_verificacion 
                 SET requiere_seguimiento = true,
                     instancias_notificadas = ARRAY['test_henry', 'seder_juridico']::text[]
-                WHERE visita_id = 2;
+                WHERE visita_id = (SELECT visita_id FROM modulo3_lista_verificacion ORDER BY visita_id ASC LIMIT 1);
             `);
         } catch (cleanErr) {
             console.warn('[DB INIT] Advertencia al limpiar asignaciones:', cleanErr.message);
